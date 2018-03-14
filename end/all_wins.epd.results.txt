@@ -1,2 +1,0 @@
-402  : count=3929     win=3516 draw=253 loss=160
-402xx: count=3929     win=3113 draw=803 loss= 13
