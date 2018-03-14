@@ -178,7 +178,6 @@
   </ItemGroup>
   <ItemGroup>
     <Text Include="copying.txt" />
-    <Text Include="readme.txt" />
   </ItemGroup>
   <ItemGroup>
     <None Include="README.md" />
