@@ -3,7 +3,6 @@ Tucano Chess Engine ![alt text](image/tucano.bmp "Tucano")
 
 This is my chess engine called Tucano. Tucano, or toucan in english, is the name of a colorful bird with an oversized bill, and is popular in my country Brazil. 
 I'm an IT professional with passion for chess and programming, so I combined both with the development of the development of a chess engine. 
-I've been working on this project for several years and I believe it is now in a stable state where I can release the engine and the source code under General Public License. 
 I used the information available on the internet, specially, many other engines source code, such as fruit, crafty, stockfish, rodent, olithink, sungorus, tscp, etc. Thanks to all developers that made this knowledge available.
 The main source of information for development of chess engines can is the Chess Programming Wiki Pages (http://chessprogramming.wikispaces.com/).
 In case of any question please send me an email (alcides_schulz@hotmail.com) or stop by talkchess.com.
@@ -11,3 +10,52 @@ In case of any question please send me an email (alcides_schulz@hotmail.com) or 
 Tucano can be downloaded from https://sites.google.com/site/tucanochess/
 
 ![alt text](image/tucano_playing.png "Tucano")
+
+Terms of use
+------------
+Tucano is free, and distributed under the GNU General Public License (GPL). Essentially, this means that you are free to do almost exactly what you want with the program, including distributing it among your friends, making it available for download from your web site, selling it (either by itself or as part of some bigger software package), or using it as the starting point for a software project of your own.
+
+The only real limitation is that whenever you distribute Tucano in some way, you must always include the full source code, or a pointer to where the source code can be found. If you make any changes to the source code, these changes must also be made available under the GPL.
+
+For full details, read the copy of the GPL found in the file named copying.txt.
+
+Notice: this is free software, there is NO warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+Have Fun.
+
+Alcides Schulz.
+
+XBoard/Winboard options
+-----------------------
+Starting with version 7.00 tucano supports the following options:
+
+option Threads=N
+	N = 1 to 64
+option Hash=N
+	N = 64 to 1024
+
+Command Line options
+--------------------
+tucano -hash N -threads N
+   -hash indicates the size of hash table, default = 64 MB, minimum: 8 MB, maximum: 1024 MB.
+   -threads indicates how many threads to use during search, minimum: 1, maximum: 64. Depends on how many cores you computer have.
+
+Signature
+---------
+If you compile tucano you can use the command "bench" to get a signature. Just start tucano and type "bench". Signature is a generated number after searching a couple of positions to indicate you have the correct compilation. If you don't get the correct signature it means that something is wrong with the compilation process and the program may not perform correctly. Below is the signature for this version:
+
+7.00 - 32177949
+
+Compilation
+-----------
+The main platform used for development is Windows. 
+I try to use standard functions and make tucano portable, so it can be compiled on other platforms, but there's no warranty it will work on all of them.
+You can report issues with other platforms and I will try to address as possible.
+Tucano was compiled for windows using Mingw version 7.2.0.
+Here are the commands that were used for compilation:
+
+Windows:
+gcc -o tucano_w64.exe -O3 -flto -m64 -mtune=generic -s -static -Wfatal-errors src\*.c
+
+Linux:
+gcc -o tucano -O3 -flto -m64 -mtune=generic -s -Wfatal-errors -lpthread -lm src/*.c
