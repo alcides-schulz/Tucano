@@ -1,0 +1,4 @@
+ORG: count=  3     win=  3 draw=  0 loss=  0
+NEW: count=  3     win=  3 draw=  0 loss=  0
+NEW: count=  3     win=  0 draw=  3 loss=  0
+NEW: count=  3     win=  0 draw=  3 loss=  0

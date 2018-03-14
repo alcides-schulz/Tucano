@@ -1,0 +1,8 @@
+402  : count=14790     win=3593 draw=7473 loss=3724
+402rn: count=14790     win=3424 draw=7941 loss=3425
+402rn: count=14790     win=4372 draw=6238 loss=4180
+402rn: count=14790     win=4372 draw=6238 loss=4180
+402rn: count=14790     win=4366 draw=6256 loss=4168
+402rn: count=14790     win=3541 draw=7860 loss=3389
+402rn: count=14790     win=3109 draw=8591 loss=3090
+402xx: count=14790     win=3109 draw=8591 loss=3090

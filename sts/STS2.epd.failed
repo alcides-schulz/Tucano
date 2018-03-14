@@ -1,0 +1,21 @@
+  SECOND bm=Ba7  found: h5   score:  5 scores: Ba7=10,Qf6=3,a5=3,h5=5
+  SECOND bm=Re7  found: Ra2  score:  5 scores: Re7=10,Ra2=5,Rg7=2
+  SECOND bm=Qa6  found: Qd7  score:  7 scores: Qa6=10,Bc8=5,Qd7=7
+  SECOND bm=Rg8  found: Bc6  score:  1 scores: Rg8=10,Bc6=1,Bd7=4
+  SECOND bm=Qf1  found: Qg2  score:  2 scores: Qf1=10,Qg2=2,Qh2=2
+  SECOND bm=Ra1  found: Kh2  score:  8 scores: Ra1=10,Kg1=7,Kh2=8
+  SECOND bm=Re2  found: Qg7  score:  4 scores: Re2=10,Qg7=4,Rb2=4
+NOTFOUND bm=Qh4  found: Ng2  score:  0 scores: Qh4=10,Rc1=6,Rc2=9,Rc4=6 
+  SECOND bm=Bg2  found: e4   score:  6 scores: Bg2=10,e4=6
+NOTFOUND bm=Bh3  found: Rf2  score:  0 scores: Bh3=10,Rc1=8,Rc2=7 
+NOTFOUND bm=Be4  found: f5   score:  0 scores: Be4=10,Bf3=2,g5=3 
+NOTFOUND bm=Rh8  found: Rd4  score:  0 scores: Rh8=10,Ra8=1,f5=1 
+NOTFOUND bm=Bc3  found: c6   score:  0 scores: Bc3=10,b4=8,f5=4 
+NOTFOUND bm=Bd7  found: Ba4  score:  0 scores: Bd7=10,Bd8=8,Rg8=1 
+  SECOND bm=Bg6  found: Qg5  score:  1 scores: Bg6=10,Qg5=1,Rd1=3,a5=4
+NOTFOUND bm=Ba6  found: Bg5  score:  0 scores: Ba6=10 
+  SECOND bm=Bb4  found: Qb2  score:  2 scores: Bb4=10,Qa2=2,Qb2=2
+NOTFOUND bm=Bg5  found: Qh3  score:  0 scores: Bg5=10,Ba3=5,Bf4=4 
+NOTFOUND bm=Bh6  found: Qc5  score:  0 scores: Bh6=10 
+  SECOND bm=Bf5  found: f3   score:  2 scores: Bf5=10,Bf3=3,Bf6=3,f3=2
+NOTFOUND bm=Qe1  found: Be3  score:  0 scores: Qe1=10,Bg5=4,Rh3=5 

@@ -1,0 +1,3 @@
+  SECOND bm=c5   found: Qd4  score:  4 scores: c5=10,Qd4=4,b5=4,g4=3
+  SECOND bm=a5   found: Bg5  score:  6 scores: a5=10,Bg5=6,Kg1=6,Nf6=6
+NOTFOUND bm=b4   found: Kh1  score:  0 scores: b4=10,Qb1=3,Qc2=4,Re1=4 

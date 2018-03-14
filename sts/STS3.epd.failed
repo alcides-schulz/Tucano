@@ -1,0 +1,29 @@
+NOTFOUND bm=Nd7  found: Ka7  score:  0 scores: Nd7=10,Bc5=8,Bc6=2,Be7=7 
+NOTFOUND bm=Ne4  found: Bc8  score:  0 scores: Ne4=10,Ba3=6,Nb6=6 
+  SECOND bm=Nd4  found: Qf6  score:  5 scores: Nd4=10,Qf6=5,bc4=3,h4=3
+  SECOND bm=Nd4  found: c4   score:  4 scores: Nd4=10,Nd3=1,c4=4,f4=9
+NOTFOUND bm=Nb5  found: Be2  score:  0 scores: Nb5=10,Kh2=5,Rc2=7 
+NOTFOUND bm=Nd3  found: Ne4  score:  0 scores: Nd3=10,Kc7=9,Ne6=9 
+  SECOND bm=Nb5  found: fg6  score:  8 scores: Nb5=10,Be2=8,Nd5=9,fg6=8
+  SECOND bm=Nd5  found: Qc7  score:  6 scores: Nd5=10,Bg5=6,Qc7=6,Qe8=6
+  SECOND bm=Nh4  found: g3   score:  6 scores: Nh4=10,Ra2=5,Rab1=6,g3=6
+  SECOND bm=Nd4  found: Bb8  score:  4 scores: Nd4=10,Bb8=4,Kh8=3
+  SECOND bm=Ne3  found: Rc8  score:  6 scores: Ne3=10,Bd4=3,Rb8=7,Rc8=6
+  SECOND bm=Ng5  found: Rh1  score:  4 scores: Ng5=10,Qd2=3,Qg2=3,Rf2=4,Rh1=4
+  SECOND bm=Nd4  found: Qc7  score:  6 scores: Nd4=10,Qc7=6,a4=4
+NOTFOUND bm=Nd2  found: b3   score:  0 scores: Nd2=10,Kg1=7,Qd3=2,h3=7 
+  SECOND bm=Nf6  found: Qf2  score:  1 scores: Nf6=10,Qf2=1,Qg3=4,h4=4
+  SECOND bm=Nd4  found: Bd2  score:  1 scores: Nd4=10,Bb2=2,Bd2=1
+NOTFOUND bm=Ng4  found: Qg6  score:  0 scores: Ng4=10,Qf8=1 
+NOTFOUND bm=Nc6  found: b4   score:  0 scores: Nc6=10,Kg8=8,Kh7=6,Qe3=6 
+NOTFOUND bm=Ne5  found: Kb7  score:  0 scores: Ne5=10,Kd7=5,Rb3=5 
+  SECOND bm=Ne8  found: Nf1  score:  8 scores: Ne8=10,Bb5=8,Kg6=7,Nf1=8
+  SECOND bm=Nd1  found: Qe3  score:  4 scores: Nd1=10,Ne2=6,Qe3=4
+NOTFOUND bm=Ne4  found: Qe2  score:  0 scores: Ne4=10 
+  SECOND bm=Ne5  found: e3   score:  6 scores: Ne5=10,Ng5=5,Qb3=7,e3=6
+NOTFOUND bm=Nf6  found: g5   score:  0 scores: Nf6=10,Bg6=3,Rbg1=2 
+  SECOND bm=Nf8  found: Ne5  score:  4 scores: Nf8=10,Ne5=4,Rec8=6
+  SECOND bm=Nf5  found: Qb3  score:  4 scores: Nf5=10,Bb1=7,Qb3=4
+  SECOND bm=Nd7  found: Rfc8 score:  1 scores: Nd7=10,Nd5=7,Nh5=5,Rac8=1,Rfc8=1
+  SECOND bm=Nd3  found: Qb5  score:  2 scores: Nd3=10,Ne2=2,Qb5=2,Rce1=3
+  SECOND bm=Nd4  found: Nhf4 score:  5 scores: Nd4=10,Nef4=6,Nhf4=5

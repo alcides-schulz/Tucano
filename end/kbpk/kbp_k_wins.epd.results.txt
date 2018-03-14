@@ -1,0 +1,2 @@
+ORG: count=481     win=481 draw=  0 loss=  0
+NEW: count=481     win=477 draw=  4 loss=  0

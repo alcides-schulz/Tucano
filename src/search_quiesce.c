@@ -1,0 +1,160 @@
+/*-------------------------------------------------------------------------------
+  tucano is a XBoard chess playing engine developed by Alcides Schulz.
+  Copyright (C) 2011-present - Alcides Schulz
+
+  tucano is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  tucano is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You can find the GNU General Public License at http://www.gnu.org/licenses/
+-------------------------------------------------------------------------------*/
+
+#include "globals.h"
+
+//-------------------------------------------------------------------------------------------------
+//  Quiescence search
+//-------------------------------------------------------------------------------------------------
+
+//-------------------------------------------------------------------------------------------------
+//  Search nodes until a quiet position is found.
+//-------------------------------------------------------------------------------------------------
+int quiesce(GAME *game, UINT incheck, int alpha, int beta, int depth, int square_recap)
+{
+    MOVE_LIST   ml;
+    int     score;
+    int     move_count = 0;
+    MOVE    move = MOVE_NONE;
+    int     best_score = -MAX_SCORE;
+    int     turn = side_on_move(&game->board);
+    int     ply = get_ply(&game->board);
+    int     cppc;
+    int     gives_check;
+    MOVE    trans_move = MOVE_NONE;
+    MOVE    best_move = MOVE_NONE;
+
+    assert(alpha <= beta);
+
+    check_time(game);
+	if (game->search.abort) return 0;
+
+	game->pv_line.pv_size[ply] = ply;
+	game->search.nodes++;
+
+    if (ply > 0 && is_draw(&game->board)) return 0;
+
+	assert(ply >= 0 && ply <= MAX_PLY);
+    if (ply >= MAX_PLY) return evaluate(game, alpha, beta);
+
+    //  Mate pruning.
+    alpha = MAX(-MATE_VALUE + ply, alpha);
+    beta = MIN(MATE_VALUE - ply, beta);
+    if (alpha >= beta) return alpha;
+
+    // transposition table score or move hint
+    if (!EVAL_TUNING && tt_probe(&game->board, depth == 0 ? 0 : -1, alpha, beta, &score, &trans_move)) {
+        return score;
+    }
+
+    if (!incheck) {
+        best_score = evaluate(game, alpha, beta);
+        if (best_score >= beta)
+            return best_score;
+        if (best_score > alpha)
+            alpha = best_score;
+    }
+
+    select_init(&ml, game, incheck, trans_move, TRUE);
+    if (!incheck) {
+        if (depth >= 0)
+            enable_quiet_checks(&ml);
+        if (depth < 0 && best_score + 300 <= alpha) {
+            ml.opp_pieces ^= pawn_bb(&game->board, flip_color(turn));
+        }
+    }
+
+    while ((move = next_move(&ml)) != MOVE_NONE) {
+
+        assert(is_valid(&game->board, move));
+
+        if (!is_pseudo_legal(&game->board, ml.pins, move))
+            continue;
+
+        //int see_old = see_move(&game->board, move);
+        //int see_new = see_move_new(&game->board, move);
+        //if ((see_old >= 0 && see_new < 0) || (see_old > 0 && see_new <= 0)) {
+        //    printf("see_old: %d see_new: %d ", see_old, see_new);
+        //    util_print_move(move, TRUE);
+        //    board_print(&game->board, "see");
+        //    see_move_new(&game->board, move);
+        //}
+
+        move_count++;
+        gives_check = is_check(&game->board, move);
+
+        //  Skip moves that are not going to improve the position.
+        if (!incheck && !gives_check && unpack_type(move) == MT_CAPPC) {
+            cppc = unpack_capture(move);
+
+            if (depth < -4 && unpack_to(move) != square_recap)
+                continue;
+
+            // Skip captures that will not improve alpha (delta pruning)
+            if (best_score + 150 + piece_value(cppc) <= alpha)
+                continue;
+
+            // Skip losing captures based on Static Exchange Evaluation (SEE).
+            if (piece_value_see(cppc) < piece_value_see(unpack_piece(move))) {
+                if (see_move(&game->board, move) < 0) {
+                    continue;
+                }
+            }
+        }
+
+        make_move(&game->board, move);
+
+        assert(gives_check == is_incheck(&game->board, side_on_move(&game->board)));
+        assert(valid_is_legal(&game->board, move));
+
+        //  Search new position.
+        score = -quiesce(game, gives_check, -beta, -alpha, depth - 1, unpack_to(move));
+        
+        undo_move(&game->board);
+        if (game->search.abort)
+            return 0;
+
+        //  Score verification
+        if (score > best_score) {
+            if (score > alpha)  {
+                if (score >= beta) {
+                    if (!EVAL_TUNING) tt_save(&game->board, depth == 0 ? 0 : -1, score, TT_LOWER, move);
+                    return score;
+                }
+                update_pv(&game->pv_line, ply, move);
+                alpha = score;
+                best_move = move;
+            }
+            best_score = score;
+        }
+    }
+
+    //  Return only checkmate scores. We don't look at all moves unless in check.
+    if (move_count == 0 && incheck)
+        return -MATE_VALUE + ply;
+
+    if (!EVAL_TUNING) {
+        if (best_move != MOVE_NONE)
+            tt_save(&game->board, depth == 0 ? 0 : -1, best_score, TT_EXACT, best_move);
+        else
+            tt_save(&game->board, depth == 0 ? 0 : -1, best_score, TT_UPPER, MOVE_NONE);
+    }
+
+    return best_score;
+}
+
+// END

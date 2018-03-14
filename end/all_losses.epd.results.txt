@@ -1,0 +1,2 @@
+402: count=3281     win= 34 draw= 27 loss=3220
+402xx: count=3281     win=  3 draw=751 loss=2527

@@ -1,0 +1,26 @@
+  SECOND bm=Bd5  found: Ne4  score:  6 scores: Bd5=10,Ne4=6
+NOTFOUND bm=Be2  found: Ka7  score:  0 scores: Be2=10,Bf5=3,Bg5=3,c4=4 
+  SECOND bm=Be5  found: a4   score:  6 scores: Be5=10,Rb5=7,Rb7=6,a4=6
+  SECOND bm=Bd5  found: Qd8  score:  3 scores: Bd5=10,Qc6=6,Qc8=6,Qd8=3
+NOTFOUND bm=Bc5  found: Kh1  score:  0 scores: Bc5=10,Bg1=5,Rc2=5,Re1=5 
+  SECOND bm=Bf3  found: Raa8 score:  5 scores: Bf3=10,Raa8=5,Rba8=6,Rbb6=5
+NOTFOUND bm=Bh5  found: Qb7  score:  0 scores: Bh5=10,Qa2=5,Qb8=7,Qd1=5 
+  SECOND bm=Bb5  found: Rf1  score:  3 scores: Bb5=10,Qb6=1,Rf1=3,ef4=2
+  SECOND bm=Bf6  found: Rc8  score:  7 scores: Bf6=10,Bc5=2,Rc8=7,f5=4
+NOTFOUND bm=Bd7  found: Rf1  score:  0 scores: Bd7=10,Be6=5,Bh3=5,Rdf1=3 
+  SECOND bm=Bc4  found: Rd4  score:  6 scores: Bc4=10,Bd4=4,Rc7=3,Rd4=6
+NOTFOUND bm=Be3  found: Ra2  score:  0 scores: Be3=10 
+  SECOND bm=Bd4  found: Ne2  score:  6 scores: Bd4=10,Bb3=4,Ne2=6,gh3=3
+  SECOND bm=Bf3  found: b5   score:  6 scores: Bf3=10,Rd6=6,a4=7,b5=6
+  SECOND bm=Nf4  found: Rg8  score:  2 scores: Nf4=10,Qc8=2,Rg8=2,h5=1
+NOTFOUND bm=Bf4  found: Re8  score:  0 scores: Bf4=10,Bb8=2 
+NOTFOUND bm=Bf6  found: Qg3  score:  0 scores: Bf6=10,R3e2=2 
+NOTFOUND bm=Ne6  found: Rc1  score:  0 scores: Ne6=10 
+NOTFOUND bm=Bb5  found: Kg7  score:  0 scores: Bb5=10 
+  SECOND bm=Nd6  found: Rfc1 score:  7 scores: Nd6=10,Rac1=7,Rfc1=7,a4=7
+  SECOND bm=Bf4  found: Bc6  score:  6 scores: Bf4=10,Bc4=7,Bc6=6,Rd1=6
+NOTFOUND bm=Ng4  found: Rc8  score:  0 scores: Ng4=10,Nc6=1,Nf7=1,Qa2=5 
+  SECOND bm=Be5  found: Nb4  score:  2 scores: Be5=10,Nb4=2,Ne7=3,Qe7=2
+NOTFOUND bm=Nf4  found: Re8  score:  0 scores: Nf4=10,Ne4=1,Rae8=1 
+  SECOND bm=Bc5  found: Nc5  score:  5 scores: Bc5=10,Bf4=4,Nc5=5,Qd4=7
+  SECOND bm=Bf4  found: Kh2  score:  7 scores: Bf4=10,Kh2=7,Rbd1=6,g4=6
