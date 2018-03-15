@@ -110,59 +110,16 @@ int null_depth(int depth)
 //-------------------------------------------------------------------------------------------------
 void check_time(GAME *search_data)
 {
-    UINT    current_time;
-    char    move_string[100];
-    double  etime;
-    char    *p;
-
     if (!search_data->is_main_thread) // check time for main thread only
         return;
-
     if (search_data->search.nodes & TIME_CHECK)
         return;
-
-    current_time = util_get_time();
+    UINT current_time = util_get_time();
     if (search_data->search.cur_depth > 1 && !search_data->search.score_drop)
         if (current_time >= search_data->search.normal_finish_time)
             search_data->search.abort = TRUE;
     if (current_time >= search_data->search.extended_finish_time)
         search_data->search.abort = TRUE;
-
-    if (is_pondering && util_input_available())
-        search_data->search.abort = TRUE;
-
-    if (is_analysis && util_input_available()) {
-        if (fgets(analysis_command, MAX_READ, stdin) == NULL) 
-            if (feof(stdin))
-                return;
-        if ((p = strchr(analysis_command, '\n')) != NULL)
-            *p = '\0';
-
-        if (!strcmp(analysis_command, ".")) {
-            etime = (double)(current_time - search_data->search.start_time) / 10.0;
-            printf("stat01: %0.f %llu %d %d %d\n",
-                etime,
-                search_data->search.nodes,
-                search_data->search.cur_depth,
-                (search_data->search.root_move_count - search_data->search.root_move_search),
-                search_data->search.root_move_count);
-            fflush(stdout);
-        }
-        else
-        if (!strcmp(analysis_command, "bk")) {
-            // not supported
-        }
-        else
-        if (!strcmp(analysis_command, "hint")) {
-            if (search_data->pv_line.pv_line[0][0]) {
-                util_get_move_string(search_data->pv_line.pv_line[0][0], move_string);
-                printf("Hint: %s\n", move_string);
-                fflush(stdout);
-            }
-        }
-        else
-            search_data->search.abort = TRUE;
-    }
 }
 
 //-------------------------------------------------------------------------------------------------

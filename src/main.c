@@ -18,7 +18,8 @@
 #define EXTERN
 #include "globals.h"
 
-#define VERSION "7.00"
+#define VERSION "7.01"
+// 7.01 - add thread for user interface
 
 void    develop_workbench(void);
 double  bench(int depth, int print);
@@ -28,8 +29,8 @@ int     valid_hash_size(int hash_size);
 void    settings_init(void);
 
 GAME        main_game;
+GAME        ponder_game;
 SETTINGS    game_settings;
-SETTINGS    ponder_settings;
 char        line[MAX_READ];
 char        command[MAX_READ] = { '\0' };
 
@@ -45,6 +46,7 @@ int main(int argc, char *argv[])
     char        epd_file[1000];
     int         ponder_on = FALSE;
     MOVE        ponder_move = MOVE_NONE;
+    THREAD_ID   ponder_thread = 0;
 
     // Options
     int         threads = 1;    // Number of Threads
@@ -84,9 +86,6 @@ int main(int argc, char *argv[])
 
     new_game(&main_game, FEN_NEW_GAME);
 
-    is_analysis = FALSE;
-    is_pondering = FALSE;
-    
 #ifndef NDEBUG
     printf("\nDEBUG MODE ON (running with asserts)\n");
 #endif
@@ -99,7 +98,7 @@ int main(int argc, char *argv[])
     while (!stop) {
         fflush(stdout);
 
-        if (ponder_on && computer != -1 && side_on_move(&main_game.board) != computer && ponder_move != MOVE_NONE) {
+       /* if (ponder_on && computer != -1 && side_on_move(&main_game.board) != computer && ponder_move != MOVE_NONE) {
             if (is_valid(&main_game.board, ponder_move))  {
                 make_move(&main_game.board, ponder_move);
                 if (!is_illegal(&main_game.board, ponder_move)) {
@@ -110,14 +109,10 @@ int main(int argc, char *argv[])
                 undo_move(&main_game.board);
             }
         }
-
+*/
         if (side_on_move(&main_game.board) == computer) {
+
             search_run(&main_game, &game_settings);
-            if (game_settings.post_flag == POST_DEFAULT) {
-                printf("\nNodes: %lld  Time spent: %3.2f  Nodes/Sec=%8.0f\n", 
-                    main_game.search.nodes, main_game.search.elapsed_time, main_game.search.nodes / main_game.search.elapsed_time);
-                printf("\n");
-            }
 
             if (!main_game.search.best_move) {
                 print_game_result(&main_game);
@@ -133,6 +128,15 @@ int main(int argc, char *argv[])
 
             if (get_game_result(&main_game) != GR_NOT_FINISH) {
                 print_game_result(&main_game);
+                continue;
+            }
+
+            if (ponder_on && ponder_move != MOVE_NONE && is_valid(&main_game.board, ponder_move)) {
+                memcpy(&ponder_game, &main_game, sizeof(GAME));
+                make_move(&ponder_game.board, ponder_move);
+                if (!is_illegal(&ponder_game.board, ponder_move)) {
+                    THREAD_CREATE(ponder_thread, ponder_search, &ponder_game);
+                }
             }
 
             continue;
@@ -145,6 +149,12 @@ int main(int argc, char *argv[])
             continue;
         
         sscanf(line, "%s", command);
+
+        if (ponder_on && ponder_thread != 0) {
+            ponder_game.search.abort = TRUE;
+            THREAD_WAIT(ponder_thread);
+            ponder_thread = 0;
+        }
 
         if (!strcmp(command, "xboard"))  {
             printf("\n");
@@ -288,7 +298,7 @@ int main(int argc, char *argv[])
             continue;
         }
         if (!strcmp(command, "eval")) {
-            //  Display current position evaluation score.
+            //  Display current position evaluation information.
             eval_print(&main_game);
             continue;
         }
@@ -440,13 +450,6 @@ void settings_init(void)
     game_settings.max_depth = MAX_DEPTH;
     game_settings.post_flag = POST_DEFAULT;
     game_settings.use_book = FALSE;
-
-    ponder_settings.single_move_time = MAX_TIME;
-    ponder_settings.total_move_time = MAX_TIME;
-    ponder_settings.moves_level = 0;
-    ponder_settings.max_depth = MAX_DEPTH;
-    ponder_settings.post_flag = POST_XBOARD;
-    ponder_settings.use_book = FALSE;
 }
 
 //-------------------------------------------------------------------------------------------------

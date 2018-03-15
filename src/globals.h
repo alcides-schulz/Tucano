@@ -526,7 +526,6 @@ void    gen_check_evasions(BOARD *board, MOVE_LIST *ml);
 void    gen_quiet_checks(BOARD *board, MOVE_LIST *ml);
 void    print_current_moves(GAME *game);
 void    print_moves(BOARD *board, MOVE_LIST *ml);
-int     util_input_available(void);
 
 void    select_init(MOVE_LIST *ml, GAME *game, int incheck, MOVE ttm, int caps);
 void    add_move(MOVE_LIST *ml, MOVE move);
@@ -549,6 +548,7 @@ int     is_killer(MOVE_ORDER *move_order, int color, int ply, MOVE move);
 void    prepare_search(GAME *game, SETTINGS *settings);
 void    threads_init(int threads_count);
 void    search_run(GAME *game, SETTINGS *settings);
+void    ponder_search(GAME *game);
 void    update_pv(PV_LINE *pv_line, int ply, MOVE move);
 int     null_depth(int depth);
 int     piece_value(int piece);
@@ -578,12 +578,7 @@ MOVE    tt_move(BOARD *board);
 int     tt_score(BOARD *board, int min_depth, int *tt_score);
 
 // Analyze Mode
-EXTERN  int  is_analysis;
-EXTERN  char analysis_command[MAX_READ];
 void    analyze_mode(GAME *game);
-
-// Ponder Mode
-EXTERN  int  is_pondering;
 
 // Board
 void    new_game(GAME *game, char *fen);

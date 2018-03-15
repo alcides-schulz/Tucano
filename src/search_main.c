@@ -48,8 +48,22 @@ void threads_init(int threads_count)
     memset(thread_data, 0, (size_t)(sizeof(GAME) * additional_threads));
 }
 
+void ponder_search(GAME *game)
+{
+    SETTINGS    ponder_settings;
+
+    ponder_settings.single_move_time = MAX_TIME;
+    ponder_settings.total_move_time = MAX_TIME;
+    ponder_settings.moves_level = 0;
+    ponder_settings.max_depth = MAX_DEPTH;
+    ponder_settings.post_flag = POST_XBOARD;
+    ponder_settings.use_book = FALSE;
+
+    search_run(game, &ponder_settings);
+}
+
 //-------------------------------------------------------------------------------------------------
-//  Search data preparation and threads coordination
+//  Search preparation and threads coordination
 //-------------------------------------------------------------------------------------------------
 void search_run(GAME *game, SETTINGS *settings)
 {
@@ -68,7 +82,7 @@ void search_run(GAME *game, SETTINGS *settings)
     game->is_main_thread = TRUE;
 
     //  Try to find a move from book.
-    if (game->search.use_book && !is_analysis) {
+    if (game->search.use_book) {
         MOVE bookmove = book_next_move(game);
         if (bookmove != MOVE_NONE) {
             game->search.best_move = bookmove;
@@ -84,7 +98,7 @@ void search_run(GAME *game, SETTINGS *settings)
     memset(&game->move_order, 0, sizeof(MOVE_ORDER));
     tt_age();
 
-    // Multi Thread: copy data to additional threads and start them.
+    //  Multi Thread: copy data to additional threads and start them.
     for (int i = 0; i < additional_threads; i++) {
         memcpy(&thread_data[i].board, &game->board, sizeof(BOARD));
 		memcpy(&thread_data[i].search, &game->search, sizeof(SEARCH));
@@ -95,10 +109,10 @@ void search_run(GAME *game, SETTINGS *settings)
         THREAD_CREATE(thread_data[i].thread_handle, iterative_deepening, &thread_data[i]);
     }
 
-    // Search
+    //  Run main search
     iterative_deepening(game);
 
-	// Notify additional threads to finish and collect nodes count
+	//  Notify additional threads to finish and collect nodes count
     for (int i = 0; i < additional_threads; i++) {
         thread_data[i].search.abort = TRUE;
         THREAD_WAIT(thread_data[i].thread_handle);
@@ -107,6 +121,12 @@ void search_run(GAME *game, SETTINGS *settings)
 
     game->search.end_time = util_get_time();
     game->search.elapsed_time = (double)(game->search.end_time - game->search.start_time) / 1000.0;
+
+    if (game->search.post_flag == POST_DEFAULT) {
+        printf("\nNodes: %lld  Time spent: %3.2f  Nodes/Sec=%8.0f\n",
+            game->search.nodes, game->search.elapsed_time, game->search.nodes / game->search.elapsed_time);
+        printf("\n");
+    }
 }
 
 //-------------------------------------------------------------------------------------------------
