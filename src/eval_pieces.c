@@ -29,21 +29,6 @@ static const int MY_RANK_7[COLORS] = {RANK7, RANK2};
 static const int MY_RANK_8[COLORS] = {RANK8, RANK1};
 static const U64 MY_BB_RANK_7[COLORS] = {BB_RANK_7, BB_RANK_2};
 static const U64 MY_BB_RANK_8[COLORS] = {BB_RANK_8, BB_RANK_1};
-static const U64 MY_BB_RANK_678[COLORS] = {BB_RANK_6 | BB_RANK_7 | BB_RANK_8, BB_RANK_3 | BB_RANK_2 | BB_RANK_1};
-static const U64 BB_OUTPOST[COLORS] = {((U64)0x007E7E7E00000000), ((U64)0x000000007E7E7E00)};
-static const U64 BB_BLOCK_PAWN[COLORS] = {((U64)0x0000000000180000), ((U64)0x0000180000000000)};
-static const int SQUARE_BEHIND[COLORS] = {+8, -8};
-static const int BISHOP_TRAP_A7[COLORS] = {A7, A2};
-static const int BISHOP_TRAP_A7_PAWN[COLORS][2] = {{B6, C7}, {B3, C2}};
-static const int BISHOP_TRAP_H7[COLORS] = {H7, H2};
-static const int BISHOP_TRAP_H7_PAWN[COLORS][2] = {{G6, F7}, {G3, F2}};
-
-static const int ROOK_TRAP_A1_RSQ[COLORS] = {A1, A8};
-static const int ROOK_TRAP_B1_RSQ[COLORS] = {B1, B8};
-static const U64 ROOK_TRAP_A1_KSQ[COLORS] = {((U64)0x0000000000000060), ((U64)0x6000000000000000)}; // B1-C1, B8-C8
-static const int ROOK_TRAP_H1_RSQ[COLORS] = {H1, H8};
-static const int ROOK_TRAP_G1_RSQ[COLORS] = {G1, G8};
-static const U64 ROOK_TRAP_H1_KSQ[COLORS] = {((U64)0x0000000000000006), ((U64)0x0600000000000000)}; // G1-F1, G8-F8
 
 void    eval_pieces_prepare(BOARD *board, EVALUATION *eval_values);
 void    eval_knights(BOARD *board, EVALUATION *eval_values, int myc, int opp);
@@ -51,8 +36,6 @@ void    eval_bishops(BOARD *board, EVALUATION *eval_values, int myc, int opp);
 void    eval_rooks(BOARD *board, EVALUATION *eval_values, int myc, int opp);
 void    eval_queens(BOARD *board, EVALUATION *eval_values, int myc, int opp);
 void    eval_pieces_finalize(BOARD *board, EVALUATION *eval_values, int myc, int opp);
-
-
 
 //-------------------------------------------------------------------------------------------------
 //  Evaluate pieces.
@@ -85,10 +68,12 @@ void eval_pieces_prepare(BOARD *board, EVALUATION *eval_values)
     eval_values->king_attack_count[WHITE] = eval_values->king_attack_count[BLACK] = 0;
     eval_values->king_attack_value[WHITE] = eval_values->king_attack_value[BLACK] = 0;
 
-    eval_values->pawn_attacks[WHITE] = (pawn_bb(board, WHITE) & BB_NO_AFILE) << 9 |
-        (pawn_bb(board, WHITE) & BB_NO_HFILE) << 7;
-    eval_values->pawn_attacks[BLACK] = (pawn_bb(board, BLACK) & BB_NO_HFILE) >> 9 |
-        (pawn_bb(board, BLACK) & BB_NO_AFILE) >> 7;
+    eval_values->pawn_attacks[WHITE] = 0;
+    eval_values->pawn_attacks[WHITE] |= (pawn_bb(board, WHITE) & BB_NO_AFILE) << 9;
+    eval_values->pawn_attacks[WHITE] |= (pawn_bb(board, WHITE) & BB_NO_HFILE) << 7;
+    eval_values->pawn_attacks[BLACK] = 0;
+    eval_values->pawn_attacks[BLACK] |= (pawn_bb(board, BLACK) & BB_NO_HFILE) >> 9;
+    eval_values->pawn_attacks[BLACK] |= (pawn_bb(board, BLACK) & BB_NO_AFILE) >> 7;
 
     eval_values->undefended[WHITE] = all_pieces_bb(board, WHITE) & ~eval_values->pawn_attacks[WHITE];
     eval_values->undefended[BLACK] = all_pieces_bb(board, BLACK) & ~eval_values->pawn_attacks[BLACK];
@@ -105,8 +90,9 @@ void eval_pieces_finalize(BOARD *board, EVALUATION *eval_values, int myc, int op
     int     king_attack;
 
     // pawns attacking king zone
-    if (eval_values->pawn_attacks[myc] & king_moves_bb(king_square(board, opp)) & ~pawn_bb(board, opp))
+    if (eval_values->pawn_attacks[myc] & king_moves_bb(king_square(board, opp)) & ~pawn_bb(board, opp)) {
         eval_values->king[opp] -= P_PAWN_ATK_KING;
+    }
 
     // calculate king attack
     if (eval_values->flag_king_safety[opp] && eval_values->king_attack_count[myc] > 1)  {
@@ -164,10 +150,6 @@ void eval_knights(BOARD *board, EVALUATION *eval_values, int myc, int opp)
             eval_values->pieces[myc] -= P_PAWN_ATK_KNIGHT;
         }
 
-        //  Blocking central pawns
-        if (square_bb(pcsq) & BB_BLOCK_PAWN[myc] && piece_on_square(board, myc, pcsq + SQUARE_BEHIND[myc]) == PAWN)
-            eval_values->pieces[myc] -= P_MINOR_BLOCK_PAWN;
-
         bb_clear_bit(&piece.u64, pcsq);
     }
 }
@@ -219,10 +201,6 @@ void eval_bishops(BOARD *board, EVALUATION *eval_values, int myc, int opp)
         if (eval_values->pawn_attacks[opp] & square_bb(pcsq)) {
             eval_values->pieces[myc] -= P_PAWN_ATK_BISHOP;
         }
-
-        // Blocking central pawns
-        if (square_bb(pcsq) & BB_BLOCK_PAWN[myc] && piece_on_square(board, myc, pcsq + SQUARE_BEHIND[myc]) == PAWN)
-            eval_values->pieces[myc] -= P_MINOR_BLOCK_PAWN;
 
         bb_clear_bit(&piece.u64, pcsq);
     }

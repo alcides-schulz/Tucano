@@ -18,9 +18,10 @@
 #define EXTERN
 #include "globals.h"
 
-#define VERSION "7.02"
+#define VERSION "7.03"
 // 7.01 - add thread for user interface
-// 7.02 - removed rook and bishop trap eval terms. 12k games +2 elo. simplification.
+// 7.02 - removed rook and bishop trap eval terms. 12k games -2 elo. simplification.
+// 7.03 - removed minor block pawn term. 15k games -1 elo. simplification.
 
 void        develop_workbench(void);
 double      bench(int depth, int print);
