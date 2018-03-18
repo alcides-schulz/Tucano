@@ -157,12 +157,9 @@ void eval_param_init(void)
     B_ROOK_FULL_OPEN     = MAKE_SCORE(25, 8);
     B_ROOK_RANK_8        = MAKE_SCORE(5, 8);
     B_ROOK_RANK_7        = MAKE_SCORE(23, 14);
-    P_ROOK_TRAP          = MAKE_SCORE(66, 6);
     B_DOUBLE_RANK_7      = MAKE_SCORE(39, 43);
     P_MINOR_BLOCK_PAWN   = MAKE_SCORE(24, -15);
     B_QUEEN_RANK_7       = MAKE_SCORE(-28, 31);
-    P_BISHOP_TRAP1       = MAKE_SCORE(124, 46);
-    P_BISHOP_TRAP2       = MAKE_SCORE(12, 99);
     // MOBILITY
     B_QUEEN_MOBILITY     = MAKE_SCORE(3, 3);
     B_ROOK_MOBILITY      = MAKE_SCORE(4, 5);

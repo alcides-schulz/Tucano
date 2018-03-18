@@ -224,24 +224,6 @@ void eval_bishops(BOARD *board, EVALUATION *eval_values, int myc, int opp)
         if (square_bb(pcsq) & BB_BLOCK_PAWN[myc] && piece_on_square(board, myc, pcsq + SQUARE_BEHIND[myc]) == PAWN)
             eval_values->pieces[myc] -= P_MINOR_BLOCK_PAWN;
 
-        // Bishop trapped at A2, A7
-        if (pcsq == BISHOP_TRAP_A7[myc]) {
-            if (piece_on_square(board, opp, BISHOP_TRAP_A7_PAWN[myc][0]) == PAWN) {
-                eval_values->pieces[myc] -= P_BISHOP_TRAP1;
-                if (piece_on_square(board, opp, BISHOP_TRAP_A7_PAWN[myc][1]) == PAWN)
-                    eval_values->pieces[myc] -= P_BISHOP_TRAP2;
-            }
-        }
-
-        // Bishop trapped at H2, H7
-        if (pcsq == BISHOP_TRAP_H7[myc]) {
-            if (piece_on_square(board, opp, BISHOP_TRAP_H7_PAWN[myc][0]) == PAWN) {
-                eval_values->pieces[myc] -= P_BISHOP_TRAP1;
-                if (piece_on_square(board, opp, BISHOP_TRAP_H7_PAWN[myc][1]) == PAWN)
-                    eval_values->pieces[myc] -= P_BISHOP_TRAP2;
-            }
-        }
-
         bb_clear_bit(&piece.u64, pcsq);
     }
 }
@@ -310,19 +292,6 @@ void eval_rooks(BOARD *board, EVALUATION *eval_values, int myc, int opp)
             else
                 eval_values->pieces[myc] += B_ROOK_SEMI_OPEN;
         }
-
-        // trapped rook
-        if (pcsq == ROOK_TRAP_A1_RSQ[myc] && (king_bb(board, myc) & ROOK_TRAP_A1_KSQ[myc]))
-            eval_values->pieces[myc] -= P_ROOK_TRAP;
-        else
-            if (pcsq == ROOK_TRAP_B1_RSQ[myc] && (king_bb(board, myc) & ROOK_TRAP_A1_KSQ[myc]))
-                eval_values->pieces[myc] -= P_ROOK_TRAP;
-            else
-                if (pcsq == ROOK_TRAP_H1_RSQ[myc] && (king_bb(board, myc) & ROOK_TRAP_H1_KSQ[myc]))
-                    eval_values->pieces[myc] -= P_ROOK_TRAP;
-                else
-                    if (pcsq == ROOK_TRAP_G1_RSQ[myc] && (king_bb(board, myc) & ROOK_TRAP_H1_KSQ[myc]))
-                        eval_values->pieces[myc] -= P_ROOK_TRAP;
 
         bb_clear_bit(&piece.u64, pcsq);
     }

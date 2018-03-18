@@ -18,15 +18,16 @@
 #define EXTERN
 #include "globals.h"
 
-#define VERSION "7.01"
+#define VERSION "7.02"
 // 7.01 - add thread for user interface
+// 7.02 - removed rook and bishop trap eval terms. 12k games +2 elo. simplification.
 
-void    develop_workbench(void);
-double  bench(int depth, int print);
-void    speed_test(void);
-int     valid_threads(int threads);
-int     valid_hash_size(int hash_size);
-void    settings_init(void);
+void        develop_workbench(void);
+double      bench(int depth, int print);
+void        speed_test(void);
+int         valid_threads(int threads);
+int         valid_hash_size(int hash_size);
+void        settings_init(void);
 
 GAME        main_game;
 GAME        ponder_game;

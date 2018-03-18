@@ -68,8 +68,7 @@ int search_zw(GAME *game, UINT incheck, int beta, int depth, UINT can_null, MOVE
     alpha = beta - 1;
     alpha = MAX(-MATE_VALUE + ply, alpha);
     beta = MIN(MATE_VALUE - ply, beta);
-    if (alpha >= beta)
-        return alpha;
+    if (alpha >= beta) return alpha;
 
     // transposition table score or move hint
     if (exclude_move == MOVE_NONE && tt_probe(&game->board, depth, beta - 1, beta, &score, &trans_move)) {
@@ -83,8 +82,7 @@ int search_zw(GAME *game, UINT incheck, int beta, int depth, UINT can_null, MOVE
         if (evaluate(game, beta - 1, beta) + RAZOR_MARGIN[depth] < beta && !has_pawn_on_rank7(&game->board, turn)) {
             razor_beta = beta - RAZOR_MARGIN[depth];
             score = quiesce(game, FALSE, razor_beta - 1, razor_beta, 0, -1);
-            if (game->search.abort)
-                return 0;
+            if (game->search.abort) return 0;
             if (score < razor_beta) {
                 return score;
             }
@@ -94,20 +92,19 @@ int search_zw(GAME *game, UINT incheck, int beta, int depth, UINT can_null, MOVE
     // Null move: Side to move has advantage that even allowing an extra move to opponent still keeps advantage.
     if (!incheck && can_null && !is_mate_score(beta) && has_pieces(&game->board, turn)) {
         // static null move
-        if (depth < STAT_NULL_DEPTH && evaluate(game, beta - 1, beta) - STAT_NULL_MARGIN[depth] >= beta)
+        if (depth < STAT_NULL_DEPTH && evaluate(game, beta - 1, beta) - STAT_NULL_MARGIN[depth] >= beta) {
             return evaluate(game, beta - 1, beta) - STAT_NULL_MARGIN[depth];
+        }
         
         // null move
         if (depth >= 2 && (depth <= 4 || evaluate(game, beta - 1, beta) >= beta)) {
             make_move(&game->board, pack_null_move());
             score = -search_zw(game, incheck, 1 - beta, null_depth(depth), FALSE, MOVE_NONE);
             undo_move(&game->board);
-            if (game->search.abort)
-                return 0;
+            if (game->search.abort) return 0;
 
             if (score >= beta) {
-                if (is_mate_score(score))
-                    score = beta;
+                if (is_mate_score(score)) score = beta;
                 tt_save(&game->board, depth, score, TT_LOWER, MOVE_NONE);
                 return score;
             }
@@ -127,38 +124,40 @@ int search_zw(GAME *game, UINT incheck, int beta, int depth, UINT can_null, MOVE
 
         int reductions = 0;
         int extensions = 0;
+
         gives_check = is_check(&game->board, move);
         
         // extension if move puts opponent in check
-        if (gives_check && (depth < 4 || see_move(&game->board, move) >= 0))
-            extensions = 1;
+        if (gives_check && (depth < 4 || see_move(&game->board, move) >= 0)) extensions = 1;
 
         // pruning or depth reductions
         if (!incheck && !gives_check && !extensions && move_count > 1) {
             assert(move != trans_move);
-            if (eval_score == -MAX_SCORE)
-                eval_score = evaluate(game, beta - 1, beta);
+
+            if (eval_score == -MAX_SCORE) eval_score = evaluate(game, beta - 1, beta);
 
             // Capture pruning
             if (depth <= 8 && unpack_type(move) == MT_CAPPC && !is_free_pawn(&game->board, turn, move) /*TODO: && unpack_piece(move) != KING*/) {
-                if (eval_score + depth * 50 + piece_value(unpack_capture(move)) + 100 < beta)
+                if (eval_score + depth * 50 + piece_value(unpack_capture(move)) + 100 < beta) {
                     continue;
+                }
             }
 
             // Quiet moves pruning/reductions
             if (is_late_moves(&ml) && !is_killer(&game->move_order, turn, ply, move))  {
                 bad_history = has_bad_history(&game->move_order, turn, move);
                 // move count pruning
-                if (move_is_quiet(move) && move_count > 4 + depth * 2 && bad_history)
+                if (move_is_quiet(move) && move_count > 4 + depth * 2 && bad_history) {
                     continue;
+                }
                 // futility pruning
-                if (move_is_quiet(move) && depth < 10 && eval_score + depth * 50 < beta)
+                if (move_is_quiet(move) && depth < 10 && eval_score + depth * 50 < beta) {
                     continue;
+                }
                 // late move reductions
                 if (move_count > 3 && depth > 2) {
                     reductions = 1;
-                    if (depth > 5 && bad_history)
-                        reductions += depth / 6 + move_count / 6;
+                    if (depth > 5 && bad_history) reductions += depth / 6 + move_count / 6;
                     reductions = MIN(reductions, 10);
                 }
             }
@@ -171,12 +170,12 @@ int search_zw(GAME *game, UINT incheck, int beta, int depth, UINT can_null, MOVE
 
         score = -search_zw(game, gives_check, 1 - beta, depth - 1 + extensions - reductions, 1, MOVE_NONE);
         //  Research reduced moves.
-        if (!game->search.abort && score >= beta && reductions > 0)
+        if (!game->search.abort && score >= beta && reductions > 0) {
             score = -search_zw(game, gives_check, 1 - beta, depth - 1, 1, MOVE_NONE);
+        }
         
         undo_move(&game->board);
-        if (game->search.abort)
-            return 0;
+        if (game->search.abort) return 0;
 
         // score verification
         if (score > best_score) {

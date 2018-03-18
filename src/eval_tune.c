@@ -368,12 +368,9 @@ void init_param_list(void)
         create_link("PIECES", "B_ROOK_FULL_OPEN",   &B_ROOK_FULL_OPEN,   OPENING_ENDGAME);
         create_link("PIECES", "B_ROOK_RANK_8",      &B_ROOK_RANK_8,      OPENING_ENDGAME);
         create_link("PIECES", "B_ROOK_RANK_7",      &B_ROOK_RANK_7,      OPENING_ENDGAME);
-        create_link("PIECES", "P_ROOK_TRAP",        &P_ROOK_TRAP,        OPENING_ENDGAME);
         create_link("PIECES", "B_DOUBLE_RANK_7",    &B_DOUBLE_RANK_7,    OPENING_ENDGAME);
         create_link("PIECES", "P_MINOR_BLOCK_PAWN", &P_MINOR_BLOCK_PAWN, OPENING_ENDGAME);
         create_link("PIECES", "B_QUEEN_RANK_7",     &B_QUEEN_RANK_7,     OPENING_ENDGAME);
-        create_link("PIECES", "P_BISHOP_TRAP1",     &P_BISHOP_TRAP1,     OPENING_ENDGAME);
-        create_link("PIECES", "P_BISHOP_TRAP2",     &P_BISHOP_TRAP2,     OPENING_ENDGAME);
     }
     if (TUNE_MOBILITY) {
         create_link("MOBILITY", "B_QUEEN_MOBILITY",  &B_QUEEN_MOBILITY,  OPENING_ENDGAME);
