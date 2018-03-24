@@ -348,6 +348,7 @@ void init_param_list(void)
         create_link("PAWN", "P_ISOLATED_OPEN", &P_ISOLATED_OPEN, OPENING_ENDGAME);
         create_link("PAWN", "P_BACKWARD",      &P_BACKWARD,      OPENING_ENDGAME);
         create_link("PAWN", "P_BACKWARD_OPEN", &P_BACKWARD_OPEN, OPENING_ENDGAME);
+        create_link("PAWN", "B_PAWN_SPACE",    &B_PAWN_SPACE,    OPENING_ENDGAME);
     }
     if (TUNE_PASSED) {
         create_link("PASSED", "B_PASSED_RANK3",     &B_PASSED_RANK3,     OPENING_ENDGAME);

@@ -45,6 +45,7 @@ void eval_param_init(void)
     P_ISOLATED_OPEN      = MAKE_SCORE(14, 16);
     P_BACKWARD           = MAKE_SCORE(22, -11);
     P_BACKWARD_OPEN      = MAKE_SCORE(43, -13);
+    B_PAWN_SPACE         = MAKE_SCORE(1, 0);
     // PASSED
     B_PASSED_RANK3       = MAKE_SCORE(-6, 0);
     B_PASSED_RANK4       = MAKE_SCORE(-7, 23);

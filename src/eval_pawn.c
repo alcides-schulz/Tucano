@@ -23,6 +23,7 @@
 
 int is_backward(BOARD *board, int myc, int pcsq);
 int is_candidate(BOARD *board, int myc, int pcsq);
+int space_bonus(BOARD *board, int myc);
 
 int USE_PAWN_TABLE = TRUE;
 
@@ -72,6 +73,7 @@ void eval_pawns(BOARD *board, PAWN_TABLE *pawn_table, EVALUATION *eval_values)
             eval_values->pawn[myc] -= isolated ? (opposing ? P_ISOLATED : P_ISOLATED_OPEN) : 0;
             eval_values->pawn[myc] -= backward ? (opposing ? P_BACKWARD : P_BACKWARD_OPEN) : 0;
             eval_values->pawn[myc] += candidate ? B_CANDIDATE * relative_rank : 0;
+            eval_values->pawn[myc] += space_bonus(board, myc);
 
             if (passed) {
                 bb_set_bit(&eval_values->bb_passers[myc], pcsq);
@@ -98,6 +100,33 @@ void eval_pawns(BOARD *board, PAWN_TABLE *pawn_table, EVALUATION *eval_values)
         ppt->bb_passers[WHITE] = eval_values->bb_passers[WHITE];
         ppt->bb_passers[BLACK] = eval_values->bb_passers[BLACK];
     }
+}
+
+//------------------------------------------------------------------------------------
+//    Controled squares that are behind pawn chain.
+//------------------------------------------------------------------------------------
+int space_bonus(BOARD *board, int myc) 
+{
+    BBIX space;
+    
+    space.u64 = pawn_bb(board, myc);
+
+    if (myc == WHITE) {
+        space.u64 |= space.u64 >> 8;
+        space.u64 |= space.u64 >> 8;
+        space.u64 |= space.u64 >> 8;
+        space.u64 &= (U64)0x000000FFFFFF0000; // ranks 3, 4, 5
+    }
+    else {
+        space.u64 |= space.u64 << 8;
+        space.u64 |= space.u64 << 8;
+        space.u64 |= space.u64 << 8;
+        space.u64 &= (U64)0x0000FFFFFF000000; // ranks 6, 5, 4
+    }
+
+    space.u64 &= (all_pieces_bb(board, myc) | empty_bb(board)) & ~pawn_bb(board, myc);
+
+    return bb_count(space) * B_PAWN_SPACE;
 }
 
 //------------------------------------------------------------------------------------
