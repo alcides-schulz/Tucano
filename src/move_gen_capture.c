@@ -46,7 +46,7 @@ void gen_caps(BOARD *board, MOVE_LIST *ml)
     piece.u64 = knight_bb(board, turn);
     while (piece.u64) {
         from = bb_first(piece);
-        attacks.u64 = knight_moves_bb(from) & ml->opp_pieces;
+        attacks.u64 = knight_moves_bb(from) & all_pieces_bb(board, opp);
         while (attacks.u64) {
             to = (turn == WHITE ? bb_first(attacks) : bb_last(attacks));
             add_move(ml, pack_capture(KNIGHT, piece_on_square(board, opp, to), from, to));
@@ -60,7 +60,7 @@ void gen_caps(BOARD *board, MOVE_LIST *ml)
     while (piece.u64) {
         from = bb_first(piece);
 
-        attacks.u64 = bb_rook_attacks(from, occupied_bb(board)) & ml->opp_pieces;
+        attacks.u64 = bb_rook_attacks(from, occupied_bb(board)) & all_pieces_bb(board, opp);
         while (attacks.u64) {
             to = (turn == WHITE ? bb_first(attacks) : bb_last(attacks));
             add_move(ml, pack_capture(piece_on_square(board, turn, from), piece_on_square(board, opp, to), from, to));
@@ -74,7 +74,7 @@ void gen_caps(BOARD *board, MOVE_LIST *ml)
     piece.u64 = queen_bishop_bb(board, turn);
     while (piece.u64) {
         from = bb_first(piece);
-        attacks.u64 = bb_bishop_attacks(from, occupied_bb(board)) & ml->opp_pieces;
+        attacks.u64 = bb_bishop_attacks(from, occupied_bb(board)) & all_pieces_bb(board, opp);
         while (attacks.u64) {
             to = (turn == WHITE ? bb_first(attacks) : bb_last(attacks));
             add_move(ml, pack_capture(piece_on_square(board, turn, from), piece_on_square(board, opp, to), from, to));
@@ -85,7 +85,7 @@ void gen_caps(BOARD *board, MOVE_LIST *ml)
 
     //  King
     from = king_square(board, turn);
-    attacks.u64 = king_moves_bb(from) & ml->opp_pieces;
+    attacks.u64 = king_moves_bb(from) & all_pieces_bb(board, opp);
     while (attacks.u64) {
         to = (turn == WHITE ? bb_first(attacks) : bb_last(attacks));
         add_move(ml, pack_capture(KING, piece_on_square(board, opp, to), from, to));
@@ -100,6 +100,7 @@ void gen_white_pawn_captures(BOARD *board, MOVE_LIST *ml)
 {
     BBIX    moves, attacks, ep_capture;
     int     from, to;
+    int     opp = flip_color(side_on_move(board));
 
     // promotions
     moves.u64 = ((pawn_bb(board, WHITE) & BB_RANK_7) << 8) & empty_bb(board);
@@ -112,7 +113,7 @@ void gen_white_pawn_captures(BOARD *board, MOVE_LIST *ml)
     //  attacks to northwest
     attacks.u64 = (pawn_bb(board, WHITE) & BB_NO_AFILE) << 9;
     ep_capture.u64 = attacks.u64 & ep_square_bb(board);
-    attacks.u64 &= ml->opp_pieces;
+    attacks.u64 &= all_pieces_bb(board, opp);
     while (attacks.u64) {
         to = bb_first(attacks);
         from = to + 9;
@@ -130,7 +131,7 @@ void gen_white_pawn_captures(BOARD *board, MOVE_LIST *ml)
     // attacks northeast
     attacks.u64 = (pawn_bb(board, WHITE) & BB_NO_HFILE) << 7;
     ep_capture.u64 = attacks.u64 & ep_square_bb(board);
-    attacks.u64 &= ml->opp_pieces;
+    attacks.u64 &= all_pieces_bb(board, opp);
     while (attacks.u64) {
         to = bb_first(attacks);
         from = to + 7;
@@ -153,6 +154,7 @@ void gen_black_pawn_captures(BOARD *board, MOVE_LIST *ml)
 {
     BBIX    moves, attacks, ep_capture;
     int     from, to;
+    int     opp = flip_color(side_on_move(board));
 
     //  promotions
        moves.u64 = ((pawn_bb(board, BLACK) & BB_RANK_2) >> 8) & empty_bb(board);
@@ -164,7 +166,7 @@ void gen_black_pawn_captures(BOARD *board, MOVE_LIST *ml)
     // attacks southeast
     attacks.u64 = (pawn_bb(board, BLACK) & BB_NO_HFILE) >> 9;
     ep_capture.u64 = attacks.u64 & ep_square_bb(board);
-    attacks.u64 &= ml->opp_pieces;
+    attacks.u64 &= all_pieces_bb(board, opp);
     while (attacks.u64) {
         to = bb_last(attacks);
         from = to - 9;
@@ -181,7 +183,7 @@ void gen_black_pawn_captures(BOARD *board, MOVE_LIST *ml)
     // attacks southwest
     attacks.u64 = (pawn_bb(board, BLACK) & BB_NO_AFILE) >> 7;
     ep_capture.u64 = attacks.u64 & ep_square_bb(board);
-    attacks.u64 &= ml->opp_pieces;
+    attacks.u64 &= all_pieces_bb(board, opp);
     while (attacks.u64) {
         to = bb_last(attacks);
         from = to - 7;

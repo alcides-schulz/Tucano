@@ -18,7 +18,8 @@
 #define EXTERN
 #include "globals.h"
 
-#define VERSION "7.04"
+#define VERSION "7.05"
+// 7.05 - removed quiesce pawn capture skip - 12k games, -2 elo. simplification.
 // 7.04 - space bonus - 24k game +5 elo.
 // 7.03 - removed minor block pawn term. 15k games -1 elo. simplification.
 // 7.02 - removed rook and bishop trap eval terms. 12k games -2 elo. simplification.

@@ -59,7 +59,6 @@ void select_init(MOVE_LIST *ml, GAME *game, int incheck, MOVE ttm, int caps)
     ml->phase = TRANS;
     ml->sort = TRUE;
     ml->gen_quiet_checks = FALSE;
-    ml->opp_pieces = all_pieces_bb(&game->board, flip_color(side_on_move(&game->board)));
     ml->board = &game->board;
     ml->move_order = &game->move_order;
 }

@@ -42,8 +42,9 @@ void move_order_save(MOVE_ORDER *move_order, int color, int ply, MOVE move, MOVE
 
     // update bad history for all previous move.
     move = prev_move(ml); // discard last move which is the best move
-    while ((move = prev_move(ml)) != MOVE_NONE)
+    while ((move = prev_move(ml)) != MOVE_NONE) {
         move_order->hist_tot[color][unpack_piece(move)][unpack_to(move)] += 1;
+    }
 }
 
 //-------------------------------------------------------------------------------------------------

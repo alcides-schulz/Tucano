@@ -31,7 +31,6 @@ int quiesce(GAME *game, UINT incheck, int alpha, int beta, int depth, int square
     int     move_count = 0;
     MOVE    move = MOVE_NONE;
     int     best_score = -MAX_SCORE;
-    int     turn = side_on_move(&game->board);
     int     ply = get_ply(&game->board);
     int     cppc;
     int     gives_check;
@@ -63,21 +62,13 @@ int quiesce(GAME *game, UINT incheck, int alpha, int beta, int depth, int square
 
     if (!incheck) {
         best_score = evaluate(game, alpha, beta);
-        if (best_score >= beta)
-            return best_score;
-        if (best_score > alpha)
-            alpha = best_score;
+        if (best_score >= beta) return best_score;
+        if (best_score > alpha) alpha = best_score;
     }
 
     select_init(&ml, game, incheck, trans_move, TRUE);
-    if (!incheck) {
-        if (depth >= 0) {
-            enable_quiet_checks(&ml);
-        }
-        if (depth < 0 && best_score + 300 <= alpha) {
-            ml.opp_pieces ^= pawn_bb(&game->board, flip_color(turn));
-        }
-    }
+
+    if (!incheck && depth >= 0) enable_quiet_checks(&ml);
 
     while ((move = next_move(&ml)) != MOVE_NONE) {
 

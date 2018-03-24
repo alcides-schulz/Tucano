@@ -363,7 +363,6 @@ typedef struct s_eval_table
 {
     U64     key;
     S32     score;
-    S32     dummy;
 }   EVAL_TABLE;
 
 #define PAWN_TABLE_SIZE 16384
@@ -471,7 +470,6 @@ typedef struct s_move_list
     int         late_moves_next;
     int         sort;
     U64         pins;
-    U64         opp_pieces;
     BOARD       *board;
     MOVE_ORDER  *move_order;
 }   MOVE_LIST;
