@@ -54,7 +54,7 @@ int search_zw(GAME *game, UINT incheck, int beta, int depth, UINT can_null, MOVE
     check_time(game);
     if (game->search.abort) return 0;
 
-    if (depth <= 0) return quiesce(game, incheck, beta - 1, beta, 0, -1);
+    if (depth <= 0) return quiesce(game, incheck, beta - 1, beta, 0);
 
     game->search.nodes++;
 	game->pv_line.pv_size[ply] = ply;
@@ -81,7 +81,7 @@ int search_zw(GAME *game, UINT incheck, int beta, int depth, UINT can_null, MOVE
     if (exclude_move == MOVE_NONE && !incheck && depth < RAZOR_DEPTH && !is_mate_score(beta)) {
         if (evaluate(game, beta - 1, beta) + RAZOR_MARGIN[depth] < beta && !has_pawn_on_rank7(&game->board, turn)) {
             razor_beta = beta - RAZOR_MARGIN[depth];
-            score = quiesce(game, FALSE, razor_beta - 1, razor_beta, 0, -1);
+            score = quiesce(game, FALSE, razor_beta - 1, razor_beta, 0);
             if (game->search.abort) return 0;
             if (score < razor_beta) {
                 return score;

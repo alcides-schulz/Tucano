@@ -18,7 +18,8 @@
 #define EXTERN
 #include "globals.h"
 
-#define VERSION "7.05"
+#define VERSION "7.06"
+// 7.06 - quiesce recap removal, 20k games, +5 elo.
 // 7.05 - removed quiesce pawn capture skip - 12k games, -2 elo. simplification.
 // 7.04 - space bonus - 24k game +5 elo.
 // 7.03 - removed minor block pawn term. 15k games -1 elo. simplification.

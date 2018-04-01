@@ -44,8 +44,7 @@ int search_pv(GAME *game, UINT incheck, int alpha, int beta, int depth)
     assert(beta > alpha);
     assert(depth <= MAX_DEPTH);
 
-	if (depth <= 0)
-		return quiesce(game, incheck, alpha, beta, 0, -1);
+	if (depth <= 0) return quiesce(game, incheck, alpha, beta, 0);
 
 	game->pv_line.pv_size[ply] = ply;
 	game->search.nodes++;

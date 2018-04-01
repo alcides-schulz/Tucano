@@ -512,7 +512,7 @@ void calc_e_sub(TUNE_THREAD *thread_data)
         thread_data->game.search.extended_move_time = 20000;
         thread_data->game.search.post_flag = POST_DEFAULT;
 
-        double eval = (double)quiesce(&thread_data->game, is_incheck(&thread_data->game.board, side_on_move(&thread_data->game.board)), -MAX_SCORE, MAX_SCORE, 0, 0);
+        double eval = (double)quiesce(&thread_data->game, is_incheck(&thread_data->game.board, side_on_move(&thread_data->game.board)), -MAX_SCORE, MAX_SCORE, 0);
 
         x = -(thread_data->k * eval / 400.0);
         x = 1.0 / (1.0 + pow(10, x));
@@ -561,7 +561,7 @@ double calc_e(double k, int tune_param[])
         game.search.extended_move_time = 20000;
         game.search.post_flag = POST_DEFAULT;
 
-        eval = (double)quiesce(&game, is_incheck(&game.board, side_on_move(&game.board)), -MAX_SCORE, MAX_SCORE, 0, 0);
+        eval = (double)quiesce(&game, is_incheck(&game.board, side_on_move(&game.board)), -MAX_SCORE, MAX_SCORE, 0);
 
         x = -(k * eval / 400.0);
         x = 1.0 / (1.0 + pow(10, x));
@@ -657,7 +657,7 @@ void select_positions(char *input_pgn, char *output_pos)
             if (pgn_game.move_number <= 8) continue;
             if (side_on_move(&game->board) != WHITE) continue;
             in_check = is_incheck(&game->board, side_on_move(&game->board));
-            score = quiesce(game, in_check, -MAX_SCORE, MAX_SCORE, 0, 0);
+            score = quiesce(game, in_check, -MAX_SCORE, MAX_SCORE, 0);
             //if (ABS(score) > VALUE_ROOK) continue;
             if (is_mate_score(score)) continue;
             util_get_board_fen(&game->board, fen);
