@@ -18,8 +18,9 @@
 #define EXTERN
 #include "globals.h"
 
-#define VERSION "7.06"
-// 7.06 - quiesce recap removal, 20k games, +5 elo.
+#define VERSION "7.07"
+// 7.07 - removed pawn attacking king zone - 12k games, 0 elo. simplification. 
+// 7.06 - quiesce recap removal - 30k games, +4 elo. simplification.
 // 7.05 - removed quiesce pawn capture skip - 12k games, -2 elo. simplification.
 // 7.04 - space bonus - 24k game +5 elo.
 // 7.03 - removed minor block pawn term. 15k games -1 elo. simplification.
@@ -103,18 +104,6 @@ int main(int argc, char *argv[])
     while (!stop) {
         fflush(stdout);
 
-       /* if (ponder_on && computer != -1 && side_on_move(&main_game.board) != computer && ponder_move != MOVE_NONE) {
-            if (is_valid(&main_game.board, ponder_move))  {
-                make_move(&main_game.board, ponder_move);
-                if (!is_illegal(&main_game.board, ponder_move)) {
-                    is_pondering = TRUE;
-                    search_run(&main_game, &ponder_settings);
-                    is_pondering = FALSE;
-                }
-                undo_move(&main_game.board);
-            }
-        }
-*/
         if (side_on_move(&main_game.board) == computer) {
 
             search_run(&main_game, &game_settings);
@@ -147,11 +136,9 @@ int main(int argc, char *argv[])
             continue;
         }
 
-        if (!fgets(line, MAX_READ, stdin))
-            return 0;
+        if (!fgets(line, MAX_READ, stdin)) return 0;
     
-        if (line[0] == '\n')
-            continue;
+        if (line[0] == '\n') continue;
         
         sscanf(line, "%s", command);
 
@@ -160,7 +147,6 @@ int main(int argc, char *argv[])
             THREAD_WAIT(ponder_thread);
             ponder_thread = 0;
         }
-
         if (!strcmp(command, "xboard"))  {
             printf("\n");
             continue;
@@ -273,22 +259,15 @@ int main(int argc, char *argv[])
             ponder_on = FALSE;
             continue;
         }
-        if (!strcmp(command, "otim")) 
-            continue;
-        if (!strcmp(command, "random"))
-            continue;
-        if (!strcmp(command, "computer"))
-            continue;
-        if (!strcmp(command, "white")) 
-            continue;
-        if (!strcmp(command, "black")) 
-            continue;
-        if (!strcmp(command, "accepted"))
-            continue;
-        if (!strcmp(command, "rejected"))
-            continue;
-        if (!strcmp(command, "result"))
-            continue;
+
+        if (!strcmp(command, "otim"))     continue;
+        if (!strcmp(command, "random"))   continue;
+        if (!strcmp(command, "computer")) continue;
+        if (!strcmp(command, "white"))    continue;
+        if (!strcmp(command, "black"))    continue;
+        if (!strcmp(command, "accepted")) continue;
+        if (!strcmp(command, "rejected")) continue;
+        if (!strcmp(command, "result"))   continue;
 
         //  Special commands (non Xboard)
         if (!strcmp(command, "post1")) {

@@ -387,7 +387,6 @@ void init_param_list(void)
         create_link("KING_ATTACK", "B_KING_ATTACK",      &B_KING_ATTACK,      SINGLE_VALUE);
     }
     if (TUNE_THREAT) {
-        create_link("THREAT", "P_PAWN_ATK_KING",   &P_PAWN_ATK_KING,   OPENING_ENDGAME);
         create_link("THREAT", "P_PAWN_ATK_KNIGHT", &P_PAWN_ATK_KNIGHT, OPENING_ENDGAME);
         create_link("THREAT", "P_PAWN_ATK_BISHOP", &P_PAWN_ATK_BISHOP, OPENING_ENDGAME);
         create_link("THREAT", "P_PAWN_ATK_ROOK",   &P_PAWN_ATK_ROOK,   OPENING_ENDGAME);

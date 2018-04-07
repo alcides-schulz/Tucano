@@ -35,7 +35,7 @@ void    eval_knights(BOARD *board, EVALUATION *eval_values, int myc, int opp);
 void    eval_bishops(BOARD *board, EVALUATION *eval_values, int myc, int opp);
 void    eval_rooks(BOARD *board, EVALUATION *eval_values, int myc, int opp);
 void    eval_queens(BOARD *board, EVALUATION *eval_values, int myc, int opp);
-void    eval_pieces_finalize(BOARD *board, EVALUATION *eval_values, int myc, int opp);
+void    eval_pieces_finalize(EVALUATION *eval_values, int myc, int opp);
 
 //-------------------------------------------------------------------------------------------------
 //  Evaluate pieces.
@@ -56,8 +56,8 @@ void eval_pieces(BOARD *board, EVALUATION *eval_values)
     eval_queens(board, eval_values, WHITE, BLACK);
     eval_queens(board, eval_values, BLACK, WHITE);
 
-    eval_pieces_finalize(board, eval_values, WHITE, BLACK);
-    eval_pieces_finalize(board, eval_values, BLACK, WHITE);
+    eval_pieces_finalize(eval_values, WHITE, BLACK);
+    eval_pieces_finalize(eval_values, BLACK, WHITE);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -85,19 +85,12 @@ void eval_pieces_prepare(BOARD *board, EVALUATION *eval_values)
 //-------------------------------------------------------------------------------------------------
 //  Calculate final eval terms for pieces
 //-------------------------------------------------------------------------------------------------
-void eval_pieces_finalize(BOARD *board, EVALUATION *eval_values, int myc, int opp)
+void eval_pieces_finalize(EVALUATION *eval_values, int myc, int opp)
 {
-    int     king_attack;
-
-    // pawns attacking king zone
-    if (eval_values->pawn_attacks[myc] & king_moves_bb(king_square(board, opp)) & ~pawn_bb(board, opp)) {
-        eval_values->king[opp] -= P_PAWN_ATK_KING;
-    }
-
     // calculate king attack
     if (eval_values->flag_king_safety[opp] && eval_values->king_attack_count[myc] > 1)  {
-        king_attack = (int)(eval_values->king_attack_value[myc] * B_KING_ATTACK *
-                      KING_ATTACK_MULTI * eval_values->king_attack_count[myc] / 100);
+        int king_attack = (int)(eval_values->king_attack_value[myc] * B_KING_ATTACK *
+                                KING_ATTACK_MULTI * eval_values->king_attack_count[myc] / 100);
         eval_values->king[opp] -= MAKE_SCORE(king_attack, king_attack >> 3);
     }
 }
@@ -137,7 +130,7 @@ void eval_knights(BOARD *board, EVALUATION *eval_values, int myc, int opp)
             eval_values->pieces[myc] += *B_THREAT[piece_on_square(board, opp, attacked)];
             bb_clear_bit(&attacks.u64, attacked);
         }
-  
+
         // king attack
         threat = knight_moves_bb(pcsq) & king_moves_bb(king_square(board, opp));
         if (threat) {
