@@ -75,7 +75,6 @@ void eval_param_init(void)
     KING_ATTACK_MULTI    = 29;
     B_KING_ATTACK        = 27;
     // THREAT
-    P_PAWN_ATK_KING      = MAKE_SCORE(30, -26);
     P_PAWN_ATK_KNIGHT    = MAKE_SCORE(45, 26);
     P_PAWN_ATK_BISHOP    = MAKE_SCORE(37, 50);
     P_PAWN_ATK_ROOK      = MAKE_SCORE(38, 31);
