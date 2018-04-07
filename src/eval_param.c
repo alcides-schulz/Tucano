@@ -62,10 +62,6 @@ void eval_param_init(void)
     // PIECES
     B_ROOK_SEMI_OPEN     = MAKE_SCORE(10, 3);
     B_ROOK_FULL_OPEN     = MAKE_SCORE(25, 8);
-    B_ROOK_RANK_8        = MAKE_SCORE(5, 8);
-    B_ROOK_RANK_7        = MAKE_SCORE(23, 14);
-    B_DOUBLE_RANK_7      = MAKE_SCORE(39, 43);
-    B_QUEEN_RANK_7       = MAKE_SCORE(-28, 31);
     // MOBILITY
     B_QUEEN_MOBILITY     = MAKE_SCORE(3, 3);
     B_ROOK_MOBILITY      = MAKE_SCORE(4, 5);
@@ -79,6 +75,7 @@ void eval_param_init(void)
     KING_ATTACK_MULTI    = 29;
     B_KING_ATTACK        = 27;
     // THREAT
+    P_PAWN_ATK_KING      = MAKE_SCORE(30, -26);
     P_PAWN_ATK_KNIGHT    = MAKE_SCORE(45, 26);
     P_PAWN_ATK_BISHOP    = MAKE_SCORE(37, 50);
     P_PAWN_ATK_ROOK      = MAKE_SCORE(38, 31);

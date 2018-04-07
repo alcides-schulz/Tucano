@@ -248,13 +248,6 @@ void eval_rooks(BOARD *board, EVALUATION *eval_values, int myc, int opp)
             eval_values->pieces[myc] -= P_PAWN_ATK_ROOK;
         }
 
-        // rook on 7th rank
-        if (get_rank(pcsq) == MY_RANK_7[myc]) {
-            if ((MY_BB_RANK_7[myc] & pawn_bb(board, opp)) || (MY_BB_RANK_8[myc] & king_bb(board, opp))) {
-                eval_values->pieces[myc] += B_ROOK_RANK_7;
-            }
-        }
-
         // rook in open file.
         rook_file_bb = north_moves_bb(pcsq) | south_moves_bb(pcsq);
         if (!(rook_file_bb & pawn_bb(board, myc))) {
@@ -318,15 +311,6 @@ void eval_queens(BOARD *board, EVALUATION *eval_values, int myc, int opp)
         // penalty when attacked by pawn
         if (eval_values->pawn_attacks[opp] & square_bb(pcsq)) {
             eval_values->pieces[myc] -= P_PAWN_ATK_QUEEN;
-        }
-
-        // queen on 7th rank
-        if (get_rank(pcsq) == MY_RANK_7[myc]) {
-            if ((MY_BB_RANK_7[myc] & pawn_bb(board, opp)) || (MY_BB_RANK_8[myc] & king_bb(board, opp))) {
-                eval_values->pieces[myc] += B_QUEEN_RANK_7;
-                if (MY_BB_RANK_7[myc] & rook_bb(board, myc))
-                    eval_values->pieces[myc] += B_DOUBLE_RANK_7;
-            }
         }
 
         bb_clear_bit(&piece.u64, pcsq);

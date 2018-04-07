@@ -18,7 +18,8 @@
 #define EXTERN
 #include "globals.h"
 
-#define VERSION "7.07"
+#define VERSION "7.08"
+// 7.08 - Remove eval term queen/rook on 7th rank - 20k games, 0 elo. simplification.
 // 7.07 - removed pawn attacking king zone - 12k games, 0 elo. simplification. 
 // 7.06 - quiesce recap removal - 30k games, +4 elo. simplification.
 // 7.05 - removed quiesce pawn capture skip - 12k games, -2 elo. simplification.

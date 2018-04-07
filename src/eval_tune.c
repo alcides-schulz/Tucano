@@ -367,10 +367,6 @@ void init_param_list(void)
     if (TUNE_PIECES) {
         create_link("PIECES", "B_ROOK_SEMI_OPEN",   &B_ROOK_SEMI_OPEN,   OPENING_ENDGAME);
         create_link("PIECES", "B_ROOK_FULL_OPEN",   &B_ROOK_FULL_OPEN,   OPENING_ENDGAME);
-        create_link("PIECES", "B_ROOK_RANK_8",      &B_ROOK_RANK_8,      OPENING_ENDGAME);
-        create_link("PIECES", "B_ROOK_RANK_7",      &B_ROOK_RANK_7,      OPENING_ENDGAME);
-        create_link("PIECES", "B_DOUBLE_RANK_7",    &B_DOUBLE_RANK_7,    OPENING_ENDGAME);
-        create_link("PIECES", "B_QUEEN_RANK_7",     &B_QUEEN_RANK_7,     OPENING_ENDGAME);
     }
     if (TUNE_MOBILITY) {
         create_link("MOBILITY", "B_QUEEN_MOBILITY",  &B_QUEEN_MOBILITY,  OPENING_ENDGAME);
@@ -387,6 +383,7 @@ void init_param_list(void)
         create_link("KING_ATTACK", "B_KING_ATTACK",      &B_KING_ATTACK,      SINGLE_VALUE);
     }
     if (TUNE_THREAT) {
+        create_link("THREAT", "P_PAWN_ATK_KING",   &P_PAWN_ATK_KING,   OPENING_ENDGAME);
         create_link("THREAT", "P_PAWN_ATK_KNIGHT", &P_PAWN_ATK_KNIGHT, OPENING_ENDGAME);
         create_link("THREAT", "P_PAWN_ATK_BISHOP", &P_PAWN_ATK_BISHOP, OPENING_ENDGAME);
         create_link("THREAT", "P_PAWN_ATK_ROOK",   &P_PAWN_ATK_ROOK,   OPENING_ENDGAME);
