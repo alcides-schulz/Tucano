@@ -461,7 +461,6 @@ typedef struct s_move_list
     int         count;
     int         incheck;
     int         caps;
-    int         gen_quiet_checks;
     MOVE        ttm;
     int         next;
     int         phase;
@@ -521,7 +520,6 @@ int     is_square_attacked(BOARD *board, int square, int by_color, U64 occup);
 void    gen_moves(BOARD *board, MOVE_LIST *ml);
 void    gen_caps(BOARD *board, MOVE_LIST *ml);
 void    gen_check_evasions(BOARD *board, MOVE_LIST *ml);
-void    gen_quiet_checks(BOARD *board, MOVE_LIST *ml);
 void    print_current_moves(GAME *game);
 void    print_moves(BOARD *board, MOVE_LIST *ml);
 
@@ -531,7 +529,6 @@ void    add_all_promotions(MOVE_LIST *ml, int from_square, int to_square);
 void    add_all_capture_promotions(MOVE_LIST *ml, int from_square, int to_square, int captured_piece);
 MOVE    next_move(MOVE_LIST *ml);
 MOVE    prev_move(MOVE_LIST *ml);
-void    enable_quiet_checks(MOVE_LIST *ml);
 int     is_late_moves(MOVE_LIST *ml);
 int     is_bad_capture(MOVE_LIST *ml);
 int     is_mate_score(int score);

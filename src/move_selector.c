@@ -28,9 +28,7 @@ enum    {TRANS,
          NEXT_QUIET, 
          NEXT_LATE_MOVE, 
          GEN_EVASION, 
-         NEXT_EVASION, 
-         GEN_QUIET_CHECKS, 
-         NEXT_QUIET_CHECK};
+         NEXT_EVASION};
 
 #define    SORT_CAPS    200000000
 #define    SORT_KILL    100000000
@@ -58,7 +56,6 @@ void select_init(MOVE_LIST *ml, GAME *game, int incheck, MOVE ttm, int caps)
     ml->ttm = ttm;
     ml->phase = TRANS;
     ml->sort = TRUE;
-    ml->gen_quiet_checks = FALSE;
     ml->board = &game->board;
     ml->move_order = &game->move_order;
 }
@@ -112,11 +109,6 @@ int is_bad_capture(MOVE_LIST *ml)
         return FALSE;
 }
 
-void enable_quiet_checks(MOVE_LIST *ml)
-{
-    ml->gen_quiet_checks = TRUE;
-}
-
 int skip_trans_move(MOVE_LIST *ml)
 {
     if (ml->moves[ml->next] == ml->ttm) {
@@ -158,12 +150,9 @@ MOVE next_move(MOVE_LIST *ml)
                 // Have to make the move in order to test for check legality.
                 // Some moves coming from tt are valid for the position but leave the king in check.
                 make_move(ml->board, ml->ttm);
-                if (is_illegal(ml->board, ml->ttm))
-                    ml->ttm = MOVE_NONE;
+                if (is_illegal(ml->board, ml->ttm)) ml->ttm = MOVE_NONE;
                 undo_move(ml->board);
-                if (ml->ttm != MOVE_NONE) {
-                    return ml->ttm;
-                }
+                if (ml->ttm != MOVE_NONE) return ml->ttm;
             }
             ml->ttm = MOVE_NONE;
         }
@@ -207,11 +196,8 @@ MOVE next_move(MOVE_LIST *ml)
         }
         ml->phase = NEXT_LATE_MOVE;
     case NEXT_LATE_MOVE:
-        if (ml->late_moves_next < ml->late_moves_count)
+        if (ml->late_moves_next < ml->late_moves_count) {
             return ml->late_moves[ml->late_moves_next++];
-        if (ml->gen_quiet_checks) {
-            ml->phase = GEN_QUIET_CHECKS;
-            return next_move(ml);
         }
         return MOVE_NONE;
     case GEN_EVASION:
@@ -221,19 +207,6 @@ MOVE next_move(MOVE_LIST *ml)
         assign_tactical_score(ml);
         ml->phase = NEXT_EVASION;
     case NEXT_EVASION:
-        while (ml->next < ml->count) {
-            select_next(ml);
-            if (skip_trans_move(ml)) continue;
-            return ml->moves[ml->next++];
-        }
-        return MOVE_NONE;
-    case GEN_QUIET_CHECKS:
-        ml->count = 0;
-        ml->next = 0;
-        gen_quiet_checks(ml->board, ml);
-        assign_tactical_score(ml);
-        ml->phase = NEXT_QUIET_CHECK;
-    case NEXT_QUIET_CHECK:
         while (ml->next < ml->count) {
             select_next(ml);
             if (skip_trans_move(ml)) continue;

@@ -18,7 +18,8 @@
 #define EXTERN
 #include "globals.h"
 
-#define VERSION "7.08"
+#define VERSION "7.09"
+// 7.09 - remove quiet checks generation at first quiesce level - 20k games +1 elo. simplification.
 // 7.08 - Remove eval term queen/rook on 7th rank - 20k games, 0 elo. simplification.
 // 7.07 - removed pawn attacking king zone - 12k games, 0 elo. simplification. 
 // 7.06 - quiesce recap removal - 30k games, +4 elo. simplification.

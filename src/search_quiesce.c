@@ -67,8 +67,6 @@ int quiesce(GAME *game, UINT incheck, int alpha, int beta, int depth)
 
     select_init(&ml, game, incheck, trans_move, TRUE);
 
-    if (!incheck && depth >= 0) enable_quiet_checks(&ml);
-
     while ((move = next_move(&ml)) != MOVE_NONE) {
 
         assert(is_valid(&game->board, move));

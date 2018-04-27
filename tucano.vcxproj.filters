@@ -128,9 +128,6 @@
     <ClCompile Include="src\move_gen_quiet.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\move_gen_quiet_checks.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\test_open.c">
       <Filter>Source Files</Filter>
     </ClCompile>

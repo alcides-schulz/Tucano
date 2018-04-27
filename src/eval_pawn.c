@@ -50,10 +50,8 @@ void eval_pawns(BOARD *board, PAWN_TABLE *pawn_table, EVALUATION *eval_values)
         pawns.u64 = pawn_bb(board, myc);
         while (pawns.u64) {
             int pcsq = bb_first(pawns);
-//            int file = get_file(pcsq);
             int rank = get_rank(pcsq);
             int relative_rank = get_relative_rank(myc, rank);
-//            int relative_pcsq = get_relative_square(myc, pcsq);
 
             assert(piece_on_square(board, myc, pcsq) == PAWN);
 

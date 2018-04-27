@@ -146,7 +146,6 @@
     <ClCompile Include="src\move_gen_capture.c" />
     <ClCompile Include="src\move_gen_evasion.c" />
     <ClCompile Include="src\move_gen_quiet.c" />
-    <ClCompile Include="src\move_gen_quiet_checks.c" />
     <ClCompile Include="src\main.c" />
     <ClCompile Include="src\move.c" />
     <ClCompile Include="src\move_order.c" />
