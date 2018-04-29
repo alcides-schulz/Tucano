@@ -55,16 +55,18 @@ void prepare_search(GAME *game, SETTINGS *settings)
     UINT max_time = (int)(settings->total_move_time * 0.9);
     int played_moves = get_played_moves_count(&game->board, side_on_move(&game->board));
     int moves_to_go = 40; // initial guess
-    if (settings->moves_level > 0) // subtract moves played
-        moves_to_go = settings->moves_level - (played_moves % settings->moves_level);
-    if (moves_to_go <= 0 || moves_to_go > 28) {
-        if (played_moves <= 40)
-            moves_to_go = 20;
-        else
-            if (played_moves <= 60)
-                moves_to_go = 25;
-            else
-                moves_to_go = 28;
+
+    if (settings->moves_per_level > 0) {
+        // calculate moves to go in this level
+        moves_to_go = settings->moves_per_level - (played_moves % settings->moves_per_level);
+        int half_moves = (int)(settings->moves_per_level / 2);
+        if (moves_to_go > half_moves) moves_to_go = half_moves; // use more time in early moves
+        if (moves_to_go < 1) moves_to_go = 1;
+    }
+    else {
+        // gives more time for starting moves
+        moves_to_go = 20 - played_moves / 8 - played_moves / 16;
+        if (moves_to_go < 3) moves_to_go = 3;
     }
 
     game->search.normal_move_time = (UINT)(max_time / moves_to_go);

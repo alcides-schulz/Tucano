@@ -54,7 +54,7 @@ void ponder_search(GAME *game)
 
     ponder_settings.single_move_time = MAX_TIME;
     ponder_settings.total_move_time = MAX_TIME;
-    ponder_settings.moves_level = 0;
+    ponder_settings.moves_per_level = 0;
     ponder_settings.max_depth = MAX_DEPTH;
     ponder_settings.post_flag = POST_XBOARD;
     ponder_settings.use_book = FALSE;

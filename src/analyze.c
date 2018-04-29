@@ -113,7 +113,7 @@ void analysis_start(GAME *game)
     SETTINGS    settings;
 
     settings.max_depth = MAX_DEPTH;
-    settings.moves_level = 0;
+    settings.moves_per_level = 0;
     settings.post_flag = POST_XBOARD;
     settings.single_move_time = MAX_TIME;
     settings.total_move_time = MAX_TIME;

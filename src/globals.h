@@ -485,7 +485,7 @@ typedef struct s_move_list
 typedef struct s_settings {
     int     single_move_time;       // set by st command. default is 10 seconds.
     int     total_move_time;        // set by time command.
-    int     moves_level;            // set by level command.
+    int     moves_per_level;        // set by level command.
     int     max_depth;              // set by sd command.
     int     post_flag;              // post format.
     int     use_book;               // opening book use.

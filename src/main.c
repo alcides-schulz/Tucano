@@ -18,7 +18,8 @@
 #define EXTERN
 #include "globals.h"
 
-#define VERSION "7.09"
+#define VERSION "7.10"
+// 7.10 - Fix time control to allocate more time at late moves - 20k games +10 elo.
 // 7.09 - remove quiet checks generation at first quiesce level - 20k games +1 elo. simplification.
 // 7.08 - Remove eval term queen/rook on 7th rank - 20k games, 0 elo. simplification.
 // 7.07 - removed pawn attacking king zone - 12k games, 0 elo. simplification. 
@@ -180,8 +181,8 @@ int main(int argc, char *argv[])
         }
         if (!strcmp(command, "level"))  {
             // just get the "moves to go". will use "time" command to calculate move time.
-            sscanf(line, "level %d", &game_settings.moves_level);
-            if (game_settings.moves_level < 0) game_settings.moves_level = 0;
+            sscanf(line, "level %d", &game_settings.moves_per_level);
+            if (game_settings.moves_per_level < 0) game_settings.moves_per_level = 0;
             continue;
         }
         if (!strcmp(command, "time"))  {
@@ -432,7 +433,7 @@ void settings_init(void)
 {
     game_settings.single_move_time = 10000; // 10 seconds
     game_settings.total_move_time = 0;
-    game_settings.moves_level = 0;
+    game_settings.moves_per_level = 0;
     game_settings.max_depth = MAX_DEPTH;
     game_settings.post_flag = POST_DEFAULT;
     game_settings.use_book = FALSE;
@@ -474,7 +475,7 @@ double bench(int depth, int print)
 
     SETTINGS settings;
     settings.max_depth = depth;
-    settings.moves_level = 0;
+    settings.moves_per_level = 0;
     settings.post_flag = POST_NONE;
     settings.single_move_time = MAX_TIME;
     settings.total_move_time = MAX_TIME;
