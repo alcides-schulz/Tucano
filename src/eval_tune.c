@@ -30,7 +30,6 @@
 //  - Calculate k than minimizes the error
 //    - use calc_min_k function
 //  - Run the tunning using exec_tune method
-//    - will run for several days
 //    - results are saved in tune-results.txt and should be copied to eval_param().
 //-------------------------------------------------------------------------------------------------
 
@@ -51,26 +50,24 @@ int TUNE_PST_KING    = TRUE;
 
 enum    {SINGLE_VALUE, OPENING_ENDGAME} LINK_TYPE;
 
-//#define POS_MAX 8000000
-#define POS_MAX 8000000
-char    position_list[POS_MAX][100];
-int     position_count = 0;
-
-#define TUNE_THREADS    16
+#define MAX_POSITIONS       14000000
+#define MAX_THREADS         14
+#define MAX_POS_PER_THREAD  (MAX_POSITIONS / MAX_THREADS)
+#define MAX_LINE_SIZE       100
 
 typedef struct {
-    HANDLE  thread_id;
-    int     start_position;
-    int     end_position;
-    int     position_count;
-    double  k;
-    double  error;
-    GAME    game;
+    HANDLE      thread_id;
+    char        position[MAX_POS_PER_THREAD][MAX_LINE_SIZE];
+    int         position_count;
+    double      k;
+    double      error;
+    GAME        game;
+    SETTINGS    settings;
 }   TUNE_THREAD;
 
-TUNE_THREAD     tune_thread[TUNE_THREADS];
+TUNE_THREAD     tune_thread[MAX_THREADS];
 
-#define MAX_PARAM_SIZE 256
+#define MAX_PARAM_SIZE      512
 
 typedef struct {
     char    *group_name;
@@ -91,9 +88,8 @@ int     tune_param_count = 0;
 
 void    exec_tune(char *results_filename, double k);
 void    init_param_list(void);
-void    load_positions(char *positions_filename, int start, int end);
+void    load_positions(char *positions_filename);
 void    local_tune(char *results_filename, double k, int param_size, int original[], int initial_guess[], char *param_name[]);
-double  calc_e(double k, int tune_param[]);
 void    copy_values(int param_size, int from_param[], int to_param[]);
 void    print_current_values(char *results_filename, int iteration, UINT time_spent, int param_size, int values[]);
 double  calc_min_k(void);
@@ -103,46 +99,66 @@ void    calc_e_sub(TUNE_THREAD *thread_data);
 
 void eval_tune(void)
 {
-    //char    *TUNE_GAMES = "tune-games.pgn";
-    char    *TUNE_POSITIONS = "tune-positions.txt";
-    char    *TUNE_RESULTS = "tune-results.txt";
-    double  k = 1.1;
+    char    *TUNE_GAMES_FILE = "a.pgn";
+    char    *TUNE_POSITIONS_FILE = "tune-positions.txt";
+    char    *TUNE_RESULTS_FILE = "tune-results.txt";
+    double  k = 1.0;
+    char    option[1024];
 
     EVAL_TUNING = TRUE;
 
-    // Step 1: Select positions from pgn file
-    //select_positions(TUNE_GAMES, TUNE_POSITIONS);
+    while (TRUE) {
+        printf("Eval tuning options:\n\n");
+        printf("\t s - select positions from games: %s -> %s\n", TUNE_GAMES_FILE, TUNE_POSITIONS_FILE);
+        printf("\t c - calculate k in order to minimize error, k=%3.10f\n", k);
+        printf("\t t - tune, file %s, %d positions, %d threads, results to %s\n", TUNE_POSITIONS_FILE, MAX_POSITIONS, MAX_THREADS, TUNE_RESULTS_FILE);
+        printf("\t q - quit\n\n");
+        printf("Option: ");
+        fflush(stdout);
 
-    // Link parameters from engine to tune process
-    init_param_list();
+        if (!fgets(option, 1024, stdin)) {
+            break;
+        }
+        
+        if (!strcmp(option, "s\n")) {
+            select_positions(TUNE_GAMES_FILE, TUNE_POSITIONS_FILE);
+            continue;
+        }
 
-    // Load selected positions to memory
-    load_positions(TUNE_POSITIONS, 0, POS_MAX);
+        if (!strcmp(option, "c\n")) {
+            init_param_list();
+            load_positions(TUNE_POSITIONS_FILE);
+            k = calc_min_k();
+            continue;
+        }
 
-    // Step 2: Calculate k that minizes e
-    //k = calc_min_k();
+        if (!strcmp(option, "t\n")) {
+            init_param_list();
+            load_positions(TUNE_POSITIONS_FILE);
+            exec_tune(TUNE_RESULTS_FILE, k);
+            continue;
+        }
 
-    // Step 3: Eval tuning process
-    exec_tune(TUNE_RESULTS, k);
+        if (!strcmp(option, "q\n")) {
+            break;
+        }
+    }
 }
 
 void exec_tune(char *results_filename, double k)
 {
     UINT    start = util_get_time();
     
-    printf("k: %f\n", k);
+    printf("k: %1.20f\n", k);
     
     local_tune(results_filename, k, tune_param_count, tune_param_value, tune_param_value, tune_param_name);
 
     printf("TIME=%u seconds\n", (util_get_time() - start) / 1000);
 }
 
-void load_positions(char *positions_file_name, int start, int end)
+void load_positions(char *positions_file_name)
 {
-    FILE    *f = fopen(positions_file_name, "r");
-    char    line[1000];
-    int     count = 0;
-
+    FILE *f = fopen(positions_file_name, "r");
     if (f)  {
         printf("loading positions from: %s\n", positions_file_name);
     }
@@ -150,22 +166,27 @@ void load_positions(char *positions_file_name, int start, int end)
         fprintf(stderr, "cannot open file: %s\n", positions_file_name);
         exit(-1);
     }
-    position_count = 0;
+
+    int position_count = 0;
+    int thread_index = 0;
+
+    for (int i = 0; i < MAX_THREADS; i++) {
+        tune_thread[i].position_count = 0;
+    }
+
+    char line[1000];
     while (fgets(line, 1000, f)) {
         line[strlen(line) - 1] = 0;
-        if (strlen(line) > 100 - 1)
-            continue;
-        if (count >= start && count < end) {
-            strcpy(position_list[position_count], line);
-            position_count++;
-            if (position_count == POS_MAX)
-                break;
-            if (position_count % 1000 == 0)
-                printf("loading %d...\r", position_count);
+        if (strlen(line) > MAX_LINE_SIZE - 1) continue;
+        strcpy(tune_thread[thread_index].position[tune_thread[thread_index].position_count++], line);
+        if (tune_thread[thread_index].position_count >= MAX_POS_PER_THREAD) {
+            thread_index++;
         }
-        count++;
+        position_count++;
+        if (position_count % 1000 == 0) printf("loading positions %d...\r", position_count);
+        if (position_count >= MAX_POSITIONS) break;
     }
-    printf("loaded %d positions\n", position_count);
+    printf("loaded %d positions from %s\n", position_count, positions_file_name);
 }
 
 void local_tune(char *results_filename, double k, int param_size, int original[], int initial_guess[], char *param_name[])
@@ -186,7 +207,7 @@ void local_tune(char *results_filename, double k, int param_size, int original[]
     best_param = (int *)malloc(param_size * sizeof(int));
 
     //best_e = calc_e(k, initial_guess);
-    best_e = calc_e_main(k, initial_guess, TUNE_THREADS, tune_thread);
+    best_e = calc_e_main(k, initial_guess, MAX_THREADS, tune_thread);
 
     printf("initial e: %1.20f  calc_e time: %u seconds  param count: %d\n\n", best_e, (util_get_time() - start) / 1000, param_size);
 
@@ -202,7 +223,7 @@ void local_tune(char *results_filename, double k, int param_size, int original[]
             copy_values(param_size, best_param, new_param);
             new_param[i] += TUNE_INC;
             //new_e = calc_e(k, new_param);
-            new_e = calc_e_main(k, new_param, TUNE_THREADS, tune_thread);
+            new_e = calc_e_main(k, new_param, MAX_THREADS, tune_thread);
             if (new_e < best_e) {
                 best_e = new_e;
                 copy_values(param_size, new_param, best_param);
@@ -212,7 +233,7 @@ void local_tune(char *results_filename, double k, int param_size, int original[]
             else {
                 new_param[i] -= (TUNE_INC * 2);
                 //new_e = calc_e(k, new_param);
-                new_e = calc_e_main(k, new_param, TUNE_THREADS, tune_thread);
+                new_e = calc_e_main(k, new_param, MAX_THREADS, tune_thread);
                 if (new_e < best_e) {
                     best_e = new_e;
                     copy_values(param_size, new_param, best_param);
@@ -380,10 +401,10 @@ void init_param_list(void)
         create_link("KING_ATTACK", "KING_ATTACK_ROOK",   &KING_ATTACK_ROOK,   SINGLE_VALUE);
         create_link("KING_ATTACK", "KING_ATTACK_QUEEN",  &KING_ATTACK_QUEEN,  SINGLE_VALUE);
         create_link("KING_ATTACK", "KING_ATTACK_MULTI",  &KING_ATTACK_MULTI,  SINGLE_VALUE);
+        create_link("KING_ATTACK", "KING_ATTACK_EGPCT",  &KING_ATTACK_EGPCT,  SINGLE_VALUE);
         create_link("KING_ATTACK", "B_KING_ATTACK",      &B_KING_ATTACK,      SINGLE_VALUE);
     }
     if (TUNE_THREAT) {
-        create_link("THREAT", "P_PAWN_ATK_KING",   &P_PAWN_ATK_KING,   OPENING_ENDGAME);
         create_link("THREAT", "P_PAWN_ATK_KNIGHT", &P_PAWN_ATK_KNIGHT, OPENING_ENDGAME);
         create_link("THREAT", "P_PAWN_ATK_BISHOP", &P_PAWN_ATK_BISHOP, OPENING_ENDGAME);
         create_link("THREAT", "P_PAWN_ATK_ROOK",   &P_PAWN_ATK_ROOK,   OPENING_ENDGAME);
@@ -446,70 +467,69 @@ void send_param_to_engine(int values[])
 
 double calc_e_main(double k, int tune_param[], int thread_count, TUNE_THREAD thread_list[])
 {
-    if (position_count % thread_count != 0) {
-        fprintf(stderr, "calc_e_main: wrong number of threads %d for position count of %d\n", thread_count, position_count);
-        exit(-1);
-    }
-    int positions_per_thread = position_count / thread_count;
-
     send_param_to_engine(tune_param);
 
-    int position_index = 0;
     for (int i = 0; i < thread_count; i++) {
-        thread_list[i].start_position = position_index;
-        thread_list[i].end_position = position_index + positions_per_thread - 1;
         thread_list[i].position_count = 0;
         thread_list[i].error = 0;
         thread_list[i].k = k;
-        THREAD_CREATE(thread_list[i].thread_id, calc_e_sub, &thread_list[i]);
+        thread_list[i].settings.max_depth = MAX_DEPTH;
+        thread_list[i].settings.moves_per_level = 0;
+        thread_list[i].settings.post_flag = POST_NONE;
+        thread_list[i].settings.single_move_time = MAX_TIME;
+        thread_list[i].settings.total_move_time = MAX_TIME;
+        thread_list[i].settings.use_book = FALSE;
 
-        position_index += positions_per_thread;
+        THREAD_CREATE(thread_list[i].thread_id, calc_e_sub, &thread_list[i]);
     }
 
     double  error = 0;
+    double  count = 0;
 
     for (int i = 0; i < thread_count; i++) {
         THREAD_WAIT(thread_list[i].thread_id);
 
         error += thread_list[i].error;
+        count += thread_list[i].position_count;
 
-        if (thread_list[i].position_count != positions_per_thread) {
-            printf("error: thread %d position_count: %d positions_per_thread: %d\n", i, thread_list[i].position_count, positions_per_thread);
+        if (thread_list[i].position_count != MAX_POS_PER_THREAD) {
+            printf("error: thread %d position_count: %d positions_per_thread: %d\n", i, thread_list[i].position_count, MAX_POS_PER_THREAD);
         }
     }
 
-    error /= (double)position_count;
-
-    return error;
+    return error / count;
 }
 
 void calc_e_sub(TUNE_THREAD *thread_data)
 {
-    char    *line;
     double  result;
     double  x;
 
-    for (int i = thread_data->start_position; i <= thread_data->end_position; i++) {
-        line = position_list[i];
+    for (int i = 0; i < MAX_POS_PER_THREAD; i++) {
+        char *line = thread_data->position[i];
         thread_data->position_count++;
 
-        if (line[0] == 'w')
-            result = 1.0;
-        else
-            if (line[0] == 'l')
-                result = 0.0;
-            else
-                result = 0.5;
+        switch (line[0]) {
+        case 'w': result = 1.0; break;
+        case 'l': result = 0.0; break;
+        case 'd': result = 0.5; break;
+        default: printf("wrong result character at line: %s\n", line); continue;
+        }
 
         new_game(&thread_data->game, &line[2]);
+        prepare_search(&thread_data->game, &thread_data->settings);
 
-        thread_data->game.search.max_depth = MAX_DEPTH;
-        thread_data->game.search.normal_move_time = 20000;
-        thread_data->game.search.extended_move_time = 20000;
-        thread_data->game.search.post_flag = POST_DEFAULT;
-
+        thread_data->game.search.start_time = util_get_time();
+        thread_data->game.search.normal_finish_time = thread_data->game.search.start_time + thread_data->game.search.normal_move_time;
+        thread_data->game.search.extended_finish_time = thread_data->game.search.start_time + thread_data->game.search.extended_move_time;
+        thread_data->game.search.score_drop = FALSE;
+        thread_data->game.search.best_move = MOVE_NONE;
+        thread_data->game.search.ponder_move = MOVE_NONE;
+        thread_data->game.search.abort = FALSE;
+        thread_data->game.search.nodes = 0;
+        
         double eval = (double)quiesce(&thread_data->game, is_incheck(&thread_data->game.board, side_on_move(&thread_data->game.board)), -MAX_SCORE, MAX_SCORE, 0);
-
+        
         x = -(thread_data->k * eval / 400.0);
         x = 1.0 / (1.0 + pow(10, x));
         x = pow(result - x, 2);
@@ -518,62 +538,11 @@ void calc_e_sub(TUNE_THREAD *thread_data)
     }
 }
 
-double calc_e(double k, int tune_param[])
-{
-    char    *line;
-    double  result;
-    char    *fen;
-    double  err;
-    double  eval = 0;
-    double  x;
-    GAME    game;
-
-    int         count = 0;
-
-    send_param_to_engine(tune_param);
-
-    err = 0;
-
-    while (count < position_count) {
-        line = position_list[count++];
-
-        if (count % 10000 == 0)
-            printf("%d        \r", count);
-
-        if (line[0] == 'w')
-            result = 1.0;
-        else
-            if (line[0] == 'l')
-                result = 0.0;
-            else
-                result = 0.5;
-
-        fen = &line[2];
-
-        new_game(&game, fen);
-
-        game.search.max_depth = MAX_DEPTH;
-        game.search.normal_move_time = 20000;
-        game.search.extended_move_time = 20000;
-        game.search.post_flag = POST_DEFAULT;
-
-        eval = (double)quiesce(&game, is_incheck(&game.board, side_on_move(&game.board)), -MAX_SCORE, MAX_SCORE, 0);
-
-        x = -(k * eval / 400.0);
-        x = 1.0 / (1.0 + pow(10, x));
-        x = pow(result - x, 2);
-        err += x;
-    }
-
-    err = err / (double)position_count;
-
-    return err;
-}
-
 void copy_values(int param_size, int from_param[], int to_param[]) 
 {
-    for (int i = 0; i < param_size; i++) 
+    for (int i = 0; i < param_size; i++) {
         to_param[i] = from_param[i];
+    }
 }
 
 double calc_min_k(void) 
@@ -583,14 +552,14 @@ double calc_min_k(void)
     double e;
     double s = 9999;
 
-    for (i = -1; i <= 2; i += 0.1)  {
+    for (i = -2; i <= 2; i += 0.1)  {
         //e = calc_e(i, tune_param_value);
-        e = calc_e_main(i, tune_param_value, TUNE_THREADS, tune_thread);
+        e = calc_e_main(i, tune_param_value, MAX_THREADS, tune_thread);
         if (e < s) {
             k = i;
             s = e;
         }
-        printf("i=%3.8f e=%2.8f k=%3.8f\n", i, e, k);
+        printf("i=%3.10f e=%3.10f k=%3.10f\n", i, e, k);
     }
     
     printf("\nk=%1.8f\n", k);
@@ -615,6 +584,7 @@ void select_positions(char *input_pgn, char *output_pos)
     FILE        *out_file;
     int         count = 0;
     int         in_check;
+    SETTINGS    settings;
 
     GAME *game = (GAME *)malloc(sizeof(GAME));
     if (game == NULL) {
@@ -640,13 +610,33 @@ void select_positions(char *input_pgn, char *output_pos)
         
         new_game(game, FEN_NEW_GAME);
 
+        settings.single_move_time = MAX_TIME;
+        settings.total_move_time = MAX_TIME;
+        settings.moves_per_level = 0;
+        settings.max_depth = MAX_DEPTH;
+        settings.post_flag = POST_XBOARD;
+        settings.use_book = FALSE;
+
+        prepare_search(game, &settings);
+
+        game->search.start_time = util_get_time();
+        game->search.normal_finish_time = game->search.start_time + game->search.normal_move_time;
+        game->search.extended_finish_time = game->search.start_time + game->search.extended_move_time;
+        game->search.score_drop = FALSE;
+        game->search.best_move = MOVE_NONE;
+        game->search.ponder_move = MOVE_NONE;
+        game->search.abort = FALSE;
+        game->search.nodes = 0;
+
+        game->is_main_thread = TRUE;
+
         while (pgn_next_move(&pgn_game, &pgn_move))  {
 
             move = pgn_engine_move(game, &pgn_move);
 
             if (move == MOVE_NONE) {
                 fprintf(stderr, "move not valid: %s\n", pgn_move.string);
-                continue; // TODO: review not valid moves. e.g. Qe1e3
+                break; // TODO: review not valid moves. e.g. Qe1e3
             }
 
             make_move(&game->board, move);

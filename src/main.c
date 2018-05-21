@@ -18,7 +18,8 @@
 #define EXTERN
 #include "globals.h"
 
-#define VERSION "7.10"
+#define VERSION "7.11"
+// 7.11 - Eval parameters tuning (round 1) - 30k games +3 elo. 
 // 7.10 - Fix time control to allocate more time at late moves - 20k games +10 elo.
 // 7.09 - remove quiet checks generation at first quiesce level - 20k games +1 elo. simplification.
 // 7.08 - Remove eval term queen/rook on 7th rank - 20k games, 0 elo. simplification.
