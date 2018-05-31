@@ -131,7 +131,7 @@ int search_zw(GAME *game, UINT incheck, int beta, int depth, UINT can_null, MOVE
         if (gives_check && (depth < 4 || see_move(&game->board, move) >= 0)) extensions = 1;
 
         // pruning or depth reductions
-        if (!incheck && !gives_check && !extensions && move_count > 1) {
+        if (!incheck && !extensions && move_count > 1) {
             assert(move != trans_move);
 
             if (eval_score == -MAX_SCORE) eval_score = evaluate(game, beta - 1, beta);
