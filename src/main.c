@@ -18,7 +18,8 @@
 #define EXTERN
 #include "globals.h"
 
-#define VERSION "7.12"
+#define VERSION "7.13"
+// 7.13 - reduce quiesce pruning range - 48k games +3 elo.
 // 7.12 - Prune/reduce check moves - 28k games +6 elo.
 // 7.11 - Eval parameters tuning (round 1) - 30k games +3 elo. 
 // 7.10 - Fix time control to allocate more time at late moves - 20k games +10 elo.
