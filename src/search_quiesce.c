@@ -76,8 +76,11 @@ int quiesce(GAME *game, UINT incheck, int alpha, int beta, int depth)
         move_count++;
         gives_check = is_check(&game->board, move);
 
+        // Prune checks with negative SEE score;
+        if (gives_check && see_move(&game->board, move) < 0) continue;
+
         //  Skip moves that are not going to improve the position.
-        if (!incheck && !gives_check && unpack_type(move) == MT_CAPPC) {
+        if (!incheck && unpack_type(move) == MT_CAPPC) {
 
             // Skip captures that will not improve alpha (delta pruning)
             if (best_score + 120 + piece_value(unpack_capture(move)) <= alpha) {
