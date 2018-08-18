@@ -96,7 +96,7 @@ int search_pv(GAME *game, UINT incheck, int alpha, int beta, int depth)
         gives_check = is_check(&game->board, move);
         
         // check and advance pawn extensions
-        if (gives_check || (is_pawn_to_rank78(turn, move) && see_move(&game->board, move) >= 0)) {
+        if (gives_check /*|| (is_pawn_to_rank78(turn, move) && see_move(&game->board, move) >= 0)*/) {
             extensions = 1;
         }
 
