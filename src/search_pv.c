@@ -90,15 +90,14 @@ int search_pv(GAME *game, UINT incheck, int alpha, int beta, int depth)
             continue;
         
         move_count++;
+
         reductions = 0;
         extensions = 0;
 
         gives_check = is_check(&game->board, move);
         
-        // check and advance pawn extensions
-        if (gives_check /*|| (is_pawn_to_rank78(turn, move) && see_move(&game->board, move) >= 0)*/) {
-            extensions = 1;
-        }
+        // check extension
+        if (gives_check) extensions = 1;
 
         // singular move extension
         if (try_singular_extension && move == trans_move && depth >= 8 && !extensions) {

@@ -19,6 +19,7 @@
 #include "globals.h"
 
 #define VERSION "7.14"
+// 7.15 - 
 // 7.14 - don't extend pawn to 7-8 ranks - +1 elo. Code cleanup.
 // 7.13 - reduce quiesce pruning range - 48k games +3 elo.
 // 7.12 - Prune/reduce check moves - 28k games +6 elo.
