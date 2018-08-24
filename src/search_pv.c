@@ -96,8 +96,8 @@ int search_pv(GAME *game, UINT incheck, int alpha, int beta, int depth)
 
         gives_check = is_check(&game->board, move);
         
-        // check extension
-        if (gives_check) extensions = 1;
+        // extension if move puts opponent in check
+        if (gives_check && (depth < 4 || see_move(&game->board, move) >= 0)) extensions = 1;
 
         // singular move extension
         if (try_singular_extension && move == trans_move && depth >= 8 && !extensions) {
