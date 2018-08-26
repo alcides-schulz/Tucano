@@ -33,25 +33,25 @@
 //    - results are saved in tune-results.txt and should be copied to eval_param().
 //-------------------------------------------------------------------------------------------------
 
-int TUNE_MATERIAL    = TRUE;
-int TUNE_KING        = TRUE;
-int TUNE_PAWN        = TRUE;
-int TUNE_PASSED      = TRUE;
-int TUNE_PIECES      = TRUE;
-int TUNE_MOBILITY    = TRUE;
-int TUNE_KING_ATTACK = TRUE;
+int TUNE_MATERIAL    = FALSE;
+int TUNE_KING        = FALSE;
+int TUNE_PAWN        = FALSE;
+int TUNE_PASSED      = FALSE;
+int TUNE_PIECES      = FALSE;
+int TUNE_MOBILITY    = FALSE;
+int TUNE_KING_ATTACK = FALSE;
 int TUNE_THREAT      = TRUE;
-int TUNE_PST_PAWN    = TRUE;
-int TUNE_PST_KNIGHT  = TRUE;
-int TUNE_PST_BISHOP  = TRUE;
-int TUNE_PST_ROOK    = TRUE;
-int TUNE_PST_QUEEN   = TRUE;
-int TUNE_PST_KING    = TRUE;
+int TUNE_PST_PAWN    = FALSE;
+int TUNE_PST_KNIGHT  = FALSE;
+int TUNE_PST_BISHOP  = FALSE;
+int TUNE_PST_ROOK    = FALSE;
+int TUNE_PST_QUEEN   = FALSE;
+int TUNE_PST_KING    = FALSE;
 
 enum    {SINGLE_VALUE, OPENING_ENDGAME} LINK_TYPE;
 
-#define MAX_POSITIONS       14000000
-#define MAX_THREADS         14
+#define MAX_POSITIONS       6000000
+#define MAX_THREADS         1
 #define MAX_POS_PER_THREAD  (MAX_POSITIONS / MAX_THREADS)
 #define MAX_LINE_SIZE       100
 
@@ -107,8 +107,11 @@ void eval_tune(void)
 
     EVAL_TUNING = TRUE;
 
+    init_param_list();
+
     while (TRUE) {
-        printf("Eval tuning options:\n\n");
+        printf("\nEval tuning\n\n\tParameters count: %d\n\n", tune_param_count);
+
         printf("\t s - select positions from games: %s -> %s\n", TUNE_GAMES_FILE, TUNE_POSITIONS_FILE);
         printf("\t c - calculate k in order to minimize error, k=%3.10f\n", k);
         printf("\t t - tune, file %s, %d positions, %d threads, results to %s\n", TUNE_POSITIONS_FILE, MAX_POSITIONS, MAX_THREADS, TUNE_RESULTS_FILE);
@@ -126,14 +129,12 @@ void eval_tune(void)
         }
 
         if (!strcmp(option, "c\n")) {
-            init_param_list();
             load_positions(TUNE_POSITIONS_FILE);
             k = calc_min_k();
             continue;
         }
 
         if (!strcmp(option, "t\n")) {
-            init_param_list();
             load_positions(TUNE_POSITIONS_FILE);
             exec_tune(TUNE_RESULTS_FILE, k);
             continue;
@@ -405,15 +406,19 @@ void init_param_list(void)
         create_link("KING_ATTACK", "B_KING_ATTACK",      &B_KING_ATTACK,      SINGLE_VALUE);
     }
     if (TUNE_THREAT) {
-        create_link("THREAT", "P_PAWN_ATK_KNIGHT", &P_PAWN_ATK_KNIGHT, OPENING_ENDGAME);
-        create_link("THREAT", "P_PAWN_ATK_BISHOP", &P_PAWN_ATK_BISHOP, OPENING_ENDGAME);
-        create_link("THREAT", "P_PAWN_ATK_ROOK",   &P_PAWN_ATK_ROOK,   OPENING_ENDGAME);
-        create_link("THREAT", "P_PAWN_ATK_QUEEN",  &P_PAWN_ATK_QUEEN,  OPENING_ENDGAME);
-        create_link("THREAT", "B_THREAT_PAWN",     &B_THREAT_PAWN,     OPENING_ENDGAME);
-        create_link("THREAT", "B_THREAT_KNIGHT",   &B_THREAT_KNIGHT,   OPENING_ENDGAME);
-        create_link("THREAT", "B_THREAT_BISHOP",   &B_THREAT_BISHOP,   OPENING_ENDGAME);
-        create_link("THREAT", "B_THREAT_ROOK",     &B_THREAT_ROOK,     OPENING_ENDGAME);
-        create_link("THREAT", "B_THREAT_QUEEN",    &B_THREAT_QUEEN,    OPENING_ENDGAME);
+        //create_link("THREAT", "P_PAWN_ATK_KNIGHT", &P_PAWN_ATK_KNIGHT, OPENING_ENDGAME);
+        //create_link("THREAT", "P_PAWN_ATK_BISHOP", &P_PAWN_ATK_BISHOP, OPENING_ENDGAME);
+        //create_link("THREAT", "P_PAWN_ATK_ROOK",   &P_PAWN_ATK_ROOK,   OPENING_ENDGAME);
+        //create_link("THREAT", "P_PAWN_ATK_QUEEN",  &P_PAWN_ATK_QUEEN,  OPENING_ENDGAME);
+        //create_link("THREAT", "B_THREAT_PAWN",     &B_THREAT_PAWN,     OPENING_ENDGAME);
+        //create_link("THREAT", "B_THREAT_KNIGHT",   &B_THREAT_KNIGHT,   OPENING_ENDGAME);
+        //create_link("THREAT", "B_THREAT_BISHOP",   &B_THREAT_BISHOP,   OPENING_ENDGAME);
+        //create_link("THREAT", "B_THREAT_ROOK",     &B_THREAT_ROOK,     OPENING_ENDGAME);
+        //create_link("THREAT", "B_THREAT_QUEEN",    &B_THREAT_QUEEN,    OPENING_ENDGAME);
+        create_link("THREAT", "B_CHECK_THREAT_KNIGHT", &B_CHECK_THREAT_QUEEN,  OPENING_ENDGAME);
+        create_link("THREAT", "B_CHECK_THREAT_BISHOP", &B_CHECK_THREAT_BISHOP, OPENING_ENDGAME);
+        create_link("THREAT", "B_CHECK_THREAT_ROOK",   &B_CHECK_THREAT_ROOK,   OPENING_ENDGAME);
+        create_link("THREAT", "B_CHECK_THREAT_QUEEN",  &B_CHECK_THREAT_QUEEN,  OPENING_ENDGAME);
     }
     if (TUNE_PST_PAWN) {
         create_link("PST", "PST_P_FILE_OP", &PST_P_FILE_OP, SINGLE_VALUE);
@@ -528,7 +533,8 @@ void calc_e_sub(TUNE_THREAD *thread_data)
         thread_data->game.search.abort = FALSE;
         thread_data->game.search.nodes = 0;
         
-        double eval = (double)quiesce(&thread_data->game, is_incheck(&thread_data->game.board, side_on_move(&thread_data->game.board)), -MAX_SCORE, MAX_SCORE, 0);
+        //double eval = (double)quiesce(&thread_data->game, is_incheck(&thread_data->game.board, side_on_move(&thread_data->game.board)), -MAX_SCORE, MAX_SCORE, 0);
+        double eval = (double)evaluate(&thread_data->game, -MAX_SCORE, +MAX_SCORE);
         
         x = -(thread_data->k * eval / 400.0);
         x = 1.0 / (1.0 + pow(10, x));
