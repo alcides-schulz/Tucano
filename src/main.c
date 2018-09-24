@@ -18,7 +18,8 @@
 #define EXTERN
 #include "globals.h"
 
-#define VERSION "7.16"
+#define VERSION "7.17"
+// 7.17 - eval parameters tune texel method. +2 elo
 // 7.16 - check threat on next move bonus
 // 7.15 - change check extension in pv to match zw. +1 elo.
 // 7.14 - don't extend pawn to 7-8 ranks - +1 elo. Code cleanup.
@@ -568,8 +569,12 @@ int valid_hash_size(int hash_size) {
 //-------------------------------------------------------------------------------------------------
 //  Used for development tests.
 //-------------------------------------------------------------------------------------------------
+
+void eval_tune(void);
+
 void develop_workbench(void)
 {
+    eval_tune();
 }
 
 //END
