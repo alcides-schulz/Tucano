@@ -370,8 +370,7 @@ void init_param_list(void)
         create_link("PAWN", "P_DOUBLED",       &P_DOUBLED,       OPENING_ENDGAME);
         create_link("PAWN", "P_ISOLATED",      &P_ISOLATED,      OPENING_ENDGAME);
         create_link("PAWN", "P_ISOLATED_OPEN", &P_ISOLATED_OPEN, OPENING_ENDGAME);
-        create_link("PAWN", "P_BACKWARD",      &P_BACKWARD,      OPENING_ENDGAME);
-        create_link("PAWN", "P_BACKWARD_OPEN", &P_BACKWARD_OPEN, OPENING_ENDGAME);
+        create_link("PAWN", "P_WEAK",          &P_WEAK,          OPENING_ENDGAME);
         create_link("PAWN", "B_PAWN_SPACE",    &B_PAWN_SPACE,    OPENING_ENDGAME);
     }
     if (TUNE_PASSED) {
