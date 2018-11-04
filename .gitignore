@@ -267,3 +267,5 @@ __pycache__/
 *.pyc
 /tune-positions.txt
 /tune-results.txt
+/tucano_w64.exe
+/compile.bat

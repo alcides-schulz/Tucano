@@ -26,11 +26,8 @@
 //-------------------------------------------------------------------------------------------------
 void move_order_save(MOVE_ORDER *move_order, int color, int ply, MOVE move, MOVE_LIST *ml)
 {
-    int     mvpc;
-    int     tosq;
-
-    mvpc = unpack_piece(move);
-    tosq = unpack_to(move);
+    int mvpc = unpack_piece(move);
+    int tosq = unpack_to(move);
 
     move_order->hist_tot[color][mvpc][tosq] += 1;
     move_order->hist_hit[color][mvpc][tosq] += 1;
@@ -63,8 +60,7 @@ int get_history_value(MOVE_ORDER *move_order, int color, MOVE move)
     int mvpc = unpack_piece(move);
     int tosq = unpack_to(move);
 
-    if (move_order->hist_tot[color][mvpc][tosq] == 0)
-        return 0;
+    if (move_order->hist_tot[color][mvpc][tosq] == 0) return 0;
 
     return move_order->hist_hit[color][mvpc][tosq] * 100 / move_order->hist_tot[color][mvpc][tosq];
 }
@@ -77,8 +73,7 @@ int has_bad_history(MOVE_ORDER *move_order, int color, MOVE move)
     int mvpc = unpack_piece(move);
     int tosq = unpack_to(move);
 
-    if (move_order->hist_tot[color][mvpc][tosq] == 0)
-        return FALSE;
+    if (move_order->hist_tot[color][mvpc][tosq] == 0) return FALSE;
 
     return move_order->hist_hit[color][mvpc][tosq] * 100 / move_order->hist_tot[color][mvpc][tosq] < 60 ? TRUE : FALSE;
 }
