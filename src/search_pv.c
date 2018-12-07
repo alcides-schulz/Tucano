@@ -113,7 +113,7 @@ int search_pv(GAME *game, UINT incheck, int alpha, int beta, int depth)
         }
 
         // Pruning or depth reductions
-        if (!incheck && !extensions && move_count > 1 && !is_mate_score(alpha)) {
+        if (!incheck && !extensions && move_count > 1 && !is_mate_score(alpha) && !is_mate_score(beta)) {
             assert(move != trans_move);
             // Quiet moves pruning/reductions
             if (is_late_moves(&ml) && !is_free_pawn(&game->board, turn, move) && !is_killer(&game->move_order, turn, ply, move))  {

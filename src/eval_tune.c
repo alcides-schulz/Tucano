@@ -194,12 +194,12 @@ void load_positions(char *positions_file_name)
 
 void local_tune(char *results_filename, double k, int param_size, int original[], int initial_guess[], char *param_name[])
 {
-    int     i;
     int     improved = TRUE;
     double  best_e;
     double  new_e;
     int     *new_param;
     int     *best_param;
+    int     *avg_param;
     int     count = 0;
     UINT    start = util_get_time();
     int     iteration = 0;
@@ -208,6 +208,7 @@ void local_tune(char *results_filename, double k, int param_size, int original[]
 
     new_param = (int *)malloc(param_size * sizeof(int));
     best_param = (int *)malloc(param_size * sizeof(int));
+    avg_param = (int *)malloc(param_size * sizeof(int));
 
     //best_e = calc_e(k, initial_guess);
     best_e = calc_e_main(k, initial_guess, MAX_THREADS, tune_thread);
@@ -222,7 +223,7 @@ void local_tune(char *results_filename, double k, int param_size, int original[]
         iteration++;
         printf("iteration: %d...\n", iteration);
 
-        for (i = 0; i < param_size; i++) {
+        for (int i = 0; i < param_size; i++) {
             copy_values(param_size, best_param, new_param);
             new_param[i] += TUNE_INC;
             //new_e = calc_e(k, new_param);
@@ -252,6 +253,13 @@ void local_tune(char *results_filename, double k, int param_size, int original[]
         printf("\niteration=%d %u minutes\n\n", iteration, elapsed);
 
         print_current_values(results_filename, iteration, elapsed, param_size, best_param);
+
+        // calc and print average values
+        for (int a = 0; a < param_size; a++) {
+            avg_param[a] = original[a] + (best_param[a] - original[a]) / 2;
+        }
+
+        print_current_values("tune_average.txt", iteration, elapsed, param_size, avg_param);
     }
 
     free(new_param);
