@@ -176,6 +176,7 @@ void    bb_init(void);
 int     bb_first(BBIX bbix);
 int     bb_last(BBIX bbix);
 int     bb_count(BBIX bbix);
+int     bb_count_u64(U64 bb);
 int     first_index(U64 bb);
 int     last_index(U64 bb);
 
@@ -698,6 +699,7 @@ EXTERN int B_KING_FAR_OPP;
 // Pieces
 EXTERN int B_ROOK_SEMI_OPEN;
 EXTERN int B_ROOK_FULL_OPEN;
+EXTERN int P_PAWN_BISHOP_SQ;
 
 // Mobility
 EXTERN int B_QUEEN_MOBILITY;

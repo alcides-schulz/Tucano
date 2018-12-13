@@ -61,6 +61,7 @@ void eval_param_init(void)
     // PIECES
     B_ROOK_SEMI_OPEN = MAKE_SCORE(16, -2);
     B_ROOK_FULL_OPEN = MAKE_SCORE(39, 2);
+    P_PAWN_BISHOP_SQ = MAKE_SCORE(1, 4);
     // MOBILITY
     B_QUEEN_MOBILITY = MAKE_SCORE(3, 4);
     B_ROOK_MOBILITY = MAKE_SCORE(2, 7);

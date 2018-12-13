@@ -33,25 +33,25 @@
 //    - results are saved in tune-results.txt and should be copied to eval_param().
 //-------------------------------------------------------------------------------------------------
 
-int TUNE_MATERIAL    = TRUE;
-int TUNE_KING        = TRUE;
-int TUNE_PAWN        = TRUE;
-int TUNE_PASSED      = TRUE;
+int TUNE_MATERIAL    = FALSE;
+int TUNE_KING        = FALSE;
+int TUNE_PAWN        = FALSE;
+int TUNE_PASSED      = FALSE;
 int TUNE_PIECES      = TRUE;
-int TUNE_MOBILITY    = TRUE;
-int TUNE_KING_ATTACK = TRUE;
-int TUNE_THREAT      = TRUE;
-int TUNE_PST_PAWN    = TRUE;
-int TUNE_PST_KNIGHT  = TRUE;
-int TUNE_PST_BISHOP  = TRUE;
-int TUNE_PST_ROOK    = TRUE;
-int TUNE_PST_QUEEN   = TRUE;
-int TUNE_PST_KING    = TRUE;
+int TUNE_MOBILITY    = FALSE;
+int TUNE_KING_ATTACK = FALSE;
+int TUNE_THREAT      = FALSE;
+int TUNE_PST_PAWN    = FALSE;
+int TUNE_PST_KNIGHT  = FALSE;
+int TUNE_PST_BISHOP  = FALSE;
+int TUNE_PST_ROOK    = FALSE;
+int TUNE_PST_QUEEN   = FALSE;
+int TUNE_PST_KING    = FALSE;
 
 enum    {SINGLE_VALUE, OPENING_ENDGAME} LINK_TYPE;
 
-#define MAX_POSITIONS       12000000
-#define MAX_THREADS         12
+#define MAX_POSITIONS       8000000
+#define MAX_THREADS         2
 #define MAX_POS_PER_THREAD  (MAX_POSITIONS / MAX_THREADS)
 #define MAX_LINE_SIZE       100
 
@@ -194,12 +194,12 @@ void load_positions(char *positions_file_name)
 
 void local_tune(char *results_filename, double k, int param_size, int original[], int initial_guess[], char *param_name[])
 {
+    int     i;
     int     improved = TRUE;
     double  best_e;
     double  new_e;
     int     *new_param;
     int     *best_param;
-    int     *avg_param;
     int     count = 0;
     UINT    start = util_get_time();
     int     iteration = 0;
@@ -208,7 +208,6 @@ void local_tune(char *results_filename, double k, int param_size, int original[]
 
     new_param = (int *)malloc(param_size * sizeof(int));
     best_param = (int *)malloc(param_size * sizeof(int));
-    avg_param = (int *)malloc(param_size * sizeof(int));
 
     //best_e = calc_e(k, initial_guess);
     best_e = calc_e_main(k, initial_guess, MAX_THREADS, tune_thread);
@@ -223,7 +222,7 @@ void local_tune(char *results_filename, double k, int param_size, int original[]
         iteration++;
         printf("iteration: %d...\n", iteration);
 
-        for (int i = 0; i < param_size; i++) {
+        for (i = 0; i < param_size; i++) {
             copy_values(param_size, best_param, new_param);
             new_param[i] += TUNE_INC;
             //new_e = calc_e(k, new_param);
@@ -253,13 +252,6 @@ void local_tune(char *results_filename, double k, int param_size, int original[]
         printf("\niteration=%d %u minutes\n\n", iteration, elapsed);
 
         print_current_values(results_filename, iteration, elapsed, param_size, best_param);
-
-        // calc and print average values
-        for (int a = 0; a < param_size; a++) {
-            avg_param[a] = original[a] + (best_param[a] - original[a]) / 2;
-        }
-
-        print_current_values("tune_average.txt", iteration, elapsed, param_size, avg_param);
     }
 
     free(new_param);
@@ -398,6 +390,7 @@ void init_param_list(void)
     if (TUNE_PIECES) {
         create_link("PIECES", "B_ROOK_SEMI_OPEN",   &B_ROOK_SEMI_OPEN,   OPENING_ENDGAME);
         create_link("PIECES", "B_ROOK_FULL_OPEN",   &B_ROOK_FULL_OPEN,   OPENING_ENDGAME);
+        create_link("PIECES", "P_PAWN_BISHOP_SQ",   &P_PAWN_BISHOP_SQ,   OPENING_ENDGAME);
     }
     if (TUNE_MOBILITY) {
         create_link("MOBILITY", "B_QUEEN_MOBILITY",  &B_QUEEN_MOBILITY,  OPENING_ENDGAME);

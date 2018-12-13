@@ -21,8 +21,9 @@
 //  Queen, rook, bishop and knight evaluation
 //-------------------------------------------------------------------------------------------------
 
-int THREAT_ZERO = MAKE_SCORE(0, 0);
-int *B_THREAT[NUM_PIECES] = {&B_THREAT_PAWN, &B_THREAT_KNIGHT, &B_THREAT_BISHOP, &B_THREAT_ROOK, &B_THREAT_QUEEN, &THREAT_ZERO};
+int EVAL_ZERO = MAKE_SCORE(0, 0);
+
+int *B_THREAT[NUM_PIECES] = {&B_THREAT_PAWN, &B_THREAT_KNIGHT, &B_THREAT_BISHOP, &B_THREAT_ROOK, &B_THREAT_QUEEN, &EVAL_ZERO };
 
 static const int MY_RANK_6[COLORS] = {RANK6, RANK3};
 static const int MY_RANK_7[COLORS] = {RANK7, RANK2};
@@ -189,6 +190,10 @@ void eval_bishops(BOARD *board, EVALUATION *eval_values, int myc, int opp)
             eval_values->pieces[myc] += *B_THREAT[piece_on_square(board, opp, attacked)];
             bb_clear_bit(&attacks.u64, attacked);
         }
+
+        // penalty for pawns on same square of the bishop color
+        U64 same_color_pawns = pawn_bb(board, myc) & (square_bb(pcsq) & BB_DARK_SQ ? BB_DARK_SQ : BB_LIGHT_SQ);
+        eval_values->pieces[myc] -= P_PAWN_BISHOP_SQ * bb_count_u64(same_color_pawns);
 
         // checks on next move
         U64 opp_checks;

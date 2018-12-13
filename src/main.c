@@ -19,7 +19,7 @@
 #include "globals.h"
 
 #define VERSION "7.19"
-// 7.19 - 
+// 7.19 - penalty for pawns on square of bishop color - +5 elo.
 // 7.18 - remove backward pawn logic. gives penalty for weak pawns - +3 elo
 // 7.17 - eval parameters tune texel method. +2 elo
 // 7.16 - check threat on next move bonus
