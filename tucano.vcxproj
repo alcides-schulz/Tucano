@@ -109,7 +109,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <FavorSizeOrSpeed>Neither</FavorSizeOrSpeed>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -119,6 +119,8 @@
       <CompileAs>CompileAsC</CompileAs>
       <WarningLevel>EnableAllWarnings</WarningLevel>
       <PreprocessorDefinitions>VS2017</PreprocessorDefinitions>
+      <ObjectFileName>$(IntDir)OBJ\</ObjectFileName>
+      <Optimization>Full</Optimization>
     </ClCompile>
     <Link>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>

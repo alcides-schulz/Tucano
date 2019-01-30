@@ -18,7 +18,7 @@
 #define EXTERN
 #include "globals.h"
 
-#define VERSION "7.20"
+#define VERSION "7.21"
 // 7.20 - count king attacked squares and code cleanup +2 elo.
 // 7.19 - penalty for pawns on square of bishop color - +5 elo.
 // 7.18 - remove backward pawn logic. gives penalty for weak pawns - +3 elo
