@@ -144,14 +144,14 @@ int search_zw(GAME *game, UINT incheck, int beta, int depth, UINT can_null, MOVE
             }
 
             // Quiet moves pruning/reductions
-            if (is_late_moves(&ml) && !is_killer(&game->move_order, turn, ply, move))  {
+            if (move_is_quiet(move) && !is_killer(&game->move_order, turn, ply, move))  {
                 bad_history = has_bad_history(&game->move_order, turn, move);
                 // move count pruning
-                if (move_is_quiet(move) && move_count > 4 + depth * 2 && bad_history) {
+                if (move_count > 4 + depth * 2 && bad_history) {
                     continue;
                 }
                 // futility pruning
-                if (move_is_quiet(move) && depth < 10 && eval_score + depth * 50 < beta) {
+                if (depth < 10 && eval_score + depth * 50 < beta) {
                     continue;
                 }
                 // late move reductions
