@@ -169,11 +169,11 @@ void iterative_deepening(GAME *game)
 
         // Verify if score dropped from last iteration.
         if (depth > 4) {
-            if (score + 10 < prev_score)
+            if (score + 20 < prev_score)
                 var -= 3;
             else
                 var += 1;
-            if (score + 20 < prev_score)
+            if (score + 40 < prev_score)
                 var = -3;
         }
         if (var < 0)
@@ -228,7 +228,7 @@ int search_asp(GAME *game, int incheck, int depth, int prev_score)
     int    score;
 
     if (depth > 6) {
-        for (window = 25; window <= 400; window *= 4) {
+        for (window = 50; window <= 800; window *= 4) {
             alpha = prev_score - window;
             beta  = prev_score + window;
             score = search_pv(game, incheck, alpha, beta, depth);

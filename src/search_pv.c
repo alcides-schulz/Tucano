@@ -103,7 +103,7 @@ int search_pv(GAME *game, UINT incheck, int alpha, int beta, int depth)
         if (try_singular_extension && move == trans_move && depth >= 8 && !extensions) {
             if (tt_score(&game->board, depth - 3, &trans_score)) {
                 if (!is_mate_score(trans_score)) {
-                    reduced_beta = trans_score - 2 * depth;
+                    reduced_beta = trans_score - 4 * depth;
                     score = search_zw(game, incheck, reduced_beta, depth / 2, FALSE, move);
                     if (score < reduced_beta) {
                         extensions = 1;
@@ -118,7 +118,7 @@ int search_pv(GAME *game, UINT incheck, int alpha, int beta, int depth)
             // Quiet moves pruning/reductions
             if (move_is_quiet(move) && !is_free_pawn(&game->board, turn, move) && !is_killer(&game->move_order, turn, ply, move))  {
                 // futility pruning
-                if (depth < 10 && evaluate(game, alpha, beta) + depth * 50 < alpha)
+                if (depth < 10 && evaluate(game, alpha, beta) + depth * 100 < alpha)
                     continue;
                 // late move reductions
                 if (move_count > 3 && depth > 2) {

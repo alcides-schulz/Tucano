@@ -18,7 +18,9 @@
 #define EXTERN
 #include "globals.h"
 
-#define VERSION "7.21"
+#define VERSION "7.22"
+// 7.22 - doubled all eval and search values to increase range for tuning.
+// 7.21 - don't reduce/prune bad captures +1 elo.
 // 7.20 - count king attacked squares and code cleanup +2 elo.
 // 7.19 - penalty for pawns on square of bishop color - +5 elo.
 // 7.18 - remove backward pawn logic. gives penalty for weak pawns - +3 elo

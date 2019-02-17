@@ -289,11 +289,11 @@ typedef struct s_pv_line {
 #define ENDGAME(s) (((unsigned)(s) & 0x7fffu) - (int)((unsigned)(s) & 0x8000u))
 
 // Piece Values
-#define VALUE_PAWN      90
-#define VALUE_KNIGHT    320
-#define VALUE_BISHOP    320
-#define VALUE_ROOK      500
-#define VALUE_QUEEN     1000
+#define VALUE_PAWN      180
+#define VALUE_KNIGHT    640
+#define VALUE_BISHOP    640
+#define VALUE_ROOK      1000
+#define VALUE_QUEEN     2000
 #define VALUE_KING      0
 
 #define OP      0

@@ -195,14 +195,14 @@ void post_info(GAME *game, int score, int depth)
         else
             space = "";
         sprintf(info_line, "%3d  %9lld %6.2f %s%2.1f %d.%s", depth, game->search.nodes, 
-            ((float)(side_on_move(&game->board) == BLACK ? -score : score) / 100.0),
+            ((float)(side_on_move(&game->board) == BLACK ? -score : score) / 100.0 / 2),
             space, time,
             move_number, 
             (side_on_move(&game->board) == WHITE ? "" : ".."));
     }
 
     if (game->search.post_flag == POST_XBOARD)  {
-        sprintf(info_line, "%d %d %d %lld %d.%s", depth, (side_on_move(&game->board) == BLACK ? -score : score),
+        sprintf(info_line, "%d %d %d %lld %d.%s", depth, (int)((side_on_move(&game->board) == BLACK ? -score : score) / 2),
             (util_get_time() - game->search.start_time) / 10, game->search.nodes, 
             move_number, 
             (side_on_move(&game->board) == WHITE ? "" : ".."));

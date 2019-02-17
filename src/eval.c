@@ -27,7 +27,7 @@ void    eval_passed(BOARD *board, EVALUATION *eval_values);
 void    eval_kings(BOARD *board, EVALUATION *eval_values);
 void    eval_pieces(BOARD *board, EVALUATION *eval_values);
 
-static const int TEMPO = 10;
+static const int TEMPO = 20;
 
 int USE_EVAL_TABLE = TRUE;
 
@@ -68,13 +68,18 @@ int evaluate(GAME *game, int alpha, int beta)
     // Lazy evaluation. If there's a big material difference return early.
     int opening = OPENING(eval_values.material[WHITE]) - OPENING(eval_values.material[BLACK]);
     int endgame = ENDGAME(eval_values.material[WHITE]) - ENDGAME(eval_values.material[BLACK]);
-    int lazy_eval = ((opening * (24 - eval_values.phase)) + (endgame * eval_values.phase)) / 24;
+    
+    int lazy_eval = ((opening * (48 - eval_values.phase)) + (endgame * eval_values.phase)) / 48;
+
     if (side_on_move(&game->board) == BLACK)
         lazy_eval = -lazy_eval;
 
+    if (lazy_eval > MAX_EVAL) lazy_eval = MAX_EVAL;
+    if (lazy_eval < -MAX_EVAL) lazy_eval = -MAX_EVAL;
+
     assert(lazy_eval >= -MAX_EVAL && lazy_eval <= MAX_EVAL);
 
-    if (lazy_eval + 400 < alpha || lazy_eval - 400 > beta)
+    if (lazy_eval + 800 < alpha || lazy_eval - 800 > beta)
         return lazy_eval;
 
     //  Evaluation.
@@ -105,7 +110,7 @@ int evaluate(GAME *game, int alpha, int beta)
     endgame += ENDGAME(eval_values.mobility[WHITE]) - ENDGAME(eval_values.mobility[BLACK]);
 
     //  Adjust score according material.
-    int score = ((opening * (24 - eval_values.phase)) + (endgame * eval_values.phase)) / 24;
+    int score = ((opening * (48 - eval_values.phase)) + (endgame * eval_values.phase)) / 48;
 
     if (side_on_move(&game->board) == WHITE)
         score += TEMPO;
@@ -118,6 +123,9 @@ int evaluate(GAME *game, int alpha, int beta)
     //  Adjustment for side on move.
     if (side_on_move(&game->board) == BLACK)
         score = -score;
+
+    if (score > MAX_EVAL) score = MAX_EVAL;
+    if (score < -MAX_EVAL) score = -MAX_EVAL;
 
     assert(score >= -MAX_EVAL && score <= MAX_EVAL);
 

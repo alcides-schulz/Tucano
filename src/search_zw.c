@@ -22,10 +22,10 @@
 //-------------------------------------------------------------------------------------------------
 
 #define STAT_NULL_DEPTH 4
-int STAT_NULL_MARGIN[STAT_NULL_DEPTH] = { 0, 50, 100, 200 };
+int STAT_NULL_MARGIN[STAT_NULL_DEPTH] = { 0, 100, 200, 400 };
 
 #define RAZOR_DEPTH 4
-int RAZOR_MARGIN[RAZOR_DEPTH] = {0, 150, 300, 600};
+int RAZOR_MARGIN[RAZOR_DEPTH] = {0, 300, 600, 1200};
 
 //-------------------------------------------------------------------------------------------------
 //  Search
@@ -138,7 +138,7 @@ int search_zw(GAME *game, UINT incheck, int beta, int depth, UINT can_null, MOVE
 
             // Capture pruning
             if (depth <= 8 && unpack_type(move) == MT_CAPPC && !is_free_pawn(&game->board, turn, move) /*TODO: && unpack_piece(move) != KING*/) {
-                if (eval_score + depth * 50 + piece_value(unpack_capture(move)) + 100 < beta) {
+                if (eval_score + depth * 100 + piece_value(unpack_capture(move)) + 200 < beta) {
                     continue;
                 }
             }
@@ -151,7 +151,7 @@ int search_zw(GAME *game, UINT incheck, int beta, int depth, UINT can_null, MOVE
                     continue;
                 }
                 // futility pruning
-                if (depth < 10 && eval_score + depth * 50 < beta) {
+                if (depth < 10 && eval_score + depth * 100 < beta) {
                     continue;
                 }
                 // late move reductions

@@ -33,25 +33,25 @@
 //    - results are saved in tune-results.txt and should be copied to eval_param().
 //-------------------------------------------------------------------------------------------------
 
-int TUNE_MATERIAL    = FALSE;
-int TUNE_KING        = FALSE;
-int TUNE_PAWN        = FALSE;
-int TUNE_PASSED      = FALSE;
+int TUNE_MATERIAL    = TRUE;
+int TUNE_KING        = TRUE;
+int TUNE_PAWN        = TRUE;
+int TUNE_PASSED      = TRUE;
 int TUNE_PIECES      = TRUE;
-int TUNE_MOBILITY    = FALSE;
-int TUNE_KING_ATTACK = FALSE;
-int TUNE_THREAT      = FALSE;
-int TUNE_PST_PAWN    = FALSE;
-int TUNE_PST_KNIGHT  = FALSE;
-int TUNE_PST_BISHOP  = FALSE;
-int TUNE_PST_ROOK    = FALSE;
-int TUNE_PST_QUEEN   = FALSE;
-int TUNE_PST_KING    = FALSE;
+int TUNE_MOBILITY    = TRUE;
+int TUNE_KING_ATTACK = TRUE;
+int TUNE_THREAT      = TRUE;
+int TUNE_PST_PAWN    = TRUE;
+int TUNE_PST_KNIGHT  = TRUE;
+int TUNE_PST_BISHOP  = TRUE;
+int TUNE_PST_ROOK    = TRUE;
+int TUNE_PST_QUEEN   = TRUE;
+int TUNE_PST_KING    = TRUE;
 
 enum    {SINGLE_VALUE, OPENING_ENDGAME} LINK_TYPE;
 
-#define MAX_POSITIONS       8000000
-#define MAX_THREADS         2
+#define MAX_POSITIONS       7000000
+#define MAX_THREADS         14
 #define MAX_POS_PER_THREAD  (MAX_POSITIONS / MAX_THREADS)
 #define MAX_LINE_SIZE       100
 
