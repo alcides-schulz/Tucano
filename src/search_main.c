@@ -123,7 +123,7 @@ void search_run(GAME *game, SETTINGS *settings)
     game->search.elapsed_time = (double)(game->search.end_time - game->search.start_time) / 1000.0;
 
     if (game->search.post_flag == POST_DEFAULT) {
-        printf("\nNodes: %lld  Time spent: %3.2f  Nodes/Sec=%8.0f\n",
+        printf("\nNodes: %" PRIu64 "  Time spent: %3.2f  Nodes/Sec=%8.0f\n",
             game->search.nodes, game->search.elapsed_time, game->search.nodes / game->search.elapsed_time);
         printf("\n");
     }
@@ -212,8 +212,8 @@ void iterative_deepening(GAME *game)
     if (game->is_main_thread && test_cnt) {
         cnt += test_cnt;
         hit += test_hit;
-        printf("-------->  TEST  CNT=%llu HIT=%llu PCT=%3.4f\n", test_cnt, test_hit, (double)(test_cnt == 0 ? 0 : test_hit * 100.0 / test_cnt));
-        printf("-------->  TOTAL CNT=%llu HIT=%llu PCT=%3.4f\n", cnt, hit, (double)(cnt == 0 ? 0 : hit * 100.0 / cnt));
+        printf("-------->  TEST  CNT=%" PRIu64 " HIT=%" PRIu64 " PCT=%3.4f\n", test_cnt, test_hit, (double)(test_cnt == 0 ? 0 : test_hit * 100.0 / test_cnt));
+        printf("-------->  TOTAL CNT=%" PRIu64 " HIT=%" PRIu64 " PCT=%3.4f\n", cnt, hit, (double)(cnt == 0 ? 0 : hit * 100.0 / cnt));
     }
 }
 

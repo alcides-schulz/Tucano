@@ -51,8 +51,8 @@ int TUNE_PST_KING    = TRUE;
 enum    {SINGLE_VALUE, OPENING_ENDGAME} LINK_TYPE;
 
 #define MAX_POSITIONS       7000000
-#define MAX_THREADS         14
-#define MAX_POS_PER_THREAD  (MAX_POSITIONS / MAX_THREADS)
+#define MAX_TUNE_THREADS    14
+#define MAX_POS_PER_THREAD  (MAX_POSITIONS / MAX_TUNE_THREADS)
 #define MAX_LINE_SIZE       100
 
 typedef struct {
@@ -65,7 +65,7 @@ typedef struct {
     SETTINGS    settings;
 }   TUNE_THREAD;
 
-TUNE_THREAD     tune_thread[MAX_THREADS];
+TUNE_THREAD     tune_thread[MAX_TUNE_THREADS];
 
 #define MAX_PARAM_SIZE      512
 
@@ -116,7 +116,7 @@ void eval_tune(void)
 
         printf("\t s - select positions from games: %s -> %s\n", TUNE_GAMES_FILE, TUNE_POSITIONS_FILE);
         printf("\t c - calculate k in order to minimize error, k=%3.10f\n", k);
-        printf("\t t - tune, file %s, %d positions, %d threads, results to %s\n", TUNE_POSITIONS_FILE, MAX_POSITIONS, MAX_THREADS, TUNE_RESULTS_FILE);
+        printf("\t t - tune, file %s, %d positions, %d threads, results to %s\n", TUNE_POSITIONS_FILE, MAX_POSITIONS, MAX_TUNE_THREADS, TUNE_RESULTS_FILE);
         printf("\t q - quit\n\n");
         printf("Option: ");
         fflush(stdout);
@@ -173,7 +173,7 @@ void load_positions(char *positions_file_name)
     int position_count = 0;
     int thread_index = 0;
 
-    for (int i = 0; i < MAX_THREADS; i++) {
+    for (int i = 0; i < MAX_TUNE_THREADS; i++) {
         tune_thread[i].position_count = 0;
     }
 
@@ -210,7 +210,7 @@ void local_tune(char *results_filename, double k, int param_size, int original[]
     best_param = (int *)malloc(param_size * sizeof(int));
 
     //best_e = calc_e(k, initial_guess);
-    best_e = calc_e_main(k, initial_guess, MAX_THREADS, tune_thread);
+    best_e = calc_e_main(k, initial_guess, MAX_TUNE_THREADS, tune_thread);
 
     printf("initial e: %1.20f  calc_e time: %u seconds  param count: %d\n\n", best_e, (util_get_time() - start) / 1000, param_size);
 
@@ -226,7 +226,7 @@ void local_tune(char *results_filename, double k, int param_size, int original[]
             copy_values(param_size, best_param, new_param);
             new_param[i] += TUNE_INC;
             //new_e = calc_e(k, new_param);
-            new_e = calc_e_main(k, new_param, MAX_THREADS, tune_thread);
+            new_e = calc_e_main(k, new_param, MAX_TUNE_THREADS, tune_thread);
             if (new_e < best_e) {
                 best_e = new_e;
                 copy_values(param_size, new_param, best_param);
@@ -236,7 +236,7 @@ void local_tune(char *results_filename, double k, int param_size, int original[]
             else {
                 new_param[i] -= (TUNE_INC * 2);
                 //new_e = calc_e(k, new_param);
-                new_e = calc_e_main(k, new_param, MAX_THREADS, tune_thread);
+                new_e = calc_e_main(k, new_param, MAX_TUNE_THREADS, tune_thread);
                 if (new_e < best_e) {
                     best_e = new_e;
                     copy_values(param_size, new_param, best_param);
@@ -561,7 +561,7 @@ double calc_min_k(void)
 
     for (i = -2; i <= 2; i += 0.1)  {
         //e = calc_e(i, tune_param_value);
-        e = calc_e_main(i, tune_param_value, MAX_THREADS, tune_thread);
+        e = calc_e_main(i, tune_param_value, MAX_TUNE_THREADS, tune_thread);
         if (e < s) {
             k = i;
             s = e;

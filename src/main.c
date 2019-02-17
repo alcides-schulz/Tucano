@@ -514,7 +514,7 @@ double bench(int depth, int print)
 
     double nps = signature / elapsed;
 
-    if (print) printf("\nSignature: %llu  Time: %3.2f  Nodes/sec: %4.0fk\n", signature, elapsed, nps / 1000.0);
+    if (print) printf("\nSignature: %" PRIu64 "  Time: %3.2f  Nodes/sec: %4.0fk\n", signature, elapsed, nps / 1000.0);
 
     free(game);
 
