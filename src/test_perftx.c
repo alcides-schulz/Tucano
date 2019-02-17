@@ -149,13 +149,13 @@ void perftx_test(TESTDATA *testdata)
     printf("\n");
     for (d = 1; d <= testdata->count; d++) {
         printf("%3d ", d);
-        printf("%9lld ", testdata->results[d-1].nodes);
-        printf("%8lld ", testdata->results[d-1].captures);
-        printf("%6lld ", testdata->results[d-1].en_passants);
-        printf("%7lld ", testdata->results[d-1].castles);
-        printf("%8lld ", testdata->results[d-1].promotions);
-        printf("%8lld ", testdata->results[d-1].checks);
-        printf("%6lld ", testdata->results[d-1].check_mates);
+        printf("%9" PRIu64 " ", testdata->results[d-1].nodes);
+        printf("%8" PRIu64 " ", testdata->results[d-1].captures);
+        printf("%6" PRIu64 " ", testdata->results[d-1].en_passants);
+        printf("%7" PRIu64 " ", testdata->results[d-1].castles);
+        printf("%8" PRIu64 " ", testdata->results[d-1].promotions);
+        printf("%8" PRIu64 " ", testdata->results[d-1].checks);
+        printf("%6" PRIu64 " ", testdata->results[d-1].check_mates);
         printf("\n");
     }
 
@@ -195,13 +195,13 @@ void perftx_test(TESTDATA *testdata)
         perfx_mates -= prev_mates;
 
         printf("%3d ", d);
-        printf("%9lld ", nodes);
-        printf("%8lld ", perfx_capture);
-        printf("%6lld ", perfx_enpassant);
-        printf("%7lld ", perfx_castle);
-        printf("%8lld ", perfx_promotions);
-        printf("%8lld ", perfx_checks);
-        printf("%6lld ", perfx_mates);
+        printf("%9" PRIu64 " ", nodes);
+        printf("%8" PRIu64 " ", perfx_capture);
+        printf("%6" PRIu64 " ", perfx_enpassant);
+        printf("%7" PRIu64 " ", perfx_castle);
+        printf("%8" PRIu64 " ", perfx_promotions);
+        printf("%8" PRIu64 " ", perfx_checks);
+        printf("%6" PRIu64 " ", perfx_mates);
 
         diff = 0;
 
