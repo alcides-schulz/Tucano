@@ -25,12 +25,6 @@ int EVAL_ZERO = MAKE_SCORE(0, 0);
 
 int *B_THREAT[NUM_PIECES] = {&B_THREAT_PAWN, &B_THREAT_KNIGHT, &B_THREAT_BISHOP, &B_THREAT_ROOK, &B_THREAT_QUEEN, &EVAL_ZERO };
 
-static const int MY_RANK_6[COLORS] = {RANK6, RANK3};
-static const int MY_RANK_7[COLORS] = {RANK7, RANK2};
-static const int MY_RANK_8[COLORS] = {RANK8, RANK1};
-static const U64 MY_BB_RANK_7[COLORS] = {BB_RANK_7, BB_RANK_2};
-static const U64 MY_BB_RANK_8[COLORS] = {BB_RANK_8, BB_RANK_1};
-
 void    eval_pieces_prepare(BOARD *board, EVALUATION *eval_values);
 void    eval_knights(BOARD *board, EVALUATION *eval_values, int myc, int opp);
 void    eval_bishops(BOARD *board, EVALUATION *eval_values, int myc, int opp);
@@ -106,12 +100,10 @@ void eval_knights(BOARD *board, EVALUATION *eval_values, int myc, int opp)
     BBIX    mobility;
     BBIX    attacks;
     int     attacked;
-    int     relative_pcsq;
 
     piece.u64 = knight_bb(board, myc);
     while (piece.u64) {
         pcsq = bb_first(piece);
-        relative_pcsq = get_relative_square(myc, pcsq);
 
         assert(piece_on_square(board, myc, pcsq) == KNIGHT);
 
@@ -164,12 +156,10 @@ void eval_bishops(BOARD *board, EVALUATION *eval_values, int myc, int opp)
     BBIX    attacks;
     int     attacked;
     U64     moves;
-    int     relative_pcsq;
 
     piece.u64 = bishop_bb(board, myc);
     while (piece.u64) {
         pcsq = bb_first(piece);
-        relative_pcsq = get_relative_square(myc, pcsq);
 
         assert(piece_on_square(board, myc, pcsq) == BISHOP);
 
@@ -227,13 +217,11 @@ void eval_rooks(BOARD *board, EVALUATION *eval_values, int myc, int opp)
     BBIX    attacks;
     int     attacked;
     U64     moves;
-    int     relative_pcsq;
     U64     rook_file_bb;
 
     piece.u64 = rook_bb(board, myc);
     while (piece.u64) {
         pcsq = bb_first(piece);
-        relative_pcsq = get_relative_square(myc, pcsq);
 
         assert(piece_on_square(board, myc, pcsq) == ROOK);
 
@@ -296,13 +284,11 @@ void eval_queens(BOARD *board, EVALUATION *eval_values, int myc, int opp)
     BBIX    mobility;
     BBIX    attacks;
     int     attacked;
-    int     relative_pcsq;
 
     piece.u64 = queen_bb(board, myc);
     while (piece.u64) {
 
         pcsq = bb_first(piece);
-        relative_pcsq = get_relative_square(myc, pcsq);
 
         assert(piece_on_square(board, myc, pcsq) == QUEEN);
 

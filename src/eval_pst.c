@@ -199,14 +199,13 @@ int eval_pst_king(int color, int pcsq)
 void eval_pst_print(void)
 {
     int i;
-    int s;
     int c;
 
     for (c = 0; c < 2; c++) {
         for (i = 0; i < 64; i++) {
             //s = eval_pst_king(c, i);
             //s = eval_pst_rook(i);
-            s = eval_pst_queen(c, i);
+            //s = eval_pst_queen(c, i);
             //s = eval_pst_pawn(get_file(i), RELATIVE_RANK(c, get_rank(i)));
 
             //printf("(%3d,%3d) ", OPENING(s), ENDGAME(s));

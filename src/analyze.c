@@ -41,7 +41,7 @@ void analyze_mode(GAME *game)
 
         if (!strcmp(analysis_command, ".")) {
             double etime = (double)(util_get_time() - analysis_game.search.start_time) / 10.0;
-            printf("stat01: %0.f %llu %d %d %d\n",
+            printf("stat01: %0.f %" PRIu64 " %d %d %d\n",
                 etime,
                 analysis_game.search.nodes,
                 analysis_game.search.cur_depth,

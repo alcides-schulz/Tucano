@@ -30,12 +30,10 @@ int     pawn_storm_penalty(BOARD *board, int square, int color);
 void eval_kings(BOARD *board, EVALUATION *eval_values)
 {
     int     myc;
-    int     opp;
     int     pcsq;
     int     rank;
     int     file;
     U64     pawns;
-    int     relative_pcsq;
 
     assert(eval_values->flag_king_safety[WHITE] == FALSE || eval_values->flag_king_safety[WHITE] == TRUE);
     assert(eval_values->flag_king_safety[BLACK] == FALSE || eval_values->flag_king_safety[BLACK] == TRUE);
@@ -43,14 +41,12 @@ void eval_kings(BOARD *board, EVALUATION *eval_values)
     pawns = pawn_bb(board, WHITE) | pawn_bb(board, BLACK);
 
     for (myc = WHITE; myc <= BLACK; myc++) {
-        opp = flip_color(myc);
 
         assert(king_count(board, myc) == 1);
 
         pcsq = king_square(board, myc);
         rank = get_rank(pcsq);
         file = get_file(pcsq);
-        relative_pcsq = get_relative_square(myc, pcsq);
         
         assert(pcsq >= 0 && pcsq < 64);
         assert(file >= 0 && file <= 7);
