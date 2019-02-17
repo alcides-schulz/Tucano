@@ -254,40 +254,20 @@ MOVE util_parse_move(GAME *game, char *move_string)
 //-------------------------------------------------------------------------------------------------
 void bb_print(char *msg, U64 b)
 {
-    int     i, j;
-    char    s1[200];
-    char    s2[200];
-    int        li;
-    int     fi;
-    int     bc;
     BBIX    bbix;
 
     bbix.u64 = b;
 
-    li = bb_last(bbix);
-    fi = bb_first(bbix);
-    bc = bb_count(bbix);
+    int last_index = bb_last(bbix);
+    int first_index = bb_first(bbix);
+    int bit_count = bb_count(bbix);
+    
+    printf("%s: FirstIndex: %d LastIndex: %d BitCount: %d Hex: ((U64)0x%016" PRIX64 ")\n", msg, first_index, last_index, bit_count, bbix.u64);
 
-    memset(s1, 0, sizeof(s1));
-    memset(s2, 0, sizeof(s2));
-
-    for (i = 0; i < 64; i++) {
-        if (b & 1)
-            s1[63 - i] = '1';
-        else
-            s1[63 - i] = '0';
-        b >>= 1;
+    for (int i = 0; i < 64; i++) {
+        printf("%c", (bb_is_one(bbix.u64, i)) ? '1' : '0');
+        if ((i + 1) % 8 == 0) printf("\n");
     }
-
-    for (i = j = 0; i < 64; i++, j++) {
-        s2[j] = s1[i];
-        if (i > 0 && i < 56 && (((i + 1) % 8) == 0))
-            s2[++j] = '\n';
-    }
-
-    //printf("%s %s fi=%d li=%d\n", m, s2, fi, li);
-    printf("%s firstindex=%d lastindex=%d  bitcount=%d Hex: ((U64)0x%016llX)\n", msg, fi, li, bc, bbix.u64);
-    printf("%s\n", s2);
 }
 
 //-------------------------------------------------------------------------------------------------

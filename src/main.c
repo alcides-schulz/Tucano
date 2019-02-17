@@ -579,7 +579,10 @@ void eval_tune(void);
 
 void develop_workbench(void)
 {
-    eval_tune();
+    bb_print("t1", (U64)1);
+    bb_print("t1", (U64)ULLONG_MAX);
+    bb_print("t1", (U64)(BB_DARK_SQ));
+    bb_print("t1", (U64)(BB_LIGHT_SQ));
 }
 
 //END

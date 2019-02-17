@@ -63,6 +63,7 @@ typedef unsigned __int64 uint64_t;
 #include <stdlib.h>
 #include <assert.h>
 #include <math.h>
+#include <inttypes.h>
 
 // Multi thread functions - Reference Stockfish
 #ifndef _WIN32 // Linux - Unix
