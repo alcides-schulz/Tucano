@@ -545,6 +545,7 @@ int     is_killer(MOVE_ORDER *move_order, int color, int ply, MOVE move);
 void    prepare_search(GAME *game, SETTINGS *settings);
 void    threads_init(int threads_count);
 void    search_run(GAME *game, SETTINGS *settings);
+U64     get_additional_threads_nodes(void);
 void    ponder_search(GAME *game);
 void    update_pv(PV_LINE *pv_line, int ply, MOVE move);
 int     null_depth(int depth);

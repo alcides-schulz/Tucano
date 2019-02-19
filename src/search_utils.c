@@ -73,8 +73,9 @@ void prepare_search(GAME *game, SETTINGS *settings)
 
     //  Calculate extended move time
     game->search.extended_move_time = (UINT)(game->search.normal_move_time * 4);
-    if (game->search.extended_move_time > max_time)
+    if (game->search.extended_move_time > max_time) {
         game->search.extended_move_time = max_time;
+    }
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -91,11 +92,10 @@ int piece_value(int piece)
 //-------------------------------------------------------------------------------------------------
 void update_pv(PV_LINE *pv_line, int ply, MOVE move) 
 {
-    int     i;
-
     pv_line->pv_line[ply][ply] = move;
-    for (i = ply + 1; i < pv_line->pv_size[ply + 1]; i++)
+    for (int i = ply + 1; i < pv_line->pv_size[ply + 1]; i++) {
         pv_line->pv_line[ply][i] = pv_line->pv_line[ply + 1][i];
+    }
     pv_line->pv_size[ply] = pv_line->pv_size[ply + 1];
 }
 
@@ -112,16 +112,21 @@ int null_depth(int depth)
 //-------------------------------------------------------------------------------------------------
 void check_time(GAME *search_data)
 {
-    if (!search_data->is_main_thread) // check time for main thread only
+    if (!search_data->is_main_thread) { // check time for main thread only
         return;
-    if (search_data->search.nodes & TIME_CHECK)
+    }
+    if (search_data->search.nodes & TIME_CHECK) {
         return;
+    }
     UINT current_time = util_get_time();
-    if (search_data->search.cur_depth > 1 && !search_data->search.score_drop)
-        if (current_time >= search_data->search.normal_finish_time)
+    if (search_data->search.cur_depth > 1 && !search_data->search.score_drop) {
+        if (current_time >= search_data->search.normal_finish_time) {
             search_data->search.abort = TRUE;
-    if (current_time >= search_data->search.extended_finish_time)
+        }
+    }
+    if (current_time >= search_data->search.extended_finish_time) {
         search_data->search.abort = TRUE;
+    }
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -129,12 +134,9 @@ void check_time(GAME *search_data)
 //-------------------------------------------------------------------------------------------------
 int is_free_pawn(BOARD *board, int turn, MOVE move)
 {
-    if (unpack_piece(move) != PAWN)
-        return FALSE;
-    if (unpack_type(move) == MT_PROMO || unpack_type(move) == MT_CPPRM)
-        return TRUE;
-    if (!(passed_mask_bb(turn, unpack_to(move)) & pawn_bb(board, flip_color(turn))))
-        return TRUE;
+    if (unpack_piece(move) != PAWN) return FALSE;
+    if (unpack_type(move) == MT_PROMO || unpack_type(move) == MT_CPPRM) return TRUE;
+    if (!(passed_mask_bb(turn, unpack_to(move)) & pawn_bb(board, flip_color(turn)))) return TRUE;
     return FALSE;
 }
 
@@ -162,10 +164,8 @@ int has_pawn_on_rank7(BOARD *board, int color)
 //-------------------------------------------------------------------------------------------------
 int is_mate_score(int score)
 {
-    if (score > MAX_EVAL && score != MAX_SCORE)
-        return TRUE;
-    if (score < -MAX_EVAL && score != -MAX_SCORE)
-        return TRUE;
+    if (score > MAX_EVAL && score != MAX_SCORE) return TRUE;
+    if (score < -MAX_EVAL && score != -MAX_SCORE) return TRUE;
     return FALSE;
 }
 
@@ -174,52 +174,35 @@ int is_mate_score(int score)
 //-------------------------------------------------------------------------------------------------
 void post_info(GAME *game, int score, int depth)
 {
-    int     pvi;
-    char    move_string[20];
-    char    info_line[200];
-    int     move_number;
-    double  time;
-    char    *space;
+    if (game->search.post_flag == POST_NONE) return;
 
-    if (game->search.post_flag == POST_NONE)
-        return;
-    if (get_history_ply(&game->board) % 2)
-        move_number = (get_history_ply(&game->board) + 1) / 2;
-    else
-        move_number = (get_history_ply(&game->board) + 2) / 2;
+    // node count
+    U64 total_node_count = game->search.nodes + get_additional_threads_nodes();
 
-    if (game->search.post_flag == POST_DEFAULT)  {
-        time = ((float)(util_get_time() - game->search.start_time) / 1000.0);
-        if (time < 10.0)
-            space = " ";
-        else
-            space = "";
-        sprintf(info_line, "%3d  %9" PRIu64 " %6.2f %s%2.1f %d.%s", depth, game->search.nodes, 
-            ((float)(side_on_move(&game->board) == BLACK ? -score : score) / 100.0 / 2),
-            space, time,
-            move_number, 
-            (side_on_move(&game->board) == WHITE ? "" : ".."));
+    // tucano formatted output 
+    if (game->search.post_flag == POST_DEFAULT) {
+        double score_display = score / 100.0 / 2.0;
+        if (side_on_move(&game->board) == BLACK) score_display = -score_display;
+        double time = ((float)(util_get_time() - game->search.start_time) / 1000.0);
+        char *space = time < 10.0 ? " " : "";
+        printf("%3d  %9" PRIu64 " %6.2f %s%2.1f", depth, total_node_count, score_display, space, time);
     }
 
-    if (game->search.post_flag == POST_XBOARD)  {
-        sprintf(info_line, "%d %d %d %" PRIu64 " %d.%s", depth, (int)((side_on_move(&game->board) == BLACK ? -score : score) / 2),
-            (util_get_time() - game->search.start_time) / 10, game->search.nodes, 
-            move_number, 
-            (side_on_move(&game->board) == WHITE ? "" : ".."));
+    // xboard output
+    if (game->search.post_flag == POST_XBOARD) {
+        int xboard_score = (side_on_move(&game->board) == BLACK ? -score : score) / 2;
+        int xboard_time = (util_get_time() - game->search.start_time) / 10;
+        printf("%d %d %d %" PRIu64 "", depth, xboard_score, xboard_time, total_node_count);
     }
 
-    if (game->search.post_flag != POST_NONE) {
-        printf("%s", info_line);
-
-        for (pvi = 0; pvi < game->pv_line.pv_size[0]; pvi++) {
-            if (game->pv_line.pv_line[0][pvi]) {
-                util_get_move_string(game->pv_line.pv_line[0][pvi], move_string);
-                printf(" %s", move_string);
-            }
-        }
-        printf("\n");
-        fflush(stdout);
+    // print pv
+    char move_string[20];
+    for (int pvi = 0; pvi < game->pv_line.pv_size[0]; pvi++) {
+        util_get_move_string(game->pv_line.pv_line[0][pvi], move_string);
+        printf(" %s", move_string);
     }
+    printf("\n");
+    fflush(stdout);
 }
 
 //END

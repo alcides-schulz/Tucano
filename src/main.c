@@ -18,6 +18,9 @@
 #define EXTERN
 #include "globals.h"
 
+//TODO fix node counting report
+//TODO increase mem size to 16384 
+
 #define VERSION "7.22"
 // 7.22 - doubled all eval and search values to increase range for tuning.
 // 7.21 - don't reduce/prune bad captures +1 elo.

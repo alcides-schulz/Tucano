@@ -116,17 +116,21 @@ void search_run(GAME *game, SETTINGS *settings)
     for (int i = 0; i < additional_threads; i++) {
         thread_data[i].search.abort = TRUE;
         THREAD_WAIT(thread_data[i].thread_handle);
-        game->search.nodes += thread_data[i].search.nodes;
     }
 
     game->search.end_time = util_get_time();
     game->search.elapsed_time = (double)(game->search.end_time - game->search.start_time) / 1000.0;
+}
 
-    if (game->search.post_flag == POST_DEFAULT) {
-        printf("\nNodes: %" PRIu64 "  Time spent: %3.2f  Nodes/Sec=%8.0f\n",
-            game->search.nodes, game->search.elapsed_time, game->search.nodes / game->search.elapsed_time);
-        printf("\n");
+U64 get_additional_threads_nodes(void)
+{
+    U64     total = 0;
+
+    for (int i = 0; i < additional_threads; i++) {
+        total += thread_data[i].search.nodes;
     }
+
+    return total;
 }
 
 //-------------------------------------------------------------------------------------------------
