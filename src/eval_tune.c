@@ -59,13 +59,13 @@ int     position_count = 0;
 #define TUNE_THREADS    16
 
 typedef struct {
-    HANDLE  thread_id;
-    int     start_position;
-    int     end_position;
-    int     position_count;
-    double  k;
-    double  error;
-    GAME    game;
+    THREAD_ID  thread_id;
+    int        start_position;
+    int        end_position;
+    int        position_count;
+    double     k;
+    double     error;
+    GAME       game;
 }   TUNE_THREAD;
 
 TUNE_THREAD     tune_thread[TUNE_THREADS];
