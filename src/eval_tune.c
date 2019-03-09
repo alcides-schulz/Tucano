@@ -117,6 +117,7 @@ void eval_tune(void)
         printf("\t s - select positions from games: %s -> %s\n", TUNE_GAMES_FILE, TUNE_POSITIONS_FILE);
         printf("\t c - calculate k in order to minimize error, k=%3.10f\n", k);
         printf("\t t - tune, file %s, %d positions, %d threads, results to %s\n", TUNE_POSITIONS_FILE, MAX_POSITIONS, MAX_TUNE_THREADS, TUNE_RESULTS_FILE);
+        printf("\t x - calculate k and tune\n\n");
         printf("\t q - quit\n\n");
         printf("Option: ");
         fflush(stdout);
@@ -138,6 +139,13 @@ void eval_tune(void)
 
         if (!strcmp(option, "t\n")) {
             load_positions(TUNE_POSITIONS_FILE);
+            exec_tune(TUNE_RESULTS_FILE, k);
+            continue;
+        }
+
+        if (!strcmp(option, "x\n")) {
+            load_positions(TUNE_POSITIONS_FILE);
+            k = calc_min_k();
             exec_tune(TUNE_RESULTS_FILE, k);
             continue;
         }
@@ -358,6 +366,7 @@ void init_param_list(void)
         create_link("MATERIAL", "SCORE_ROOK",    &SCORE_ROOK,    OPENING_ENDGAME);
         create_link("MATERIAL", "SCORE_QUEEN",   &SCORE_QUEEN,   OPENING_ENDGAME);
         create_link("MATERIAL", "B_BISHOP_PAIR", &B_BISHOP_PAIR, OPENING_ENDGAME);
+        create_link("MATERIAL", "B_TEMPO",       &B_TEMPO,       SINGLE_VALUE);
     }
     if (TUNE_KING) {
         create_link("KING", "B_PAWN_PROXIMITY",  &B_PAWN_PROXIMITY, OPENING_ENDGAME);
@@ -611,8 +620,15 @@ void select_positions(char *input_pgn, char *output_pos)
     }
 
     printf("select_positions: [%s] -> [%s]\n", input_pgn, output_pos);
+    int loss_on_time_count = 0;
 
     while (pgn_next_game(&pgn_file, &pgn_game))  {
+
+        if (strstr(pgn_game.string, "loses on time") != NULL) {
+            loss_on_time_count++;
+            continue;
+        }
+
         printf("game %3d: %s vs %s: %s %c\n", pgn_file.game_number, pgn_game.white, pgn_game.black, pgn_game.result, tune_result_letter(pgn_game.result));
         
         new_game(game, FEN_NEW_GAME);
@@ -668,7 +684,7 @@ void select_positions(char *input_pgn, char *output_pos)
     fclose(out_file);
     free(game);
 
-    printf("select_positions saved: [%s] -> [%s]  %d positions\n", input_pgn, output_pos, count);
+    printf("select_positions saved: [%s] -> [%s]  %d positions (%d loss on time)\n", input_pgn, output_pos, count, loss_on_time_count);
 }
 
 //END

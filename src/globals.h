@@ -89,7 +89,7 @@ typedef HANDLE THREAD_ID;
 
 #endif
 
-// Hack to define variables only once in this file.
+// Variables are defined only once in this file.
 #ifndef EXTERN
 #define EXTERN extern
 #endif
@@ -669,6 +669,7 @@ EXTERN int SCORE_BISHOP;
 EXTERN int SCORE_ROOK;
 EXTERN int SCORE_QUEEN;
 EXTERN int B_BISHOP_PAIR;
+EXTERN int B_TEMPO;
 
 // King
 EXTERN int B_PAWN_PROXIMITY;
@@ -782,6 +783,7 @@ typedef struct s_pgn_game {
     char    result[PGN_TAG_SIZE];
     int     moves_index;
     int     move_number;
+    int     loses_on_time;
 }   PGN_GAME;
 
 typedef struct s_pgn_move {

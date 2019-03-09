@@ -27,8 +27,6 @@ void    eval_passed(BOARD *board, EVALUATION *eval_values);
 void    eval_kings(BOARD *board, EVALUATION *eval_values);
 void    eval_pieces(BOARD *board, EVALUATION *eval_values);
 
-static const int TEMPO = 20;
-
 int USE_EVAL_TABLE = TRUE;
 
 //-------------------------------------------------------------------------------------------------
@@ -79,8 +77,7 @@ int evaluate(GAME *game, int alpha, int beta)
 
     assert(lazy_eval >= -MAX_EVAL && lazy_eval <= MAX_EVAL);
 
-    if (lazy_eval + 800 < alpha || lazy_eval - 800 > beta)
-        return lazy_eval;
+    if (lazy_eval + 800 < alpha || lazy_eval - 800 > beta) return lazy_eval;
 
     //  Evaluation.
     eval_pawns(&game->board, game->pawn_table, &eval_values);
@@ -113,9 +110,9 @@ int evaluate(GAME *game, int alpha, int beta)
     int score = ((opening * (48 - eval_values.phase)) + (endgame * eval_values.phase)) / 48;
 
     if (side_on_move(&game->board) == WHITE)
-        score += TEMPO;
+        score += B_TEMPO;
     else
-        score -= TEMPO;
+        score -= B_TEMPO;
 
     // Draw adjustment from material on the board.
     score = score * eval_values.draw_adjust / 64;

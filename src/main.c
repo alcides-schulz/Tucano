@@ -18,10 +18,10 @@
 #define EXTERN
 #include "globals.h"
 
-//TODO fix node counting report
 //TODO increase mem size to 16384 
 
-#define VERSION "7.22"
+#define VERSION "7.23"
+// 7.23 - tuning eval values.
 // 7.22 - doubled all eval and search values to increase range for tuning.
 // 7.21 - don't reduce/prune bad captures +1 elo.
 // 7.20 - count king attacked squares and code cleanup +2 elo.
@@ -582,10 +582,7 @@ void eval_tune(void);
 
 void develop_workbench(void)
 {
-    bb_print("t1", (U64)1);
-    bb_print("t1", (U64)ULLONG_MAX);
-    bb_print("t1", (U64)(BB_DARK_SQ));
-    bb_print("t1", (U64)(BB_LIGHT_SQ));
+    eval_tune();
 }
 
 //END
