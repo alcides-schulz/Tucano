@@ -20,7 +20,8 @@
 
 //TODO increase mem size to 16384 
 
-#define VERSION "7.23"
+#define VERSION "7.24"
+// 7.24 - fix 3-fold repetition counter.
 // 7.23 - tuning eval values.
 // 7.22 - doubled all eval and search values to increase range for tuning.
 // 7.21 - don't reduce/prune bad captures +1 elo.

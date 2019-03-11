@@ -366,33 +366,29 @@ int pieces_count(BOARD *board, int color)
 }
 
 //-------------------------------------------------------------------------------------------------
-//  Check if current board is draw.
+//  Check if current board position is draw.
 //-------------------------------------------------------------------------------------------------
 int is_draw(BOARD *board)
 {
-    if (is_threefold_repetition(board))
-        return TRUE;
-    if (board->fifty_move_rule > 100)
-        return TRUE;
-       if (insufficient_material(board))
-        return TRUE;
+    if (is_threefold_repetition(board)) return TRUE;
+    if (board->fifty_move_rule > 100) return TRUE;
+    if (insufficient_material(board)) return TRUE;
     return FALSE;
 }
 
 //-------------------------------------------------------------------------------------------------
-//  Check if current position already happened before
+//  Check if current position already happened before.
 //-------------------------------------------------------------------------------------------------
 int is_threefold_repetition(BOARD *board)
 {
-    int        i;
-    int        reps = 0;
+    int repetitions = 0;
 
-    for (i = board->histply - board->fifty_move_rule; i < board->histply; i++)  {
-        if (board->history[i].board_key == board->key)
-            reps++;
+    for (int i = board->histply - board->fifty_move_rule; i < board->histply; i++)  {
+        if (board->history[i].board_key == board->key) repetitions++;
     }
 
-    if (reps >= 2)
+    // avoids positions that happened more than one time that may lead to 3-fold repetition.
+    if (repetitions >= 1)
         return TRUE;
     else
         return FALSE;
