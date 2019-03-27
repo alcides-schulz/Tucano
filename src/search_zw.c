@@ -30,7 +30,7 @@ int RAZOR_MARGIN[RAZOR_DEPTH] = {0, 300, 600, 1200};
 //-------------------------------------------------------------------------------------------------
 //  Search
 //-------------------------------------------------------------------------------------------------
-int search_zw(GAME *game, UINT incheck, int beta, int depth, UINT can_null, MOVE exclude_move)
+int search_zw(GAME *game, UINT incheck, int beta, int depth, UINT can_null, MOVE exclude_move, int prev_move_count)
 {
     MOVE_LIST   ml;
     MOVE    trans_move  = MOVE_NONE; 
@@ -99,7 +99,7 @@ int search_zw(GAME *game, UINT incheck, int beta, int depth, UINT can_null, MOVE
         // null move
         if (depth >= 2 && (depth <= 4 || evaluate(game, beta - 1, beta) >= beta)) {
             make_move(&game->board, pack_null_move());
-            score = -search_zw(game, incheck, 1 - beta, null_depth(depth), FALSE, MOVE_NONE);
+            score = -search_zw(game, incheck, 1 - beta, null_depth(depth), FALSE, MOVE_NONE, 0);
             undo_move(&game->board);
             if (game->search.abort) return 0;
 
@@ -146,10 +146,17 @@ int search_zw(GAME *game, UINT incheck, int beta, int depth, UINT can_null, MOVE
             // Quiet moves pruning/reductions
             if (move_is_quiet(move) && !is_killer(&game->move_order, turn, ply, move))  {
                 bad_history = has_bad_history(&game->move_order, turn, move);
+
                 // move count pruning
-                if (move_count > 4 + depth * 2 && bad_history) {
-                    continue;
+                if (bad_history) {
+                    int pruning_threshold = 4 + depth * 2;
+                    // additional pruning for later moves of previous moves
+                    if (depth < 4 && prev_move_count / 8  < pruning_threshold / 3) pruning_threshold -= prev_move_count / 8;
+                    if (move_count > pruning_threshold) {
+                        continue;
+                    }
                 }
+
                 // futility pruning
                 if (depth < 10 && eval_score + depth * 100 < beta) {
                     continue;
@@ -168,10 +175,10 @@ int search_zw(GAME *game, UINT incheck, int beta, int depth, UINT can_null, MOVE
 
         assert(valid_is_legal(&game->board, move));
 
-        score = -search_zw(game, gives_check, 1 - beta, depth - 1 + extensions - reductions, 1, MOVE_NONE);
+        score = -search_zw(game, gives_check, 1 - beta, depth - 1 + extensions - reductions, 1, MOVE_NONE, move_count);
         //  Research reduced moves.
         if (!game->search.abort && score >= beta && reductions > 0) {
-            score = -search_zw(game, gives_check, 1 - beta, depth - 1, 1, MOVE_NONE);
+            score = -search_zw(game, gives_check, 1 - beta, depth - 1, 1, MOVE_NONE, move_count);
         }
         
         undo_move(&game->board);

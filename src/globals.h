@@ -555,7 +555,7 @@ int     has_pawn_on_rank7(BOARD *board, int color);
 int     is_pawn_to_rank78(int turn, MOVE move);
 void    check_time(GAME *game);
 int     search_pv(GAME *game, UINT incheck, int alpha, int beta, int depth);
-int     search_zw(GAME *game, UINT incheck, int beta, int depth, UINT can_null, MOVE exclude_move);
+int     search_zw(GAME *game, UINT incheck, int beta, int depth, UINT can_null, MOVE exclude_move, int prev_move_count);
 int     quiesce(GAME *game, UINT incheck, int alpha, int beta, int depth);
 void    post_info(GAME *game, int score, int depth);
 int     is_check(BOARD *board, MOVE move);
