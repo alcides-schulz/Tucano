@@ -146,6 +146,15 @@ U8 side_on_move(BOARD *board)
 }
 
 //-------------------------------------------------------------------------------------------------
+//  Get last move made on the board
+//-------------------------------------------------------------------------------------------------
+MOVE get_last_move_made(BOARD *board)
+{
+    if (board->histply == 0) return MOVE_NONE;
+    return board->history[board->histply - 1].move;
+}
+
+//-------------------------------------------------------------------------------------------------
 //  Make a move, update state and save history data.
 //-------------------------------------------------------------------------------------------------
 void make_move(BOARD *board, MOVE move)

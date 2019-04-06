@@ -30,8 +30,9 @@ enum    {TRANS,
          GEN_EVASION, 
          NEXT_EVASION};
 
-#define    SORT_CAPS    200000000
-#define    SORT_KILL    100000000
+#define    SORT_CAPTURE   100000000
+#define    SORT_KILLER     10000000
+#define    SORT_COUNTER     1000000
 
 void    select_next(MOVE_LIST *ml);
 int     is_badcap(BOARD *board, MOVE move);
@@ -266,21 +267,25 @@ void assign_tactical_score(MOVE_LIST *ml)
     for (i = 0; i < ml->count; i++) {
         switch (unpack_type(ml->moves[i])) {
         case MT_CAPPC:
-            ml->score[i] = SORT_KILL + VICTIM_VALUE[unpack_capture(ml->moves[i])] + ATTACKER_VALUE[unpack_piece(ml->moves[i])];
+            ml->score[i] = SORT_CAPTURE + VICTIM_VALUE[unpack_capture(ml->moves[i])] + ATTACKER_VALUE[unpack_piece(ml->moves[i])];
             break;
         case MT_EPCAP:
-            ml->score[i] = SORT_KILL + VICTIM_VALUE[PAWN] + ATTACKER_VALUE[PAWN];
+            ml->score[i] = SORT_CAPTURE + VICTIM_VALUE[PAWN] + ATTACKER_VALUE[PAWN];
             break;
         case MT_PROMO:
-            ml->score[i] = SORT_KILL + VICTIM_VALUE[unpack_prom_piece(ml->moves[i])];
+            ml->score[i] = SORT_CAPTURE + VICTIM_VALUE[unpack_prom_piece(ml->moves[i])];
             break;
         case MT_CPPRM:
-            ml->score[i] = SORT_KILL + VICTIM_VALUE[unpack_prom_piece(ml->moves[i])] + VICTIM_VALUE[unpack_capture(ml->moves[i])];
+            ml->score[i] = SORT_CAPTURE + VICTIM_VALUE[unpack_prom_piece(ml->moves[i])] + VICTIM_VALUE[unpack_capture(ml->moves[i])];
             break;
         default:
             ml->score[i] = get_history_value(ml->move_order, side_on_move(ml->board), ml->moves[i]);
-            if (is_killer(ml->move_order, side_on_move(ml->board), get_ply(ml->board), ml->moves[i]))
-                ml->score[i] += SORT_KILL / 10;
+            if (is_killer(ml->move_order, side_on_move(ml->board), get_ply(ml->board), ml->moves[i])) {
+                ml->score[i] += SORT_KILLER;
+            }
+            if (is_counter_move(ml->move_order, flip_color(side_on_move(ml->board)), get_last_move_made(ml->board), ml->moves[i])) {
+                ml->score[i] += SORT_COUNTER;
+            }
         }
     }
 }
@@ -294,8 +299,12 @@ void assign_quiet_score(MOVE_LIST *ml)
 
     for (i = 0; i < ml->count; i++) {
         ml->score[i] = get_history_value(ml->move_order, side_on_move(ml->board), ml->moves[i]);
-        if (is_killer(ml->move_order, side_on_move(ml->board), get_ply(ml->board), ml->moves[i]))
-            ml->score[i] += SORT_KILL;
+        if (is_killer(ml->move_order, side_on_move(ml->board), get_ply(ml->board), ml->moves[i])) {
+            ml->score[i] += SORT_CAPTURE;
+        }
+        if (is_counter_move(ml->move_order, flip_color(side_on_move(ml->board)), get_last_move_made(ml->board), ml->moves[i])) {
+            ml->score[i] += SORT_KILLER;
+        }
     }
 }
 

@@ -20,8 +20,9 @@
 
 //TODO increase mem size to 16384 
 
-#define VERSION "7.25"
-// 7.25 - additional move pruning using previous move counter
+#define VERSION "7.26"
+// 7.26 - counter move heuristic.
+// 7.25 - additional move pruning using previous move counter + 8 elo
 // 7.24 - fix 3-fold repetition counter.
 // 7.23 - tuning eval values.
 // 7.22 - doubled all eval and search values to increase range for tuning.

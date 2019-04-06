@@ -44,7 +44,6 @@ int search_zw(GAME *game, UINT incheck, int beta, int depth, UINT can_null, MOVE
     MOVE    move;
     int     alpha;
     int     razor_beta;
-    int     bad_history;
 
     assert(incheck == 0 || incheck == 1);
     assert(beta >= -MAX_SCORE && beta <= MAX_SCORE);
@@ -145,27 +144,32 @@ int search_zw(GAME *game, UINT incheck, int beta, int depth, UINT can_null, MOVE
 
             // Quiet moves pruning/reductions
             if (move_is_quiet(move) && !is_killer(&game->move_order, turn, ply, move))  {
-                bad_history = has_bad_history(&game->move_order, turn, move);
 
-                // move count pruning
-                if (bad_history) {
-                    int pruning_threshold = 4 + depth * 2;
-                    // additional pruning for later moves of previous moves
-                    if (depth < 4 && prev_move_count / 8  < pruning_threshold / 3) pruning_threshold -= prev_move_count / 8;
-                    if (move_count > pruning_threshold) {
+                if (!is_counter_move(&game->move_order, flip_color(turn), get_last_move_made(&game->board), move)) {
+                    
+                    int move_has_bad_history = has_bad_history(&game->move_order, turn, move);
+                    
+                    // move count pruning
+                    if (move_has_bad_history) {
+                        int pruning_threshold = 4 + depth * 2;
+                        // additional pruning for later moves of previous moves
+                        if (depth < 4 && prev_move_count / 8 < pruning_threshold / 3) pruning_threshold -= prev_move_count / 8;
+                        if (move_count > pruning_threshold) {
+                            continue;
+                        }
+                    }
+
+                    // futility pruning
+                    if (depth < 10 && eval_score + depth * 100 < beta) {
                         continue;
                     }
-                }
 
-                // futility pruning
-                if (depth < 10 && eval_score + depth * 100 < beta) {
-                    continue;
-                }
-                // late move reductions
-                if (move_count > 3 && depth > 2) {
-                    reductions = 1;
-                    if (depth > 5 && bad_history) reductions += depth / 6 + move_count / 6;
-                    reductions = MIN(reductions, 10);
+                    // late move reductions
+                    if (move_count > 3 && depth > 2) {
+                        reductions = 1;
+                        if (depth > 5 && move_has_bad_history) reductions += depth / 6 + move_count / 6;
+                        reductions = MIN(reductions, 10);
+                    }
                 }
             }
         }
@@ -188,8 +192,9 @@ int search_zw(GAME *game, UINT incheck, int beta, int depth, UINT can_null, MOVE
         if (score > best_score) {
             if (score >= beta) {
                 if (exclude_move == MOVE_NONE) {
-                    if (move_is_quiet(move))
-                        move_order_save(&game->move_order, turn, ply, move, &ml);
+                    if (move_is_quiet(move)) {
+                        move_order_save(&game->move_order, turn, ply, move, &ml, get_last_move_made(&game->board));
+                    }
                     tt_save(&game->board, depth, score, TT_LOWER, move);
                 }
                 return score;

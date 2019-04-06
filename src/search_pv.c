@@ -117,15 +117,17 @@ int search_pv(GAME *game, UINT incheck, int alpha, int beta, int depth)
             assert(move != trans_move);
             // Quiet moves pruning/reductions
             if (move_is_quiet(move) && !is_free_pawn(&game->board, turn, move) && !is_killer(&game->move_order, turn, ply, move))  {
-                // futility pruning
-                if (depth < 10 && evaluate(game, alpha, beta) + depth * 100 < alpha)
-                    continue;
-                // late move reductions
-                if (move_count > 3 && depth > 2) {
-                    reductions = 1;
-                    if (depth > 5 && has_bad_history(&game->move_order, turn, move))
-                        reductions += depth / 6;
-                    reductions = MIN(reductions, 5);
+                if (!is_counter_move(&game->move_order, flip_color(turn), get_last_move_made(&game->board), move)) {
+                    // futility pruning
+                    if (depth < 10 && evaluate(game, alpha, beta) + depth * 100 < alpha)
+                        continue;
+                    // late move reductions
+                    if (move_count > 3 && depth > 2) {
+                        reductions = 1;
+                        if (depth > 5 && has_bad_history(&game->move_order, turn, move))
+                            reductions += depth / 6;
+                        reductions = MIN(reductions, 5);
+                    }
                 }
             }
         }
@@ -152,7 +154,9 @@ int search_pv(GAME *game, UINT incheck, int alpha, int beta, int depth)
         //  Score verification.
         if (score > best_score) {
             if (score >= beta) {
-                if (move_is_quiet(move)) move_order_save(&game->move_order, turn, ply, move, &ml);
+                if (move_is_quiet(move)) {
+                    move_order_save(&game->move_order, turn, ply, move, &ml, get_last_move_made(&game->board));
+                }
                 tt_save(&game->board, depth, score, TT_LOWER, move);
                 if (ply == 0)  {
                     update_pv(&game->pv_line, ply, move);
