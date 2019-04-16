@@ -18,9 +18,10 @@
 #define EXTERN
 #include "globals.h"
 
-//TODO increase mem size to 16384 
+//TODO increase hash table mem size to 16384
 
-#define VERSION "7.26"
+#define VERSION "7.27"
+// 7.27 - additional late moves pruning (using previous move count)
 // 7.26 - counter move heuristic.
 // 7.25 - additional move pruning using previous move counter + 8 elo
 // 7.24 - fix 3-fold repetition counter.

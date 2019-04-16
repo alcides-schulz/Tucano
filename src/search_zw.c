@@ -149,7 +149,7 @@ int search_zw(GAME *game, UINT incheck, int beta, int depth, UINT can_null, MOVE
                     
                     int move_has_bad_history = has_bad_history(&game->move_order, turn, move);
                     
-                    // move count pruning
+                    // Move count pruning: prune late moves based on move count.
                     if (move_has_bad_history) {
                         int pruning_threshold = 4 + depth * 2;
                         // additional pruning for later moves of previous moves
@@ -159,12 +159,13 @@ int search_zw(GAME *game, UINT incheck, int beta, int depth, UINT can_null, MOVE
                         }
                     }
 
-                    // futility pruning
-                    if (depth < 10 && eval_score + depth * 100 < beta) {
+                    // Futility pruning: eval + margin below beta. Also included additional pruning for later moves
+                    int additional_futility_margin = MIN(prev_move_count, 50);
+                    if (depth < 10 && eval_score + depth * 100 - additional_futility_margin < beta) {
                         continue;
                     }
 
-                    // late move reductions
+                    // Late move reductions: reduce depth for later moves
                     if (move_count > 3 && depth > 2) {
                         reductions = 1;
                         if (depth > 5 && move_has_bad_history) reductions += depth / 6 + move_count / 6;

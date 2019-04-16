@@ -115,13 +115,18 @@ int search_pv(GAME *game, UINT incheck, int alpha, int beta, int depth)
         // Pruning or depth reductions
         if (!incheck && !extensions && move_count > 1 && !is_mate_score(alpha) && !is_mate_score(beta)) {
             assert(move != trans_move);
+
             // Quiet moves pruning/reductions
             if (move_is_quiet(move) && !is_free_pawn(&game->board, turn, move) && !is_killer(&game->move_order, turn, ply, move))  {
+
                 if (!is_counter_move(&game->move_order, flip_color(turn), get_last_move_made(&game->board), move)) {
-                    // futility pruning
-                    if (depth < 10 && evaluate(game, alpha, beta) + depth * 100 < alpha)
+
+                    // Futility pruning: eval + margin below beta.
+                    if (depth < 10 && evaluate(game, alpha, beta) + depth * 100 < alpha) {
                         continue;
-                    // late move reductions
+                    }
+
+                    // Late move reductions: reduce depth for later moves
                     if (move_count > 3 && depth > 2) {
                         reductions = 1;
                         if (depth > 5 && has_bad_history(&game->move_order, turn, move))
