@@ -160,8 +160,7 @@ int search_zw(GAME *game, UINT incheck, int beta, int depth, UINT can_null, MOVE
                     }
 
                     // Futility pruning: eval + margin below beta. Also included additional pruning for later moves
-                    int additional_futility_margin = MIN(prev_move_count, 50);
-                    if (depth < 10 && eval_score + depth * 100 - additional_futility_margin < beta) {
+                    if (depth < 10 && eval_score + depth * 100 < beta) {
                         continue;
                     }
 
