@@ -153,13 +153,15 @@ int search_zw(GAME *game, UINT incheck, int beta, int depth, UINT can_null, MOVE
                     if (move_has_bad_history) {
                         int pruning_threshold = 4 + depth * 2;
                         // additional pruning for later moves of previous moves
-                        if (depth < 4 && prev_move_count / 8 < pruning_threshold / 3) pruning_threshold -= prev_move_count / 8;
+                        if (depth < 16 && prev_move_count / 8 < pruning_threshold / 2) {
+                            pruning_threshold -= prev_move_count / 8;
+                        }
                         if (move_count > pruning_threshold) {
                             continue;
                         }
                     }
 
-                    // Futility pruning: eval + margin below beta. Also included additional pruning for later moves
+                    // Futility pruning: eval + margin below beta.
                     if (depth < 10 && eval_score + depth * 100 < beta) {
                         continue;
                     }

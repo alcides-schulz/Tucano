@@ -20,7 +20,9 @@
 
 //TODO increase hash table mem size to 16384
 
-#define VERSION "7.28"
+#define VERSION "7.29"
+// 7.29 - review of last move pruning logic.
+// 7.28 - review of additional late move pruning +4 elo
 // 7.27 - additional late moves pruning (using previous move count)
 // 7.26 - counter move heuristic.
 // 7.25 - additional move pruning using previous move counter + 8 elo
