@@ -95,8 +95,10 @@ void set_fen(BOARD *board, char *fen)
         }
         i++;
     }
-    board->key ^= zk_ks(side_on_move(board), board->state[side_on_move(board)].can_castle_ks);
-    board->key ^= zk_qs(side_on_move(board), board->state[side_on_move(board)].can_castle_qs);
+    board->key ^= zk_ks(WHITE, board->state[WHITE].can_castle_ks);
+    board->key ^= zk_qs(WHITE, board->state[WHITE].can_castle_qs);
+    board->key ^= zk_ks(BLACK, board->state[BLACK].can_castle_ks);
+    board->key ^= zk_qs(BLACK, board->state[BLACK].can_castle_qs);
 
     // En-passant square
     board->ep_square = 0;
@@ -258,10 +260,10 @@ void make_move(BOARD *board, MOVE move)
     board->ply++;
     board->histply++;
 
-    board->side_on_move = flip_color(board->side_on_move);
-
     board->key ^= zk_ks(board->side_on_move, board->state[board->side_on_move].can_castle_ks);
     board->key ^= zk_qs(board->side_on_move, board->state[board->side_on_move].can_castle_qs);
+
+    board->side_on_move = flip_color(board->side_on_move);
 
     assert(zk_board_key(board) == board->key);
     assert(board_state_is_ok(board));
