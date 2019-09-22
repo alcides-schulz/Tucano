@@ -382,7 +382,7 @@ int pieces_count(BOARD *board, int color)
 int is_draw(BOARD *board)
 {
     if (is_threefold_repetition(board)) return TRUE;
-    if (board->fifty_move_rule > 100) return TRUE;
+    if (reached_fifty_move_rule(board)) return TRUE;
     if (insufficient_material(board)) return TRUE;
     return FALSE;
 }
@@ -398,7 +398,7 @@ int is_threefold_repetition(BOARD *board)
         if (board->history[i].board_key == board->key) repetitions++;
     }
 
-    // avoids positions that happened more than one time that may lead to 3-fold repetition.
+    // Uses repetition count as 2 instead of 3. Forces avoiding 3-fold at all.
     if (repetitions >= 1)
         return TRUE;
     else
@@ -422,7 +422,7 @@ int insufficient_material(BOARD *board)
 //-------------------------------------------------------------------------------------------------
 int reached_fifty_move_rule(BOARD *board)
 {
-    if (board->fifty_move_rule > 100)
+    if (board->fifty_move_rule >= 100)
         return TRUE;
     else
         return FALSE;

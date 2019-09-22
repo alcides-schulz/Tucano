@@ -21,6 +21,7 @@
 //TODO increase hash table mem size to 16384
 
 #define VERSION "7.31"
+// 7.31 - fix 50 move rule count.
 // 7.30 - fix hash key generation for castle status.
 // 7.29 - review of last move pruning logic.
 // 7.28 - review of additional late move pruning +4 elo
