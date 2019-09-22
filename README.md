@@ -58,4 +58,4 @@ Windows:
 gcc -o tucano_w64.exe -O3 -flto -m64 -mtune=generic -s -static -Wfatal-errors src\*.c
 
 Linux:
-gcc -o tucano -O3 -flto -m64 -mtune=generic -s -Wfatal-errors -lpthread -lm src/*.c
+gcc -o tucano -O3 -flto -m64 -mtune=generic -s -Wfatal-errors -pthread -lm src/*.c
