@@ -50,7 +50,7 @@ int TUNE_PST_KING    = TRUE;
 
 enum    {SINGLE_VALUE, OPENING_ENDGAME} LINK_TYPE;
 
-#define MAX_POSITIONS       7000000
+#define MAX_POSITIONS       5600000
 #define MAX_TUNE_THREADS    14
 #define MAX_POS_PER_THREAD  (MAX_POSITIONS / MAX_TUNE_THREADS)
 #define MAX_LINE_SIZE       100
@@ -102,7 +102,7 @@ void eval_tune(void)
     char    *TUNE_GAMES_FILE = "a.pgn";
     char    *TUNE_POSITIONS_FILE = "tune-positions.txt";
     char    *TUNE_RESULTS_FILE = "tune-results.txt";
-    double  k = 1.0;
+    double  k = 0.4;
     char    option[1024];
 
     EVAL_TUNING = TRUE;
@@ -544,7 +544,8 @@ void calc_e_sub(TUNE_THREAD *thread_data)
         thread_data->game.search.abort = FALSE;
         thread_data->game.search.nodes = 0;
         
-        double eval = (double)quiesce(&thread_data->game, is_incheck(&thread_data->game.board, side_on_move(&thread_data->game.board)), -MAX_SCORE, MAX_SCORE, 0);
+        //double eval = (double)quiesce(&thread_data->game, is_incheck(&thread_data->game.board, side_on_move(&thread_data->game.board)), -MAX_SCORE, MAX_SCORE, 0);
+        double eval = (double)evaluate(&thread_data->game, -MAX_SCORE, MAX_SCORE);
         
         x = -(thread_data->k * eval / 400.0);
         x = 1.0 / (1.0 + pow(10, x));
@@ -663,11 +664,12 @@ void select_positions(char *input_pgn, char *output_pos)
             }
 
             make_move(&game->board, move);
-            if (pgn_game.move_number <= 8) continue;
+            if (pgn_game.move_number <= 4) continue;
             if (side_on_move(&game->board) != WHITE) continue;
             in_check = is_incheck(&game->board, side_on_move(&game->board));
-            score = quiesce(game, in_check, -MAX_SCORE, MAX_SCORE, 0);
-            //if (ABS(score) > VALUE_ROOK) continue;
+            //score = quiesce(game, in_check, -MAX_SCORE, MAX_SCORE, 0);
+            score = evaluate(game, -MAX_SCORE, MAX_SCORE);
+            if (ABS(score) > VALUE_ROOK) continue;
             if (is_mate_score(score)) continue;
             util_get_board_fen(&game->board, fen);
 
