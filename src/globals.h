@@ -139,7 +139,7 @@ typedef unsigned int    UINT;
 #define MIN_THREADS     1
 #define MAX_THREADS     64
 #define MIN_HASH_SIZE   8
-#define MAX_HASH_SIZE   1024
+#define MAX_HASH_SIZE   16384
 
 // Piece index
 #define PAWN        0
@@ -571,7 +571,7 @@ int     get_game_result(GAME *game);
 
 // transposition table
 void    tt_age(void);
-void    tt_init(int size_mb);
+void    tt_init(size_t size_mb);
 void    tt_clear(void);
 void    tt_save(BOARD *board, int depth, int search_score, S8 flag, MOVE best);
 int     tt_probe(BOARD *board, int depth, int alpha, int beta, int *search_score, MOVE *best_move);

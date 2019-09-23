@@ -111,12 +111,6 @@ void print_game_result(GAME *game)
     else {
         if (reached_fifty_move_rule(&game->board))
             printf("1/2-1/2 {Draw by fifty move rule}\n");
-        //else
-        //    if (insufficient_material())
-        //        printf("1/2-1/2 {Insufficient Material}\n");
-        //    else
-        //        if (is_threefold_repetition())
-        //            printf("1/2-1/2 {Draw by repetition}\n");
     }
 }
 

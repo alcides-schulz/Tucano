@@ -39,14 +39,14 @@ typedef struct trans_entry
 }   TT_ENTRY;
 
 TT_ENTRY    *trans_table = 0;
-int         trans_size;
+size_t      trans_size;
 int         trans_entries;
 S16         trans_age;
 
 //-------------------------------------------------------------------------------------------------
 //  Initialization.
 //-------------------------------------------------------------------------------------------------
-void tt_init(int size_mb)
+void tt_init(size_t size_mb)
 {
     assert(sizeof(TT_REC) == 16);
 
@@ -61,7 +61,7 @@ void tt_init(int size_mb)
         printf("no memory for transposition table!");
         exit(-1);
     }
-    trans_entries = trans_size / sizeof(TT_ENTRY);
+    trans_entries = (int)(trans_size / sizeof(TT_ENTRY));
     
     assert(trans_entries * (int)sizeof(TT_ENTRY) == trans_size);
 
@@ -129,8 +129,12 @@ void tt_save(BOARD *board, int depth, int search_score, S8 flag, MOVE best_move)
     }
 
     // Adjust mate score
-    if (search_score > MAX_EVAL && search_score != MAX_SCORE) search_score += get_ply(board);
-    if (search_score < -MAX_EVAL && search_score != -MAX_SCORE) search_score -= get_ply(board);
+    if (search_score > MAX_EVAL && search_score != MAX_SCORE) {
+        search_score += get_ply(board);
+    }
+    if (search_score < -MAX_EVAL && search_score != -MAX_SCORE) {
+        search_score -= get_ply(board);
+    }
 
     // Store entry
     record1->key = LOW32(board_key(board));
@@ -172,8 +176,12 @@ int tt_probe(BOARD *board, int depth, int alpha, int beta, int *search_score, MO
         *search_score = trans_table[idx].record[rec].search_score;
 
         if (tt_depth >= depth) {
-            if (*search_score > MAX_EVAL && *search_score != MAX_SCORE) *search_score -= get_ply(board);
-            if (*search_score < -MAX_EVAL &&*search_score != -MAX_SCORE) *search_score += get_ply(board);
+            if (*search_score > MAX_EVAL && *search_score != MAX_SCORE) {
+                *search_score -= get_ply(board);
+            }
+            if (*search_score < -MAX_EVAL && *search_score != -MAX_SCORE) {
+                *search_score += get_ply(board);
+            }
             if ((tt_flag == TT_UPPER && *search_score <= alpha) ||
                 (tt_flag == TT_LOWER && *search_score >= beta) ||
                 (tt_flag == TT_EXACT))
