@@ -18,7 +18,9 @@
 #define EXTERN
 #include "globals.h"
 
-#define VERSION "7.32"
+#define VERSION "7.33"
+
+// 7.33 - syzygy endgame tablebase support
 // 7.32 - added support for 16384 MB transposition table.
 // 7.31 - fix 50 move rule count.
 // 7.30 - fix hash key generation for castle status.
@@ -64,6 +66,7 @@ GAME        ponder_game;
 SETTINGS    game_settings;
 char        line[MAX_READ];
 char        command[MAX_READ] = { '\0' };
+char        syzygy_path[1024] = "";
 
 //-------------------------------------------------------------------------------------------------
 //  Main loop
@@ -99,10 +102,15 @@ int main(int argc, char *argv[])
         if (!strcmp("-ponder", argv[i])) {
             ponder_on = TRUE;
         }
+#ifdef EGTB_SYZYGY
+        if (!strcmp("-syzygy_path", argv[i])) {
+            if (++i < argc) strcpy(syzygy_path, argv[i]);
+        }
+#endif
     }
-    
+
     printf("   hash table: %d MB, threads: %d\n", hash_size, threads);
-    
+
     // Initializations
     srand((UINT)19810505);
     bb_init();
@@ -112,6 +120,14 @@ int main(int argc, char *argv[])
     book_init();
     tt_init(hash_size);
     threads_init(threads);
+#ifdef EGTB_SYZYGY
+    if (strlen(syzygy_path) != 0) {
+        if (tb_init(syzygy_path)) {
+            printf("# using egtb syzygy path=%s TB_LARGEST=%d\n", syzygy_path, TB_LARGEST);
+        }
+
+    }
+#endif
 
     settings_init();
 
@@ -232,6 +248,9 @@ int main(int argc, char *argv[])
             printf("feature analyze=1\n");
             printf("feature option=\"Hash -spin 64 %d %d\"\n", MIN_HASH_SIZE, MAX_HASH_SIZE);
             printf("feature option=\"Threads -spin 1 %d %d\"\n", MIN_THREADS, MAX_THREADS);
+#ifdef EGTB_SYZYGY
+            printf("feature option=\"SyzygyPath -path \"\"\"\n");
+#endif
             printf("feature done=1\n");
             continue;
         }
@@ -246,6 +265,16 @@ int main(int argc, char *argv[])
                 threads = valid_threads(threads);
                 threads_init(threads);
             }
+#ifdef EGTB_SYZYGY
+            if (strstr(line, "SyzygyPath")) {
+                strcpy(syzygy_path, &line[strlen("option SyzygyPath=")]);
+                if (strlen(syzygy_path) != 0) {
+                    if (tb_init(syzygy_path)) {
+                        printf("# using egtb syzygy path=%s TB_LARGEST=%d\n", syzygy_path, TB_LARGEST);
+                    }
+                }
+            }
+#endif
             continue;
         }
         if (!strcmp(command, "undo")) {

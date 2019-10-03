@@ -71,10 +71,35 @@ int search_zw(GAME *game, UINT incheck, int beta, int depth, UINT can_null, MOVE
 
     // transposition table score or move hint
     if (exclude_move == MOVE_NONE && tt_probe(&game->board, depth, beta - 1, beta, &score, &trans_move)) {
+        assert(score >= -MAX_SCORE && score <= MAX_SCORE);
         return score;
     }
-    
-    assert(score >= -MAX_SCORE && score <= MAX_SCORE);
+
+    // endgame tablebase probe
+#ifdef EGTB_SYZYGY
+    U32 tbresult = egtb_probe_wdl(&game->board, depth, ply);
+
+    if (tbresult != TB_RESULT_FAILED) {
+
+        game->search.tbhits++;
+
+        // Convert the WDL value to a score. We consider blessed losses
+        // and cursed wins to be a draw, and thus set value to zero.
+        //value = tbresult == TB_LOSS ? -MATE + MAX_PLY + height + 1
+        //    : tbresult == TB_WIN ? MATE - MAX_PLY - height - 1 : 0;
+        score = tbresult == TB_LOSS ? -MATE_VALUE + MAX_PLY + ply + 1 : tbresult == TB_WIN ? +MATE_VALUE - MAX_PLY - ply - 1: 0;
+
+        // Identify the bound based on WDL scores. For wins and losses the
+        // bound is not exact because we are dependent on the height, but
+        // for draws (and blessed / cursed) we know the tbresult to be exact
+        S8 tt_flag = tbresult == TB_LOSS ? TT_UPPER : tbresult == TB_WIN ? TT_LOWER : TT_EXACT;
+
+        if (tt_flag == TT_EXACT || (tt_flag == TT_LOWER && score >= beta) || (tt_flag == TT_UPPER && score <= beta - 1)) {
+            tt_save(&game->board, depth, score, tt_flag, MOVE_NONE);
+            return score;
+        }
+    }
+#endif 
 
     // Razoring
     if (exclude_move == MOVE_NONE && !incheck && depth < RAZOR_DEPTH && !is_mate_score(beta)) {
@@ -194,6 +219,7 @@ int search_zw(GAME *game, UINT incheck, int beta, int depth, UINT can_null, MOVE
         if (score > best_score) {
             if (score >= beta) {
                 if (exclude_move == MOVE_NONE) {
+                    update_pv(&game->pv_line, ply, move);
                     if (move_is_quiet(move)) {
                         move_order_save(&game->move_order, turn, ply, move, &ml, get_last_move_made(&game->board));
                     }

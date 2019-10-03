@@ -331,6 +331,7 @@ enum e_squares
 typedef struct s_search
 {
     U64     nodes;                  // visited nodes
+    U64     tbhits;                 // end game table base hits
     int     post_flag;              // output information
     int     use_book;               // use opening book
     int     max_depth;              // max depth 
@@ -535,6 +536,7 @@ MOVE    prev_move(MOVE_LIST *ml);
 int     is_late_moves(MOVE_LIST *ml);
 int     is_bad_capture(MOVE_LIST *ml);
 int     is_mate_score(int score);
+int     is_eval_score(int score);
 
 //  Move ordering
 void    move_order_save(MOVE_ORDER *move_order, int color, int ply, MOVE best_move, MOVE_LIST *ml, MOVE previous_move);
@@ -549,6 +551,7 @@ void    prepare_search(GAME *game, SETTINGS *settings);
 void    threads_init(int threads_count);
 void    search_run(GAME *game, SETTINGS *settings);
 U64     get_additional_threads_nodes(void);
+U64     get_additional_threads_tbhits(void);
 void    ponder_search(GAME *game);
 void    update_pv(PV_LINE *pv_line, int ply, MOVE move);
 int     null_depth(int depth);
@@ -826,12 +829,20 @@ int     pawn_is_connected(BOARD *board, int pcsq, int color);
 int     pawn_is_weak(BOARD *board, int pcsq, int color);
 int     pawn_is_passed(BOARD *board, int pcsq, int color);
 int     pawn_is_isolated(BOARD *board, int pcsq, int color);
-int     pawn_is_backward(BOARD *board, int pcsq, int color);
 int     pawn_is_candidate(BOARD *board, int pcsq, int color);
 #endif
 
 // For tests.
 EXTERN U64 test_cnt;
 EXTERN U64 test_hit;
+
+#ifdef EGTB_SYZYGY
+
+#define TB_NO_STDBOOL
+#include "fathom/tbprobe.h"
+
+U32 egtb_probe_wdl(BOARD *board, int depth, int ply);
+
+#endif
 
 //End

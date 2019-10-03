@@ -158,22 +158,18 @@ int search_pv(GAME *game, UINT incheck, int alpha, int beta, int depth)
 
         //  Score verification.
         if (score > best_score) {
-            if (score >= beta) {
-                if (move_is_quiet(move)) {
-                    move_order_save(&game->move_order, turn, ply, move, &ml, get_last_move_made(&game->board));
-                }
-                tt_save(&game->board, depth, score, TT_LOWER, move);
-                if (ply == 0)  {
-                    update_pv(&game->pv_line, ply, move);
-                    post_info(game, score, depth);
-                }
-                return score;
-            }
             if (score > alpha) {
                 update_pv(&game->pv_line, ply, move);
                 if (ply == 0) post_info(game, score, depth);
                 alpha = score;
                 best_move = move;
+                if (score >= beta) {
+                    if (move_is_quiet(move)) {
+                        move_order_save(&game->move_order, turn, ply, move, &ml, get_last_move_made(&game->board));
+                    }
+                    tt_save(&game->board, depth, score, TT_LOWER, move);
+                    return score;
+                }
             }
             best_score = score;
         }

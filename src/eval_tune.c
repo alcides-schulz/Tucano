@@ -543,6 +543,7 @@ void calc_e_sub(TUNE_THREAD *thread_data)
         thread_data->game.search.ponder_move = MOVE_NONE;
         thread_data->game.search.abort = FALSE;
         thread_data->game.search.nodes = 0;
+        thread_data->game.search.tbhits = 0;
         
         //double eval = (double)quiesce(&thread_data->game, is_incheck(&thread_data->game.board, side_on_move(&thread_data->game.board)), -MAX_SCORE, MAX_SCORE, 0);
         double eval = (double)evaluate(&thread_data->game, -MAX_SCORE, MAX_SCORE);
@@ -651,6 +652,7 @@ void select_positions(char *input_pgn, char *output_pos)
         game->search.ponder_move = MOVE_NONE;
         game->search.abort = FALSE;
         game->search.nodes = 0;
+        game->search.tbhits = 0;
 
         game->is_main_thread = TRUE;
 
@@ -667,8 +669,7 @@ void select_positions(char *input_pgn, char *output_pos)
             if (pgn_game.move_number <= 4) continue;
             if (side_on_move(&game->board) != WHITE) continue;
             in_check = is_incheck(&game->board, side_on_move(&game->board));
-            //score = quiesce(game, in_check, -MAX_SCORE, MAX_SCORE, 0);
-            score = evaluate(game, -MAX_SCORE, MAX_SCORE);
+            score = quiesce(game, in_check, -MAX_SCORE, MAX_SCORE, 0);
             if (ABS(score) > VALUE_ROOK) continue;
             if (is_mate_score(score)) continue;
             util_get_board_fen(&game->board, fen);

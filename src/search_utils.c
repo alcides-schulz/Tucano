@@ -170,6 +170,14 @@ int is_mate_score(int score)
 }
 
 //-------------------------------------------------------------------------------------------------
+//  Indicate if is an evaluation score
+//-------------------------------------------------------------------------------------------------
+int is_eval_score(int score)
+{
+    return (score >= -MAX_EVAL && score <= MAX_EVAL ? TRUE : FALSE);
+}
+
+//-------------------------------------------------------------------------------------------------
 //  Display search information on screen.
 //-------------------------------------------------------------------------------------------------
 void post_info(GAME *game, int score, int depth)
@@ -178,10 +186,14 @@ void post_info(GAME *game, int score, int depth)
 
     // node count
     U64 total_node_count = game->search.nodes + get_additional_threads_nodes();
+    U64 total_tbhits = game->search.tbhits + get_additional_threads_tbhits();
+
+    // Evaluation score is doubled, so we have to adjust it for display.
+    if (is_eval_score(score)) score /= 2;
 
     // tucano formatted output 
     if (game->search.post_flag == POST_DEFAULT) {
-        double score_display = score / 100.0 / 2.0;
+        double score_display = score / 100.0;
         if (side_on_move(&game->board) == BLACK) score_display = -score_display;
         double time = ((float)(util_get_time() - game->search.start_time) / 1000.0);
         char *space = time < 10.0 ? " " : "";
@@ -190,7 +202,7 @@ void post_info(GAME *game, int score, int depth)
 
     // xboard output
     if (game->search.post_flag == POST_XBOARD) {
-        int xboard_score = (side_on_move(&game->board) == BLACK ? -score : score) / 2;
+        int xboard_score = (side_on_move(&game->board) == BLACK ? -score : score);
         int xboard_time = (util_get_time() - game->search.start_time) / 10;
         printf("%d %d %d %" PRIu64 "", depth, xboard_score, xboard_time, total_node_count);
     }
@@ -201,6 +213,10 @@ void post_info(GAME *game, int score, int depth)
         util_get_move_string(game->pv_line.pv_line[0][pvi], move_string);
         printf(" %s", move_string);
     }
+#ifdef EGTB_SYZYGY
+    printf(" (%" PRIu64 ")", total_tbhits);
+#endif
+
     printf("\n");
     fflush(stdout);
 }

@@ -78,6 +78,7 @@ void search_run(GAME *game, SETTINGS *settings)
     game->search.ponder_move = MOVE_NONE;
     game->search.abort = FALSE;
     game->search.nodes = 0;
+    game->search.tbhits = 0;
 
     game->is_main_thread = TRUE;
 
@@ -128,6 +129,17 @@ U64 get_additional_threads_nodes(void)
 
     for (int i = 0; i < additional_threads; i++) {
         total += thread_data[i].search.nodes;
+    }
+
+    return total;
+}
+
+U64 get_additional_threads_tbhits(void)
+{
+    U64     total = 0;
+
+    for (int i = 0; i < additional_threads; i++) {
+        total += thread_data[i].search.tbhits;
     }
 
     return total;
