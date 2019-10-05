@@ -50,13 +50,12 @@ void prepare_search(GAME *game, SETTINGS *settings)
         return;
     }
 
-    //  Calculate move time
+    //  Calculate move time: moves per time period
     game->search.total_move_time = settings->total_move_time;
     UINT max_time = (int)(settings->total_move_time * 0.9);
     int played_moves = get_played_moves_count(&game->board, side_on_move(&game->board));
-    int moves_to_go = 40; // initial guess
-
-    if (settings->moves_per_level > 0) {
+    int moves_to_go = 0;
+    if (settings->moves_per_level > 0) { // In XBoard we receive move_per_level.
         // calculate moves to go in this level
         moves_to_go = settings->moves_per_level - (played_moves % settings->moves_per_level);
         int half_moves = (int)(settings->moves_per_level / 2);
@@ -64,15 +63,25 @@ void prepare_search(GAME *game, SETTINGS *settings)
         if (moves_to_go < 1) moves_to_go = 1;
     }
     else {
-        // gives more time for starting moves
-        moves_to_go = 20 - played_moves / 8 - played_moves / 16;
-        if (moves_to_go < 3) moves_to_go = 3;
+        moves_to_go = settings->moves_to_go; // In UCI mode we receive moves_to_go.
+        if (moves_to_go == 0) { // estimate
+            moves_to_go = 20 - played_moves / 8 - played_moves / 16;
+            if (moves_to_go < 3) moves_to_go = 3;
+        }
+        else {
+            if (moves_to_go > 20) moves_to_go = 20; // allocate more time for initial moves.
+        }
     }
 
     game->search.normal_move_time = (UINT)(max_time / moves_to_go);
 
+    //if (game->search.post_flag == POST_UCI)
+    //    printf("info string prepare_search move_time: %4d calc_time: %4d moves_to_go: %2d played: %2d\n", game->search.total_move_time, game->search.normal_move_time, moves_to_go, played_moves);
+    //else
+    //    printf("#           prepare_search move_time: %4d calc_time: %4d moves_to_go: %2d played: %2d\n", game->search.total_move_time, game->search.normal_move_time, moves_to_go, played_moves);
+
     //  Calculate extended move time
-    game->search.extended_move_time = (UINT)(game->search.normal_move_time * 4);
+    game->search.extended_move_time = game->search.normal_move_time * 4;
     if (game->search.extended_move_time > max_time) {
         game->search.extended_move_time = max_time;
     }
@@ -184,9 +193,11 @@ void post_info(GAME *game, int score, int depth)
 {
     if (game->search.post_flag == POST_NONE) return;
 
-    // node count
+    // node and egtb hits sum
     U64 total_node_count = game->search.nodes + get_additional_threads_nodes();
+#ifdef EGTB_SYZYGY
     U64 total_tbhits = game->search.tbhits + get_additional_threads_tbhits();
+#endif
 
     // Evaluation score is doubled, so we have to adjust it for display.
     if (is_eval_score(score)) score /= 2;
@@ -198,6 +209,9 @@ void post_info(GAME *game, int score, int depth)
         double time = ((float)(util_get_time() - game->search.start_time) / 1000.0);
         char *space = time < 10.0 ? " " : "";
         printf("%3d  %9" PRIu64 " %6.2f %s%2.1f", depth, total_node_count, score_display, space, time);
+#ifdef EGTB_SYZYGY
+        printf(" (EGTB: %" PRIu64 " hits)", total_tbhits);
+#endif
     }
 
     // xboard output
@@ -207,15 +221,40 @@ void post_info(GAME *game, int score, int depth)
         printf("%d %d %d %" PRIu64 "", depth, xboard_score, xboard_time, total_node_count);
     }
 
-    // print pv
+    // uci output
+    if (game->search.post_flag == POST_UCI) {
+        int elapsed_milliseconds = util_get_time() - game->search.start_time;
+        if (elapsed_milliseconds == 0) elapsed_milliseconds = 1;
+        U64 nodes_per_second = 1000 * total_node_count / elapsed_milliseconds;
+        int uci_score = score;
+        char *score_type = "cp"; //centipawns
+        if (is_mate_score(uci_score)) {
+            score_type = "mate";
+            if (score > 0) { // mate in
+                uci_score = (MATE_VALUE - score + 1) / 2;
+            }
+            else { // mated in
+                uci_score = (score + MATE_VALUE) / 2;
+            }
+        }
+        printf("info ");
+        printf("depth %d ", depth);
+        printf("score %s %d ", score_type, uci_score);
+        printf("time %d ", elapsed_milliseconds);
+        printf("nodes %" PRIu64 " ", total_node_count);
+        printf("nps %" PRIu64 " ", nodes_per_second);
+#ifdef EGTB_SYZYGY
+        printf("tbhits %" PRIu64 " ", total_tbhits);
+#endif
+        printf("pv");
+    }
+
+    // print pv (works for all options above)
     char move_string[20];
     for (int pvi = 0; pvi < game->pv_line.pv_size[0]; pvi++) {
         util_get_move_string(game->pv_line.pv_line[0][pvi], move_string);
         printf(" %s", move_string);
     }
-#ifdef EGTB_SYZYGY
-    printf(" (%" PRIu64 ")", total_tbhits);
-#endif
 
     printf("\n");
     fflush(stdout);

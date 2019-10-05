@@ -418,7 +418,7 @@ int insufficient_material(BOARD *board)
 }
 
 //-------------------------------------------------------------------------------------------------
-//  check if reached 50 move rule
+//  Check if reached 50 move rule
 //-------------------------------------------------------------------------------------------------
 int reached_fifty_move_rule(BOARD *board)
 {

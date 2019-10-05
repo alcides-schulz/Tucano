@@ -121,10 +121,10 @@ typedef unsigned int    UINT;
 #define flip_color(color)   ((color) ^ 1)
 
 // Search values
-#define MAX_PLY      128
-#define MAX_DEPTH     64
-#define MAX_HIST    1024
-#define MAX_TIME  999999
+#define MAX_PLY         128
+#define MAX_DEPTH        64
+#define MAX_HIST       1024
+#define MAX_TIME 1000000000
 
 #define MAX_EVAL     9000
 #define MATE_VALUE   9999
@@ -133,8 +133,9 @@ typedef unsigned int    UINT;
 #define POST_NONE       0
 #define POST_DEFAULT    1
 #define POST_XBOARD     2
+#define POST_UCI        3
 
-#define MAX_READ    16384
+#define MAX_READ     8196
 
 #define MIN_THREADS     1
 #define MAX_THREADS     64
@@ -489,7 +490,8 @@ typedef struct s_move_list
 typedef struct s_settings {
     int     single_move_time;       // set by st command. default is 10 seconds.
     int     total_move_time;        // set by time command.
-    int     moves_per_level;        // set by level command.
+    int     moves_per_level;        // set by level command in XBoard mode
+    int     moves_to_go;             // set by movestogo option in UCI mode.
     int     max_depth;              // set by sd command.
     int     post_flag;              // post format.
     int     use_book;               // opening book use.
@@ -505,11 +507,20 @@ U64     zk_qs(int color, int flag);
 U64     zk_square(int color, int piece, int square);
 
 // Game
+EXTERN GAME        main_game;
+EXTERN SETTINGS    game_settings;
+EXTERN GAME        ponder_game;
+
 void    print_game_result(GAME *game);
 void    trans_table_test(char *fen, char *desc);
 void    auto_play(int total_games, SETTINGS *settings);
 void    new_game(GAME *game, char *fen);
+int     valid_threads(int threads);
+int     valid_hash_size(int hash_size);
 
+// Interface protocols. Communication between engine and GUI.
+void uci_loop(char *engine_name, char *engine_version, char *engine_author);
+    
 // Book
 void    book_init(void);
 MOVE    book_next_move(GAME *game);

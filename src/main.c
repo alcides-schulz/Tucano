@@ -18,8 +18,11 @@
 #define EXTERN
 #include "globals.h"
 
-#define VERSION "7.33"
+#define ENGINE "Tucano"
+#define AUTHOR "Alcides Schulz"
+#define VERSION "7.34"
 
+// 7.34 - uci protocol
 // 7.33 - syzygy endgame tablebase support
 // 7.32 - added support for 16384 MB transposition table.
 // 7.31 - fix 50 move rule count.
@@ -57,13 +60,8 @@
 void        develop_workbench(void);
 double      bench(int depth, int print);
 void        speed_test(void);
-int         valid_threads(int threads);
-int         valid_hash_size(int hash_size);
 void        settings_init(void);
 
-GAME        main_game;
-GAME        ponder_game;
-SETTINGS    game_settings;
 char        line[MAX_READ];
 char        command[MAX_READ] = { '\0' };
 char        syzygy_path[1024] = "";
@@ -86,7 +84,7 @@ int main(int argc, char *argv[])
     int         threads = 1;    // Number of Threads
     int         hash_size = 64; // Hash Table Size in MB
 
-    printf("tucano chess engine by Alcides Schulz - %s (type 'help' for information)\n", VERSION);
+    printf("%s chess engine by %s - %s (type 'help' for information)\n", ENGINE, AUTHOR, VERSION);
 
     EVAL_TUNING = FALSE;
     EVAL_PRINTING = FALSE;
@@ -137,8 +135,6 @@ int main(int argc, char *argv[])
     printf("\nDEBUG MODE ON (running with asserts)\n");
 #endif
 
-    assert(valid_rank_file());
-
     signal(SIGINT, SIG_IGN);
     printf("\n");
 
@@ -183,6 +179,11 @@ int main(int argc, char *argv[])
         
         sscanf(line, "%s", command);
 
+        if (!strcmp(command, "uci")) {
+            uci_loop(ENGINE, VERSION, AUTHOR);
+            stop = TRUE;
+            continue;
+        }
         if (ponder_on && ponder_thread != 0) {
             ponder_game.search.abort = TRUE;
             THREAD_WAIT(ponder_thread);
