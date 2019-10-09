@@ -124,10 +124,13 @@ void eval_knights(BOARD *board, EVALUATION *eval_values, int myc, int opp)
         }
 
         // checks on next move
-        U64 opp_checks = (empty_bb(board) | all_pieces_bb(board, opp)) & knight_moves_bb(king_square(board, opp)) & ~eval_values->pawn_attacks[opp];
-        BBIX cc;
-        cc.u64 = knight_moves_bb(pcsq) & opp_checks;
-        if (cc.u64) eval_values->pieces[myc] += B_CHECK_THREAT_KNIGHT * bb_count(cc);
+        U64 opp_checking_squares = (empty_bb(board) | all_pieces_bb(board, opp))
+                                 & knight_moves_bb(king_square(board, opp)) 
+                                 & ~eval_values->pawn_attacks[opp];
+        U64 checks_on_next_move = knight_moves_bb(pcsq) & opp_checking_squares;
+        if (checks_on_next_move) {
+            eval_values->pieces[myc] += B_CHECK_THREAT_KNIGHT * bb_count_u64(checks_on_next_move);
+        }
     
         // king attack
         U64 king_attack = knight_moves_bb(pcsq) & (king_moves_bb(king_square(board, opp)) | king_bb(board, opp));
@@ -185,11 +188,13 @@ void eval_bishops(BOARD *board, EVALUATION *eval_values, int myc, int opp)
         eval_values->pieces[myc] -= P_PAWN_BISHOP_SQ * bb_count_u64(same_color_pawns);
 
         // checks on next move
-        U64 opp_checks;
-        opp_checks = bb_bishop_attacks(king_square(board, opp), occupied_bb(board)) & (empty_bb(board) | all_pieces_bb(board, opp)) & ~eval_values->pawn_attacks[opp];
-        BBIX cc;
-        cc.u64 = moves & opp_checks;
-        if (cc.u64) eval_values->pieces[myc] += B_CHECK_THREAT_BISHOP * bb_count(cc);
+        U64 opp_checking_squares = bb_bishop_attacks(king_square(board, opp), occupied_bb(board)) 
+                                 & (empty_bb(board) | all_pieces_bb(board, opp)) 
+                                 & ~eval_values->pawn_attacks[opp];
+        U64 checks_on_next_move = moves & opp_checking_squares;
+        if (checks_on_next_move) {
+            eval_values->pieces[myc] += B_CHECK_THREAT_BISHOP * bb_count_u64(checks_on_next_move);
+        }
     
         // king attack
         if (moves & (king_moves_bb(king_square(board, opp)) | king_bb(board, opp))) {
@@ -243,11 +248,13 @@ void eval_rooks(BOARD *board, EVALUATION *eval_values, int myc, int opp)
         }
 
         // checks on next move
-        U64 opp_checks;
-        opp_checks = bb_rook_attacks(king_square(board, opp), occupied_bb(board)) & (empty_bb(board) | all_pieces_bb(board, opp)) & ~eval_values->pawn_attacks[opp];
-        BBIX cc;
-        cc.u64 = moves & opp_checks;
-        if (cc.u64) eval_values->pieces[myc] += B_CHECK_THREAT_ROOK * bb_count(cc);
+        U64 opp_checking_squares = bb_rook_attacks(king_square(board, opp), occupied_bb(board)) 
+                                 & (empty_bb(board) | all_pieces_bb(board, opp)) 
+                                 & ~eval_values->pawn_attacks[opp];
+        U64 checks_on_next_move = moves & opp_checking_squares;
+        if (checks_on_next_move) {
+            eval_values->pieces[myc] += B_CHECK_THREAT_ROOK * bb_count_u64(checks_on_next_move);
+        }
 
         // king attack
         U64 king_attack = moves & (king_moves_bb(king_square(board, opp)));
@@ -314,13 +321,14 @@ void eval_queens(BOARD *board, EVALUATION *eval_values, int myc, int opp)
         }
 
         // checks on next move
-        U64 opp_checks;
-        opp_checks = bb_rook_attacks(king_square(board, opp), occupied_bb(board));
-        opp_checks |= bb_bishop_attacks(king_square(board, opp), occupied_bb(board));
-        opp_checks &= (empty_bb(board) | all_pieces_bb(board, opp)) & ~eval_values->pawn_attacks[opp];
-        BBIX cc;
-        cc.u64 = moves & opp_checks;
-        if (cc.u64) eval_values->pieces[myc] += B_CHECK_THREAT_QUEEN * bb_count(cc);
+        U64 opp_checking_squares = 0;
+        opp_checking_squares |= bb_rook_attacks(king_square(board, opp), occupied_bb(board));
+        opp_checking_squares |= bb_bishop_attacks(king_square(board, opp), occupied_bb(board));
+        opp_checking_squares &= (empty_bb(board) | all_pieces_bb(board, opp)) & ~eval_values->pawn_attacks[opp];
+        U64 checks_on_next_move = moves & opp_checking_squares;
+        if (checks_on_next_move) {
+            eval_values->pieces[myc] += B_CHECK_THREAT_QUEEN * bb_count_u64(checks_on_next_move);
+        }
 
         // king attack
         U64 king_attack = moves & king_moves_bb(king_square(board, opp));

@@ -69,8 +69,7 @@ int evaluate(GAME *game, int alpha, int beta)
     
     int lazy_eval = ((opening * (48 - eval_values.phase)) + (endgame * eval_values.phase)) / 48;
 
-    if (side_on_move(&game->board) == BLACK)
-        lazy_eval = -lazy_eval;
+    if (side_on_move(&game->board) == BLACK) lazy_eval = -lazy_eval;
 
     if (lazy_eval > MAX_EVAL) lazy_eval = MAX_EVAL;
     if (lazy_eval < -MAX_EVAL) lazy_eval = -MAX_EVAL;
@@ -118,8 +117,7 @@ int evaluate(GAME *game, int alpha, int beta)
     score = score * eval_values.draw_adjust / 64;
 
     //  Adjustment for side on move.
-    if (side_on_move(&game->board) == BLACK)
-        score = -score;
+    if (side_on_move(&game->board) == BLACK) score = -score;
 
     if (score > MAX_EVAL) score = MAX_EVAL;
     if (score < -MAX_EVAL) score = -MAX_EVAL;

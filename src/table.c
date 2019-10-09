@@ -50,11 +50,12 @@ void tt_init(size_t size_mb)
 {
     assert(sizeof(TT_REC) == 16);
 
-    if (trans_table)
-        free(trans_table);
+    if (trans_table) free(trans_table);
+
     trans_size = 2;
-    while (trans_size * 2 <= size_mb)
+    while (trans_size * 2 <= size_mb) {
         trans_size *= 2;
+    }
     trans_size = trans_size * 1024 * 1024;
     trans_table = (TT_ENTRY *)malloc(trans_size);
     if (!trans_table)  {
@@ -124,8 +125,9 @@ void tt_save(BOARD *board, int depth, int search_score, S8 flag, MOVE best_move)
 
     if (record1 == NULL) {
         record1 = record2;
-        if (record1 == NULL)
+        if (record1 == NULL) {
             record1 = &trans_table[idx].record[0];
+        }
     }
 
     // Adjust mate score
@@ -163,8 +165,8 @@ int tt_probe(BOARD *board, int depth, int alpha, int beta, int *search_score, MO
     *best_move = MOVE_NONE;
     
     for (rec = 0; rec < TT_BUCKETS; rec++) {
-        if (trans_table[idx].record[rec].key != LOW32(board_key(board)))
-            continue;
+
+        if (trans_table[idx].record[rec].key != LOW32(board_key(board))) continue;
 
         tt_depth = trans_table[idx].record[rec].depth;
         tt_flag = trans_table[idx].record[rec].flag;

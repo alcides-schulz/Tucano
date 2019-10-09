@@ -161,7 +161,7 @@ int search_zw(GAME *game, UINT incheck, int beta, int depth, UINT can_null, MOVE
             if (eval_score == -MAX_SCORE) eval_score = evaluate(game, beta - 1, beta);
 
             // Capture pruning
-            if (depth <= 8 && unpack_type(move) == MT_CAPPC && !is_free_pawn(&game->board, turn, move) /*TODO: && unpack_piece(move) != KING*/) {
+            if (depth <= 8 && unpack_type(move) == MT_CAPPC && !is_free_pawn(&game->board, turn, move)) {
                 if (eval_score + depth * 100 + piece_value(unpack_capture(move)) + 200 < beta) {
                     continue;
                 }

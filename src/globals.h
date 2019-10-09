@@ -329,6 +329,7 @@ enum e_squares
 #define BB_FILES_KS ((U64)0x0F0F0F0F0F0F0F0F)
 
 //  Search data: move, nodes, time control, etc.
+//  Times are in milliseconds.
 typedef struct s_search
 {
     U64     nodes;                  // visited nodes
@@ -336,22 +337,20 @@ typedef struct s_search
     int     post_flag;              // output information
     int     use_book;               // use opening book
     int     max_depth;              // max depth 
-    int     total_move_time;        // total time for remaining moves
-    UINT    normal_move_time;       // max time for move
-    UINT    extended_move_time;     // max time for long search
-    UINT    normal_finish_time;     // calculated time to finish
-    UINT    extended_finish_time;   // extended time to finish
-    UINT    start_time;             // recorded start time
-    UINT    end_time;               // recorded end time
-    double  elapsed_time;           // search duration
+    int     normal_move_time;       // max time for move
+    int     extended_move_time;     // max time for long search
+    int     normal_finish_time;     // calculated time to finish
+    int     extended_finish_time;   // extended time to finish
+    int     start_time;             // recorded start time
+    int     end_time;               // recorded end time
+    int     elapsed_time;           // search duration
     MOVE    best_move;              // best move found
     MOVE    ponder_move;            // pondering move
     int     cur_depth;              // current depth
     int     score_drop;             // controls when score drops
-    int     mate_search;            // test option.
     int     abort;                  // indicates end of search
-    int     root_move_count;        // number of moves at root node
-    int     root_move_search;       // number of move searched at root node.
+    int     root_move_count;        // number of moves at root node, used by xboard analysis
+    int     root_move_search;       // number of move searched at root node, used by xboard analysis
 }   SEARCH;
 
 //  Pawn evaluation table: cache for already evaluated pawn structure
@@ -491,7 +490,7 @@ typedef struct s_settings {
     int     single_move_time;       // set by st command. default is 10 seconds.
     int     total_move_time;        // set by time command.
     int     moves_per_level;        // set by level command in XBoard mode
-    int     moves_to_go;             // set by movestogo option in UCI mode.
+    int     moves_to_go;            // set by movestogo option in UCI mode.
     int     max_depth;              // set by sd command.
     int     post_flag;              // post format.
     int     use_book;               // opening book use.

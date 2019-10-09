@@ -94,11 +94,6 @@ int pawn_shelter_penalty(BOARD *board, int pcsq, int color)
         if (get_rank(pcsq) != (color == WHITE ? RANK8 : RANK1)) {
             if (piece_on_square(board, color, pcsq + (color == WHITE ? -8 : +8)) != PAWN)  {
                 penalty += P_PAWN_SHIELD;
-                //TODO
-                //if (!((color == WHITE ? north_moves[pcsq] : rankfile_south[pcsq]) & pawn_bb(color)))
-                //{
-                //    penalty += MAKE_SCORE(30, 0);
-                //}
             }
         }
     }

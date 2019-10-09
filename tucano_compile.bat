@@ -8,8 +8,6 @@ rem gcc -o tucano -O3 -flto -m64 -mtune=generic -s -Wfatal-errors -lpthread -lm 
 rem Windows
 rem -Wall -Wextra -Wshadow
 
-gcc -o tucano_w64.exe -DEGTB_SYZYGY -std=c99 -O3 -Isrc -flto -m64 -mtune=generic -s -static -Wall -Wfatal-errors src\*.c src\fathom\tbprobe.c
-
-rem gcc -o tucano_w64.exe -DEGTB_SYZYGY -std=c99 -g -Isrc -flto -m64 -mtune=generic -s -static -Wall -Wfatal-errors src\*.c src\fathom\tbprobe.c
+gcc -o tucano.exe -DEGTB_SYZYGY -std=c99 -O3 -Isrc -flto -m64 -mtune=generic -s -static -Wall -Wfatal-errors src\*.c src\fathom\tbprobe.c
 
 pause

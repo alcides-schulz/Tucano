@@ -545,8 +545,8 @@ void calc_e_sub(TUNE_THREAD *thread_data)
         thread_data->game.search.nodes = 0;
         thread_data->game.search.tbhits = 0;
         
-        //double eval = (double)quiesce(&thread_data->game, is_incheck(&thread_data->game.board, side_on_move(&thread_data->game.board)), -MAX_SCORE, MAX_SCORE, 0);
-        double eval = (double)evaluate(&thread_data->game, -MAX_SCORE, MAX_SCORE);
+        int in_check = is_incheck(&thread_data->game.board, side_on_move(&thread_data->game.board));
+        double eval = (double)quiesce(&thread_data->game,in_check, -MAX_SCORE, MAX_SCORE, 0);
         
         x = -(thread_data->k * eval / 400.0);
         x = 1.0 / (1.0 + pow(10, x));
@@ -571,7 +571,6 @@ double calc_min_k(void)
     double s = 9999;
 
     for (i = -2; i <= 2; i += 0.1)  {
-        //e = calc_e(i, tune_param_value);
         e = calc_e_main(i, tune_param_value, MAX_TUNE_THREADS, tune_thread);
         if (e < s) {
             k = i;

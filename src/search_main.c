@@ -88,7 +88,7 @@ void search_run(GAME *game, SETTINGS *settings)
         if (bookmove != MOVE_NONE) {
             game->search.best_move = bookmove;
             game->search.end_time = util_get_time();
-            game->search.elapsed_time = 0.0001;
+            game->search.elapsed_time = 1;
             return;
         }
     }
@@ -120,7 +120,7 @@ void search_run(GAME *game, SETTINGS *settings)
     }
 
     game->search.end_time = util_get_time();
-    game->search.elapsed_time = (double)(game->search.end_time - game->search.start_time) / 1000.0;
+    game->search.elapsed_time = game->search.end_time - game->search.start_time;
 }
 
 U64 get_additional_threads_nodes(void)
@@ -196,10 +196,6 @@ void iterative_deepening(GAME *game)
             game->search.score_drop = TRUE;
         else
             game->search.score_drop = FALSE;
-
-        //  Used when testing mate positions.
-        if (game->search.mate_search != 0 && score == game->search.mate_search)
-            break;
 
         //  Don't start another iteration if most of time was used.
         UINT used_time = util_get_time() - game->search.start_time;

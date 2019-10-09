@@ -44,18 +44,18 @@ void prepare_search(GAME *game, SETTINGS *settings)
     //  Specific time per move
     if (settings->single_move_time > 0) {
         int single_move_time = settings->single_move_time;
-        if (single_move_time > 20) single_move_time -= 10; // allow some time buffer
+        int time_buffer = (int)(single_move_time * 0.30);
+        if (time_buffer > 100) time_buffer = 100;
+        single_move_time -= time_buffer;
         game->search.normal_move_time = single_move_time;
         game->search.extended_move_time = single_move_time;
         return;
     }
 
-    //  Calculate move time: moves per time period
-    game->search.total_move_time = settings->total_move_time;
-    UINT max_time = (int)(settings->total_move_time * 0.9);
+    //  Calculate moves/time period
     int played_moves = get_played_moves_count(&game->board, side_on_move(&game->board));
     int moves_to_go = 0;
-    if (settings->moves_per_level > 0) { // In XBoard we receive move_per_level.
+    if (settings->moves_per_level > 0) { // In XBoard we can receive move_per_level.
         // calculate moves to go in this level
         moves_to_go = settings->moves_per_level - (played_moves % settings->moves_per_level);
         int half_moves = (int)(settings->moves_per_level / 2);
@@ -63,27 +63,29 @@ void prepare_search(GAME *game, SETTINGS *settings)
         if (moves_to_go < 1) moves_to_go = 1;
     }
     else {
-        moves_to_go = settings->moves_to_go; // In UCI mode we receive moves_to_go.
-        if (moves_to_go == 0) { // estimate
-            moves_to_go = 20 - played_moves / 8 - played_moves / 16;
-            if (moves_to_go < 3) moves_to_go = 3;
+        moves_to_go = settings->moves_to_go; // In UCI mode we can receive moves_to_go.
+        if (moves_to_go == 0) { // estimate moves to go
+            moves_to_go = 20 - played_moves / 4;
+            if (moves_to_go < 1) moves_to_go = 1;
         }
         else {
             if (moves_to_go > 20) moves_to_go = 20; // allocate more time for initial moves.
         }
     }
 
-    game->search.normal_move_time = (UINT)(max_time / moves_to_go);
+    // allocate time for this move
+    game->search.normal_move_time = settings->total_move_time / moves_to_go;
 
-    //if (game->search.post_flag == POST_UCI)
-    //    printf("info string prepare_search move_time: %4d calc_time: %4d moves_to_go: %2d played: %2d\n", game->search.total_move_time, game->search.normal_move_time, moves_to_go, played_moves);
-    //else
-    //    printf("#           prepare_search move_time: %4d calc_time: %4d moves_to_go: %2d played: %2d\n", game->search.total_move_time, game->search.normal_move_time, moves_to_go, played_moves);
-
-    //  Calculate extended move time
+    //  Calculate extended move time and allocate time buffer to avoid timeout
     game->search.extended_move_time = game->search.normal_move_time * 4;
-    if (game->search.extended_move_time > max_time) {
-        game->search.extended_move_time = max_time;
+    int time_buffer = (int)(settings->total_move_time * 0.10);
+    if (time_buffer > 1000) time_buffer = 1000;
+    if (time_buffer < 200) time_buffer = settings->total_move_time / 2;
+    if (game->search.extended_move_time > settings->total_move_time - time_buffer) {
+        game->search.extended_move_time = settings->total_move_time - time_buffer;
+    }
+    if (game->search.normal_move_time > game->search.extended_move_time) {
+        game->search.normal_move_time = game->search.extended_move_time;
     }
 }
 
@@ -127,7 +129,7 @@ void check_time(GAME *search_data)
     if (search_data->search.nodes & TIME_CHECK) {
         return;
     }
-    UINT current_time = util_get_time();
+    int current_time = util_get_time();
     if (search_data->search.cur_depth > 1 && !search_data->search.score_drop) {
         if (current_time >= search_data->search.normal_finish_time) {
             search_data->search.abort = TRUE;
@@ -199,7 +201,7 @@ void post_info(GAME *game, int score, int depth)
     U64 total_tbhits = game->search.tbhits + get_additional_threads_tbhits();
 #endif
 
-    // Evaluation score is doubled, so we have to adjust it for display.
+    // Evaluation score baseline is 200 centipawns, so we have to adjust it for display.
     if (is_eval_score(score)) score /= 2;
 
     // tucano formatted output 

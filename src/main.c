@@ -20,8 +20,9 @@
 
 #define ENGINE "Tucano"
 #define AUTHOR "Alcides Schulz"
-#define VERSION "7.34"
+#define VERSION "7.35"
 
+// 7.35 - change time control.
 // 7.34 - uci protocol
 // 7.33 - syzygy endgame tablebase support
 // 7.32 - added support for 16384 MB transposition table.
@@ -446,7 +447,7 @@ int main(int argc, char *argv[])
             continue;
         }
         if (!strcmp(command, "help")) {
-            printf("Tucano accepts XBoard/Winboard commands.\n\n");
+            printf("Tucano supports XBoard/Winboard or UCI protocols.\n\n");
             printf("Other commands that can be used:\n\n");
             printf("             d: display current board\n");
             printf("          eval: print evaluation score for current position\n");
@@ -457,9 +458,10 @@ int main(int argc, char *argv[])
             printf("\n");
             printf("\n");
             printf("Command line options:\n\n");
-            printf(" tucano -hash <MB> -threads <#>\n");
+            printf(" tucano -hash <MB> -threads <#> -syzygy_path <path>\n");
             printf("   -hash indicates the size of hash table, default = 64 MB, minimum: %d MB, maximum: %d MB.\n", MIN_HASH_SIZE, MAX_HASH_SIZE);
             printf("   -threads indicates how many threads to use during search, minimum: %d, maximum: %d.\n", MIN_THREADS, MAX_THREADS);
+            printf("   -syzygy_path indicates the path of Syzygy end game tablebases.\n");
             printf("\n");
             continue;
         }
@@ -538,8 +540,8 @@ double bench(int depth, int print)
     int total_tests = 0;
     for (int i = 0; test[i]; i++) total_tests++;
 
-    U64     signature = 0;
-    double  elapsed = 0;
+    U64     nodes = 0;
+    int     elapsed = 1;
 
     for (int i = 0; test[i]; i++) {
         if (print) printf("%d/%d) %s\n", i + 1, total_tests, test[i]);
@@ -548,13 +550,13 @@ double bench(int depth, int print)
 
         search_run(game, &settings);
 
-        signature += game->search.nodes;
+        nodes += game->search.nodes;
         elapsed += game->search.elapsed_time;
     }
 
-    double nps = signature / elapsed;
+    double nps = 1000.0 * (double)nodes / elapsed;
 
-    if (print) printf("\nSignature: %" PRIu64 "  Time: %3.2f  Nodes/sec: %4.0fk\n", signature, elapsed, nps / 1000.0);
+    if (print) printf("\nSignature: %" PRIu64 "  Elapsed time: %3.2f secs  Nodes/sec: %4.0fk\n", nodes, (double)elapsed / 1000.0, nps / 1000.0);
 
     free(game);
 
