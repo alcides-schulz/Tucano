@@ -20,7 +20,7 @@
 
 #define ENGINE "Tucano"
 #define AUTHOR "Alcides Schulz"
-#define VERSION "7.35"
+#define VERSION "7.36"
 
 // 7.35 - change time control.
 // 7.34 - uci protocol

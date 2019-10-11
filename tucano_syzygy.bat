@@ -1,2 +1,2 @@
-tucano_w64 -syzygy_path D:\ChessProg\syzygy
+tucano -syzygy_path D:\ChessProg\syzygy
 pause

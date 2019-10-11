@@ -86,8 +86,8 @@ int search_zw(GAME *game, UINT incheck, int beta, int depth, UINT can_null, MOVE
         // Convert the WDL value to a score. We consider blessed losses
         // and cursed wins to be a draw, and thus set value to zero.
         //value = tbresult == TB_LOSS ? -MATE + MAX_PLY + height + 1
-        //    : tbresult == TB_WIN ? MATE - MAX_PLY - height - 1 : 0;
-        score = tbresult == TB_LOSS ? -MATE_VALUE + MAX_PLY + ply + 1 : tbresult == TB_WIN ? +MATE_VALUE - MAX_PLY - ply - 1: 0;
+        //    : tbresult == TB_WIN ? EGTB_VALUE - height - 1 : 0;
+        score = tbresult == TB_LOSS ? -EGTB_WIN + ply : tbresult == TB_WIN ? +EGTB_WIN - ply : 0;
 
         // Identify the bound based on WDL scores. For wins and losses the
         // bound is not exact because we are dependent on the height, but

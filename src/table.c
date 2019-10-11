@@ -131,10 +131,10 @@ void tt_save(BOARD *board, int depth, int search_score, S8 flag, MOVE best_move)
     }
 
     // Adjust mate score
-    if (search_score > MAX_EVAL && search_score != MAX_SCORE) {
+    if (search_score >= MATE_VALUE - MAX_PLY && search_score <= MATE_VALUE) {
         search_score += get_ply(board);
     }
-    if (search_score < -MAX_EVAL && search_score != -MAX_SCORE) {
+    if (search_score >= -MATE_VALUE && search_score <= -MATE_VALUE + MAX_PLY) {
         search_score -= get_ply(board);
     }
 
@@ -178,10 +178,10 @@ int tt_probe(BOARD *board, int depth, int alpha, int beta, int *search_score, MO
         *search_score = trans_table[idx].record[rec].search_score;
 
         if (tt_depth >= depth) {
-            if (*search_score > MAX_EVAL && *search_score != MAX_SCORE) {
+            if (*search_score >= MATE_VALUE - MAX_PLY && *search_score <= MATE_VALUE) {
                 *search_score -= get_ply(board);
             }
-            if (*search_score < -MAX_EVAL && *search_score != -MAX_SCORE) {
+            if (*search_score >= -MATE_VALUE && *search_score <= -MATE_VALUE + MAX_PLY) {
                 *search_score += get_ply(board);
             }
             if ((tt_flag == TT_UPPER && *search_score <= alpha) ||

@@ -126,9 +126,10 @@ typedef unsigned int    UINT;
 #define MAX_HIST       1024
 #define MAX_TIME 1000000000
 
-#define MAX_EVAL     9000
-#define MATE_VALUE   9999
-#define MAX_SCORE   32767
+#define MAX_EVAL     20000
+#define EGTB_WIN     25000
+#define MATE_VALUE   32000
+#define MAX_SCORE    32767
 
 #define POST_NONE       0
 #define POST_DEFAULT    1

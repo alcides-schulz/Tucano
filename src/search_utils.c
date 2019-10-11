@@ -175,8 +175,8 @@ int has_pawn_on_rank7(BOARD *board, int color)
 //-------------------------------------------------------------------------------------------------
 int is_mate_score(int score)
 {
-    if (score > MAX_EVAL && score != MAX_SCORE) return TRUE;
-    if (score < -MAX_EVAL && score != -MAX_SCORE) return TRUE;
+    if (score >= MATE_VALUE - MAX_PLY && score <= MATE_VALUE) return TRUE;
+    if (score >= -MATE_VALUE  && score <= -MATE_VALUE + MAX_PLY) return TRUE;
     return FALSE;
 }
 
