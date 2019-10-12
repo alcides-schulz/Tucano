@@ -180,8 +180,7 @@ void iterative_deepening(GAME *game)
         game->search.cur_depth = depth;
 
         int score = search_asp(game, incheck, depth, prev_score);
-        if (game->search.abort)
-            break;
+        if (game->search.abort) break;
 
         // Verify if score dropped from last iteration.
         if (depth > 4) {
@@ -198,17 +197,20 @@ void iterative_deepening(GAME *game)
             game->search.score_drop = FALSE;
 
         //  Don't start another iteration if most of time was used.
-        UINT used_time = util_get_time() - game->search.start_time;
+        int used_time = util_get_time() - game->search.start_time;
 
         assert(used_time <= game->search.extended_move_time + 1000);
 
+        // normal termination after completed iteration.
         if (!game->search.score_drop && depth > 1) {
-            if ((double)used_time >= ((double)game->search.normal_move_time * 0.6))
+            if (used_time >= game->search.normal_move_time) {
                 break;
+            }
         }
         if (depth > 1) {
-            if ((double)used_time >= ((double)game->search.extended_move_time * 0.6))
+            if (used_time >= game->search.extended_move_time * 0.6) {
                 break;
+            }
         }
 
         prev_score = score;

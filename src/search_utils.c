@@ -65,7 +65,7 @@ void prepare_search(GAME *game, SETTINGS *settings)
     else {
         moves_to_go = settings->moves_to_go; // In UCI mode we can receive moves_to_go.
         if (moves_to_go == 0) { // estimate moves to go
-            moves_to_go = 20 - played_moves / 4;
+            moves_to_go = 40 - played_moves / 2;
             if (moves_to_go < 1) moves_to_go = 1;
         }
         else {
@@ -129,13 +129,7 @@ void check_time(GAME *search_data)
     if (search_data->search.nodes & TIME_CHECK) {
         return;
     }
-    int current_time = util_get_time();
-    if (search_data->search.cur_depth > 1 && !search_data->search.score_drop) {
-        if (current_time >= search_data->search.normal_finish_time) {
-            search_data->search.abort = TRUE;
-        }
-    }
-    if (current_time >= search_data->search.extended_finish_time) {
+    if (util_get_time() >= (UINT)search_data->search.extended_finish_time) {
         search_data->search.abort = TRUE;
     }
 }

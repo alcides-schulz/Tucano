@@ -75,26 +75,29 @@ int search_zw(GAME *game, UINT incheck, int beta, int depth, UINT can_null, MOVE
         return score;
     }
 
-    // endgame tablebase probe
 #ifdef EGTB_SYZYGY
+    // endgame tablebase probe
     U32 tbresult = egtb_probe_wdl(&game->board, depth, ply);
-
     if (tbresult != TB_RESULT_FAILED) {
-
         game->search.tbhits++;
+        S8 tt_flag;
 
-        // Convert the WDL value to a score. We consider blessed losses
-        // and cursed wins to be a draw, and thus set value to zero.
-        //value = tbresult == TB_LOSS ? -MATE + MAX_PLY + height + 1
-        //    : tbresult == TB_WIN ? EGTB_VALUE - height - 1 : 0;
-        score = tbresult == TB_LOSS ? -EGTB_WIN + ply : tbresult == TB_WIN ? +EGTB_WIN - ply : 0;
+        switch (tbresult) {
+        case TB_WIN:
+            score = EGTB_WIN - ply;
+            tt_flag = TT_LOWER;
+            break;
+        case TB_LOSS:
+            score = -EGTB_WIN + ply;
+            tt_flag = TT_UPPER;
+            break;
+        default:
+            score = 0;
+            tt_flag = TT_EXACT;
+            break;
+        }
 
-        // Identify the bound based on WDL scores. For wins and losses the
-        // bound is not exact because we are dependent on the height, but
-        // for draws (and blessed / cursed) we know the tbresult to be exact
-        S8 tt_flag = tbresult == TB_LOSS ? TT_UPPER : tbresult == TB_WIN ? TT_LOWER : TT_EXACT;
-
-        if (tt_flag == TT_EXACT || (tt_flag == TT_LOWER && score >= beta) || (tt_flag == TT_UPPER && score <= beta - 1)) {
+        if (tt_flag == TT_EXACT || (tt_flag == TT_LOWER && score >= beta) || (tt_flag == TT_UPPER && score < beta)) {
             tt_save(&game->board, depth, score, tt_flag, MOVE_NONE);
             return score;
         }

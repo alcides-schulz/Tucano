@@ -20,8 +20,10 @@
 
 #define ENGINE "Tucano"
 #define AUTHOR "Alcides Schulz"
-#define VERSION "7.36"
+#define VERSION "7.37"
 
+// 7.38 - change time control 2.
+// 7.36 - change score limits.
 // 7.35 - change time control.
 // 7.34 - uci protocol
 // 7.33 - syzygy endgame tablebase support
