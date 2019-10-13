@@ -26,9 +26,15 @@ Have Fun.
 
 Alcides Schulz.
 
-Runnning Tucano
----------------
+Running Tucano
+--------------
 Tucano version 8.00 supports both XBoard and UCI protocols. I recommend using UCI from now on. Future version may not support XBoard anymore.
+
+Syzygy endgame tablebases
+-------------------------
+Starting on version 8.00, tucano supports syzygy (option SyzygyPath). It leverages Fathom from Jon Dart. 
+    - Syzygy: endgame tables bases by Ronald de Man
+    - Fathom: syzygy probing utility by Jon Dart.
 
 Protocol options
 ----------------
