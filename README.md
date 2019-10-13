@@ -52,15 +52,15 @@ Command Line options
 tucano -hash N -threads N -syzygy_path F
    -hash indicates the size of hash table, default = 64 MB, minimum: 8 MB, maximum: 1024 MB.
    -threads indicates how many threads to use during search, minimum: 1, maximum: 64. Depends on how many cores you computer have.
-   -syzygy_path indicates the folder of syzygy endgame tablebase
-
+   -syzygy_path indicates the folder of syzygy endgame tablebase.
+   
 Signature
 ---------
 If you compile tucano you can use the command "bench" to get a signature. Just start tucano and type "bench". 
 Signature is a generated number after searching a couple of positions to indicate you have the correct compilation. 
 If you don't get the correct signature it means that something is wrong with the compilation process and the program may not perform correctly. 
 
-8.00 - 32406478
+8.00: 32406478
 
 Compilation
 -----------
