@@ -33,8 +33,11 @@ Tucano version 8.00 supports both XBoard and UCI protocols. I recommend using UC
 Syzygy endgame tablebases
 -------------------------
 Starting on version 8.00, tucano supports syzygy (option SyzygyPath). It leverages Fathom from Jon Dart.
+
     - Syzygy: endgame tables bases by Ronald de Man
+    
     - Fathom: syzygy probing tool by Jon Dart.
+    
     
 Protocol options
 ----------------
