@@ -73,4 +73,3 @@ gcc -o tucano.exe -DEGTB_SYZYGY -std=c99 -O3 -Isrc -flto -m64 -mtune=generic -s 
 
 Linux:
 gcc -o tucano.exe -DEGTB_SYZYGY -std=c99 -O3 -Isrc -flto -m64 -mtune=generic -s -pthread -Wall -Wfatal-errors src\*.c src\fathom\tbprobe.c
-
