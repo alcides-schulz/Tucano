@@ -34,7 +34,7 @@ Syzygy endgame tablebases
 -------------------------
 Starting on version 8.00, tucano supports syzygy (option SyzygyPath). It leverages Fathom from Jon Dart.
     - Syzygy: endgame tables bases by Ronald de Man
-    - Fathom: syzygy probing utility by Jon Dart.
+    - Fathom: syzygy probing tool by Jon Dart.
     
 Protocol options
 ----------------
@@ -58,7 +58,7 @@ Signature
 ---------
 If you compile tucano you can use the command "bench" to get a signature. Just start tucano and type "bench". 
 Signature is a generated number after searching a couple of positions to indicate you have the correct compilation. 
-If you don't get the correct signature it means that something is wrong with the compilation process and the program may not perform correctly. 
+If you don't get the correct signature it means that something is wrong with the compilation process and the program may not perform correctly.
 
 8.00: 32406478
 
