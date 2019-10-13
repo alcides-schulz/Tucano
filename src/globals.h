@@ -124,7 +124,7 @@ typedef unsigned int    UINT;
 #define MAX_PLY         128
 #define MAX_DEPTH        64
 #define MAX_HIST       1024
-#define MAX_TIME 1000000000
+#define MAX_TIME   10000000
 
 #define MAX_EVAL     20000
 #define EGTB_WIN     25000
@@ -338,13 +338,13 @@ typedef struct s_search
     int     post_flag;              // output information
     int     use_book;               // use opening book
     int     max_depth;              // max depth 
-    int     normal_move_time;       // max time for move
-    int     extended_move_time;     // max time for long search
-    int     normal_finish_time;     // calculated time to finish
-    int     extended_finish_time;   // extended time to finish
-    int     start_time;             // recorded start time
-    int     end_time;               // recorded end time
-    int     elapsed_time;           // search duration
+    UINT    normal_move_time;       // max time for move
+    UINT    extended_move_time;     // max time for long search
+    UINT    normal_finish_time;     // calculated time to finish
+    UINT    extended_finish_time;   // extended time to finish
+    UINT    start_time;             // recorded start time
+    UINT    end_time;               // recorded end time
+    UINT    elapsed_time;           // search duration
     MOVE    best_move;              // best move found
     MOVE    ponder_move;            // pondering move
     int     cur_depth;              // current depth
@@ -488,8 +488,8 @@ typedef struct s_move_list
 
 //  Settings: default time, max depth, etc
 typedef struct s_settings {
-    int     single_move_time;       // set by st command. default is 10 seconds.
-    int     total_move_time;        // set by time command.
+    UINT    single_move_time;       // set by st command. default is 10 seconds.
+    UINT    total_move_time;        // set by time command.
     int     moves_per_level;        // set by level command in XBoard mode
     int     moves_to_go;            // set by movestogo option in UCI mode.
     int     max_depth;              // set by sd command.

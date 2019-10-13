@@ -152,8 +152,9 @@ void iterative_deepening(GAME *game)
 {
     test_cnt = test_hit = 0;
 
-    if (game->search.post_flag == POST_DEFAULT)
+    if (game->search.post_flag == POST_DEFAULT) {
         printf("Ply      Nodes  Score Time Principal Variation\n");
+    }
 
     int incheck = is_incheck(&game->board, side_on_move(&game->board));
 
@@ -197,9 +198,7 @@ void iterative_deepening(GAME *game)
             game->search.score_drop = FALSE;
 
         //  Don't start another iteration if most of time was used.
-        int used_time = util_get_time() - game->search.start_time;
-
-        assert(used_time <= game->search.extended_move_time + 1000);
+        UINT used_time = util_get_time() - game->search.start_time;
 
         // normal termination after completed iteration.
         if (!game->search.score_drop && depth > 1) {

@@ -43,9 +43,10 @@ void prepare_search(GAME *game, SETTINGS *settings)
 
     //  Specific time per move
     if (settings->single_move_time > 0) {
-        int single_move_time = settings->single_move_time;
-        int time_buffer = (int)(single_move_time * 0.30);
-        if (time_buffer > 100) time_buffer = 100;
+        UINT single_move_time = settings->single_move_time;
+        UINT time_buffer = (UINT)(single_move_time * 0.10);
+        if (time_buffer > 1000) time_buffer = 1000;
+        if (time_buffer < 200) time_buffer = single_move_time / 2;
         single_move_time -= time_buffer;
         game->search.normal_move_time = single_move_time;
         game->search.extended_move_time = single_move_time;
@@ -129,7 +130,8 @@ void check_time(GAME *search_data)
     if (search_data->search.nodes & TIME_CHECK) {
         return;
     }
-    if (util_get_time() >= (UINT)search_data->search.extended_finish_time) {
+    UINT current_time = util_get_time();
+    if (current_time >= search_data->search.extended_finish_time) {
         search_data->search.abort = TRUE;
     }
 }

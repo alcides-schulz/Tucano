@@ -20,45 +20,7 @@
 
 #define ENGINE "Tucano"
 #define AUTHOR "Alcides Schulz"
-#define VERSION "7.37"
-
-// 7.38 - change time control 2.
-// 7.36 - change score limits.
-// 7.35 - change time control.
-// 7.34 - uci protocol
-// 7.33 - syzygy endgame tablebase support
-// 7.32 - added support for 16384 MB transposition table.
-// 7.31 - fix 50 move rule count.
-// 7.30 - fix hash key generation for castle status.
-// 7.29 - review of last move pruning logic.
-// 7.28 - review of additional late move pruning +4 elo
-// 7.27 - additional late moves pruning (using previous move count)
-// 7.26 - counter move heuristic.
-// 7.25 - additional move pruning using previous move counter + 8 elo
-// 7.24 - fix 3-fold repetition counter.
-// 7.23 - tuning eval values.
-// 7.22 - doubled all eval and search values to increase range for tuning.
-// 7.21 - don't reduce/prune bad captures +1 elo.
-// 7.20 - count king attacked squares and code cleanup +2 elo.
-// 7.19 - penalty for pawns on square of bishop color - +5 elo.
-// 7.18 - remove backward pawn logic. gives penalty for weak pawns - +3 elo
-// 7.17 - eval parameters tune texel method. +2 elo
-// 7.16 - check threat on next move bonus
-// 7.15 - change check extension in pv to match zw. +1 elo.
-// 7.14 - don't extend pawn to 7-8 ranks - +1 elo. Code cleanup.
-// 7.13 - reduce quiesce pruning range - 48k games +3 elo.
-// 7.12 - Prune/reduce check moves - 28k games +6 elo.
-// 7.11 - Eval parameters tuning (round 1) - 30k games +3 elo. 
-// 7.10 - Fix time control to allocate more time at late moves - 20k games +10 elo.
-// 7.09 - remove quiet checks generation at first quiesce level - 20k games +1 elo. simplification.
-// 7.08 - Remove eval term queen/rook on 7th rank - 20k games, 0 elo. simplification.
-// 7.07 - removed pawn attacking king zone - 12k games, 0 elo. simplification. 
-// 7.06 - quiesce recap removal - 30k games, +4 elo. simplification.
-// 7.05 - removed quiesce pawn capture skip - 12k games, -2 elo. simplification.
-// 7.04 - space bonus - 24k game +5 elo.
-// 7.03 - removed minor block pawn term. 15k games -1 elo. simplification.
-// 7.02 - removed rook and bishop trap eval terms. 12k games -2 elo. simplification.
-// 7.01 - add thread for user interface
+#define VERSION "8.00"
 
 void        develop_workbench(void);
 double      bench(int depth, int print);
