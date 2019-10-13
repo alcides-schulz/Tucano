@@ -50,9 +50,11 @@ Tucano supports the following options (version 8.00), same name in both XBoard a
 Command Line options
 --------------------
 tucano -hash N -threads N -syzygy_path F
+
    -hash indicates the size of hash table, default = 64 MB, minimum: 8 MB, maximum: 1024 MB.
    -threads indicates how many threads to use during search, minimum: 1, maximum: 64. Depends on how many cores you computer have.
    -syzygy_path indicates the folder of syzygy endgame tablebase.
+
    
 Signature
 ---------
