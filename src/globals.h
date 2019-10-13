@@ -63,6 +63,7 @@ typedef unsigned __int64 uint64_t;
 #include <stdlib.h>
 #include <assert.h>
 #include <math.h>
+#include <inttypes.h>
 
 // Multi thread functions - Reference Stockfish
 #ifndef _WIN32 // Linux - Unix
@@ -88,7 +89,7 @@ typedef HANDLE THREAD_ID;
 
 #endif
 
-// Hack to define variables only once in this file.
+// Variables are defined only once in this file.
 #ifndef EXTERN
 #define EXTERN extern
 #endif
@@ -120,25 +121,27 @@ typedef unsigned int    UINT;
 #define flip_color(color)   ((color) ^ 1)
 
 // Search values
-#define MAX_PLY      128
-#define MAX_DEPTH     64
-#define MAX_HIST    1024
-#define MAX_TIME  999999
+#define MAX_PLY         128
+#define MAX_DEPTH        64
+#define MAX_HIST       1024
+#define MAX_TIME   10000000
 
-#define MAX_EVAL     9000
-#define MATE_VALUE   9999
-#define MAX_SCORE   32767
+#define MAX_EVAL     20000
+#define EGTB_WIN     25000
+#define MATE_VALUE   32000
+#define MAX_SCORE    32767
 
 #define POST_NONE       0
 #define POST_DEFAULT    1
 #define POST_XBOARD     2
+#define POST_UCI        3
 
-#define MAX_READ    16384
+#define MAX_READ     8196
 
 #define MIN_THREADS     1
 #define MAX_THREADS     64
 #define MIN_HASH_SIZE   8
-#define MAX_HASH_SIZE   1024
+#define MAX_HASH_SIZE   16384
 
 // Piece index
 #define PAWN        0
@@ -176,6 +179,7 @@ void    bb_init(void);
 int     bb_first(BBIX bbix);
 int     bb_last(BBIX bbix);
 int     bb_count(BBIX bbix);
+int     bb_count_u64(U64 bb);
 int     first_index(U64 bb);
 int     last_index(U64 bb);
 
@@ -288,11 +292,11 @@ typedef struct s_pv_line {
 #define ENDGAME(s) (((unsigned)(s) & 0x7fffu) - (int)((unsigned)(s) & 0x8000u))
 
 // Piece Values
-#define VALUE_PAWN      90
-#define VALUE_KNIGHT    320
-#define VALUE_BISHOP    320
-#define VALUE_ROOK      500
-#define VALUE_QUEEN     1000
+#define VALUE_PAWN      180
+#define VALUE_KNIGHT    640
+#define VALUE_BISHOP    640
+#define VALUE_ROOK      1000
+#define VALUE_QUEEN     2000
 #define VALUE_KING      0
 
 #define OP      0
@@ -326,28 +330,28 @@ enum e_squares
 #define BB_FILES_KS ((U64)0x0F0F0F0F0F0F0F0F)
 
 //  Search data: move, nodes, time control, etc.
+//  Times are in milliseconds.
 typedef struct s_search
 {
     U64     nodes;                  // visited nodes
+    U64     tbhits;                 // end game table base hits
     int     post_flag;              // output information
     int     use_book;               // use opening book
     int     max_depth;              // max depth 
-    int     total_move_time;        // total time for remaining moves
     UINT    normal_move_time;       // max time for move
     UINT    extended_move_time;     // max time for long search
     UINT    normal_finish_time;     // calculated time to finish
     UINT    extended_finish_time;   // extended time to finish
     UINT    start_time;             // recorded start time
     UINT    end_time;               // recorded end time
-    double  elapsed_time;           // search duration
+    UINT    elapsed_time;           // search duration
     MOVE    best_move;              // best move found
     MOVE    ponder_move;            // pondering move
     int     cur_depth;              // current depth
     int     score_drop;             // controls when score drops
-    int     mate_search;            // test option.
     int     abort;                  // indicates end of search
-    int     root_move_count;        // number of moves at root node
-    int     root_move_search;       // number of move searched at root node.
+    int     root_move_count;        // number of moves at root node, used by xboard analysis
+    int     root_move_search;       // number of move searched at root node, used by xboard analysis
 }   SEARCH;
 
 //  Pawn evaluation table: cache for already evaluated pawn structure
@@ -363,7 +367,6 @@ typedef struct s_eval_table
 {
     U64     key;
     S32     score;
-    S32     dummy;
 }   EVAL_TABLE;
 
 #define PAWN_TABLE_SIZE 16384
@@ -414,6 +417,7 @@ typedef struct s_move_ordering {
     int     hist_tot[COLORS][NUM_PIECES][64];
     int     hist_hit[COLORS][NUM_PIECES][64];
     MOVE    killers[MAX_PLY][COLORS][2];
+    MOVE    counter_move[COLORS][NUM_PIECES][64][2];
 }   MOVE_ORDER;
 
 //  Board representation (bitboard based)
@@ -462,7 +466,6 @@ typedef struct s_move_list
     int         count;
     int         incheck;
     int         caps;
-    int         gen_quiet_checks;
     MOVE        ttm;
     int         next;
     int         phase;
@@ -471,7 +474,6 @@ typedef struct s_move_list
     int         late_moves_next;
     int         sort;
     U64         pins;
-    U64         opp_pieces;
     BOARD       *board;
     MOVE_ORDER  *move_order;
 }   MOVE_LIST;
@@ -486,9 +488,10 @@ typedef struct s_move_list
 
 //  Settings: default time, max depth, etc
 typedef struct s_settings {
-    int     single_move_time;       // set by st command. default is 10 seconds.
-    int     total_move_time;        // set by time command.
-    int     moves_level;            // set by level command.
+    UINT    single_move_time;       // set by st command. default is 10 seconds.
+    UINT    total_move_time;        // set by time command.
+    int     moves_per_level;        // set by level command in XBoard mode
+    int     moves_to_go;            // set by movestogo option in UCI mode.
     int     max_depth;              // set by sd command.
     int     post_flag;              // post format.
     int     use_book;               // opening book use.
@@ -504,11 +507,20 @@ U64     zk_qs(int color, int flag);
 U64     zk_square(int color, int piece, int square);
 
 // Game
+EXTERN GAME        main_game;
+EXTERN SETTINGS    game_settings;
+EXTERN GAME        ponder_game;
+
 void    print_game_result(GAME *game);
 void    trans_table_test(char *fen, char *desc);
 void    auto_play(int total_games, SETTINGS *settings);
 void    new_game(GAME *game, char *fen);
+int     valid_threads(int threads);
+int     valid_hash_size(int hash_size);
 
+// Interface protocols. Communication between engine and GUI.
+void uci_loop(char *engine_name, char *engine_version, char *engine_author);
+    
 // Book
 void    book_init(void);
 MOVE    book_next_move(GAME *game);
@@ -523,10 +535,8 @@ int     is_square_attacked(BOARD *board, int square, int by_color, U64 occup);
 void    gen_moves(BOARD *board, MOVE_LIST *ml);
 void    gen_caps(BOARD *board, MOVE_LIST *ml);
 void    gen_check_evasions(BOARD *board, MOVE_LIST *ml);
-void    gen_quiet_checks(BOARD *board, MOVE_LIST *ml);
 void    print_current_moves(GAME *game);
 void    print_moves(BOARD *board, MOVE_LIST *ml);
-int     util_input_available(void);
 
 void    select_init(MOVE_LIST *ml, GAME *game, int incheck, MOVE ttm, int caps);
 void    add_move(MOVE_LIST *ml, MOVE move);
@@ -534,21 +544,26 @@ void    add_all_promotions(MOVE_LIST *ml, int from_square, int to_square);
 void    add_all_capture_promotions(MOVE_LIST *ml, int from_square, int to_square, int captured_piece);
 MOVE    next_move(MOVE_LIST *ml);
 MOVE    prev_move(MOVE_LIST *ml);
-void    enable_quiet_checks(MOVE_LIST *ml);
 int     is_late_moves(MOVE_LIST *ml);
 int     is_bad_capture(MOVE_LIST *ml);
 int     is_mate_score(int score);
+int     is_eval_score(int score);
 
 //  Move ordering
-void    move_order_save(MOVE_ORDER *move_order, int color, int ply, MOVE move, MOVE_LIST *ml);
+void    move_order_save(MOVE_ORDER *move_order, int color, int ply, MOVE best_move, MOVE_LIST *ml, MOVE previous_move);
 int     get_history_value(MOVE_ORDER *move_order, int color, MOVE move);
 int     has_bad_history(MOVE_ORDER *move_order, int color, MOVE move);
 int     is_killer(MOVE_ORDER *move_order, int color, int ply, MOVE move);
+int     is_counter_move(MOVE_ORDER *move_order, int prev_color, MOVE previous_move, MOVE current_move);
+
 
 // Search
 void    prepare_search(GAME *game, SETTINGS *settings);
 void    threads_init(int threads_count);
 void    search_run(GAME *game, SETTINGS *settings);
+U64     get_additional_threads_nodes(void);
+U64     get_additional_threads_tbhits(void);
+void    ponder_search(GAME *game);
 void    update_pv(PV_LINE *pv_line, int ply, MOVE move);
 int     null_depth(int depth);
 int     piece_value(int piece);
@@ -557,8 +572,8 @@ int     has_pawn_on_rank7(BOARD *board, int color);
 int     is_pawn_to_rank78(int turn, MOVE move);
 void    check_time(GAME *game);
 int     search_pv(GAME *game, UINT incheck, int alpha, int beta, int depth);
-int     search_zw(GAME *game, UINT incheck, int beta, int depth, UINT can_null, MOVE exclude_move);
-int     quiesce(GAME *game, UINT incheck, int alpha, int beta, int depth, int square_recap);
+int     search_zw(GAME *game, UINT incheck, int beta, int depth, UINT can_null, MOVE exclude_move, int prev_move_count);
+int     quiesce(GAME *game, UINT incheck, int alpha, int beta, int depth);
 void    post_info(GAME *game, int score, int depth);
 int     is_check(BOARD *board, MOVE move);
 
@@ -570,7 +585,7 @@ int     get_game_result(GAME *game);
 
 // transposition table
 void    tt_age(void);
-void    tt_init(int size_mb);
+void    tt_init(size_t size_mb);
 void    tt_clear(void);
 void    tt_save(BOARD *board, int depth, int search_score, S8 flag, MOVE best);
 int     tt_probe(BOARD *board, int depth, int alpha, int beta, int *search_score, MOVE *best_move);
@@ -578,12 +593,7 @@ MOVE    tt_move(BOARD *board);
 int     tt_score(BOARD *board, int min_depth, int *tt_score);
 
 // Analyze Mode
-EXTERN  int  is_analysis;
-EXTERN  char analysis_command[MAX_READ];
 void    analyze_mode(GAME *game);
-
-// Ponder Mode
-EXTERN  int  is_pondering;
 
 // Board
 void    new_game(GAME *game, char *fen);
@@ -617,6 +627,7 @@ U64     occupied_bb(BOARD *board);
 U64     empty_bb(BOARD *board);
 int     king_square(BOARD *board, int color);
 U8      side_on_move(BOARD *board);
+MOVE    get_last_move_made(BOARD *board);
 U64     board_key(BOARD *board);
 U64     board_pawn_key(BOARD *board);
 int     piece_on_square(BOARD *board, int color, int square);
@@ -676,6 +687,7 @@ EXTERN int SCORE_BISHOP;
 EXTERN int SCORE_ROOK;
 EXTERN int SCORE_QUEEN;
 EXTERN int B_BISHOP_PAIR;
+EXTERN int B_TEMPO;
 
 // King
 EXTERN int B_PAWN_PROXIMITY;
@@ -688,8 +700,8 @@ EXTERN int B_CONNECTED;
 EXTERN int P_DOUBLED;
 EXTERN int P_ISOLATED;
 EXTERN int P_ISOLATED_OPEN;
-EXTERN int P_BACKWARD;
-EXTERN int P_BACKWARD_OPEN;
+EXTERN int P_WEAK;
+EXTERN int B_PAWN_SPACE;
 
 // Passed Pawns
 EXTERN int B_PASSED_RANK3;
@@ -708,14 +720,7 @@ EXTERN int B_KING_FAR_OPP;
 // Pieces
 EXTERN int B_ROOK_SEMI_OPEN;
 EXTERN int B_ROOK_FULL_OPEN;
-EXTERN int B_ROOK_RANK_8;
-EXTERN int B_ROOK_RANK_7;
-EXTERN int P_ROOK_TRAP;
-EXTERN int B_DOUBLE_RANK_7;
-EXTERN int P_MINOR_BLOCK_PAWN;
-EXTERN int B_QUEEN_RANK_7;
-EXTERN int P_BISHOP_TRAP1;
-EXTERN int P_BISHOP_TRAP2;
+EXTERN int P_PAWN_BISHOP_SQ;
 
 // Mobility
 EXTERN int B_QUEEN_MOBILITY;
@@ -729,6 +734,7 @@ EXTERN int KING_ATTACK_BISHOP;
 EXTERN int KING_ATTACK_ROOK;
 EXTERN int KING_ATTACK_QUEEN;
 EXTERN int KING_ATTACK_MULTI;
+EXTERN int KING_ATTACK_EGPCT;
 EXTERN int B_KING_ATTACK;
 
 // Threats
@@ -742,6 +748,11 @@ EXTERN int B_THREAT_KNIGHT;
 EXTERN int B_THREAT_BISHOP;
 EXTERN int B_THREAT_ROOK;
 EXTERN int B_THREAT_QUEEN;
+
+EXTERN int B_CHECK_THREAT_KNIGHT;
+EXTERN int B_CHECK_THREAT_BISHOP;
+EXTERN int B_CHECK_THREAT_ROOK;
+EXTERN int B_CHECK_THREAT_QUEEN;
 
 // PST's
 EXTERN int PST_P_FILE_OP;
@@ -790,6 +801,7 @@ typedef struct s_pgn_game {
     char    result[PGN_TAG_SIZE];
     int     moves_index;
     int     move_number;
+    int     loses_on_time;
 }   PGN_GAME;
 
 typedef struct s_pgn_move {
@@ -828,12 +840,20 @@ int     pawn_is_connected(BOARD *board, int pcsq, int color);
 int     pawn_is_weak(BOARD *board, int pcsq, int color);
 int     pawn_is_passed(BOARD *board, int pcsq, int color);
 int     pawn_is_isolated(BOARD *board, int pcsq, int color);
-int     pawn_is_backward(BOARD *board, int pcsq, int color);
 int     pawn_is_candidate(BOARD *board, int pcsq, int color);
 #endif
 
 // For tests.
 EXTERN U64 test_cnt;
 EXTERN U64 test_hit;
+
+#ifdef EGTB_SYZYGY
+
+#define TB_NO_STDBOOL
+#include "fathom/tbprobe.h"
+
+U32 egtb_probe_wdl(BOARD *board, int depth, int ply);
+
+#endif
 
 //End

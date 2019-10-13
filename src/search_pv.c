@@ -44,8 +44,7 @@ int search_pv(GAME *game, UINT incheck, int alpha, int beta, int depth)
     assert(beta > alpha);
     assert(depth <= MAX_DEPTH);
 
-	if (depth <= 0)
-		return quiesce(game, incheck, alpha, beta, 0, -1);
+	if (depth <= 0) return quiesce(game, incheck, alpha, beta, 0);
 
 	game->pv_line.pv_size[ply] = ply;
 	game->search.nodes++;
@@ -62,8 +61,7 @@ int search_pv(GAME *game, UINT incheck, int alpha, int beta, int depth)
     //  Mate pruning.
     alpha = MAX(-MATE_VALUE + ply, alpha);
     beta = MIN(MATE_VALUE - ply, beta);
-    if (alpha >= beta)
-        return alpha;
+    if (alpha >= beta) return alpha;
 
     //  Get move hint from transposition table
     trans_move = tt_move(&game->board);
@@ -71,8 +69,7 @@ int search_pv(GAME *game, UINT incheck, int alpha, int beta, int depth)
     // Internal Iterative Deepening.
     if (depth > 3 && trans_move == MOVE_NONE) {
         score = search_pv(game, incheck, alpha, beta, depth - 3);
-        if (score <= alpha)
-            score = search_pv(game, incheck, -MAX_SCORE, beta, depth - 3);
+        if (score <= alpha) score = search_pv(game, incheck, -MAX_SCORE, beta, depth - 3);
         if (game->search.abort) return 0;
         trans_move = tt_move(&game->board);
     }
@@ -93,21 +90,21 @@ int search_pv(GAME *game, UINT incheck, int alpha, int beta, int depth)
             continue;
         
         move_count++;
+
         reductions = 0;
         extensions = 0;
 
         gives_check = is_check(&game->board, move);
         
-        // check and advance pawn extensions
-        if (gives_check || (is_pawn_to_rank78(turn, move) && see_move(&game->board, move) >= 0))
-            extensions = 1;
+        // extension if move puts opponent in check
+        if (gives_check && (depth < 4 || see_move(&game->board, move) >= 0)) extensions = 1;
 
         // singular move extension
         if (try_singular_extension && move == trans_move && depth >= 8 && !extensions) {
             if (tt_score(&game->board, depth - 3, &trans_score)) {
                 if (!is_mate_score(trans_score)) {
-                    reduced_beta = trans_score - 2 * depth;
-                    score = search_zw(game, incheck, reduced_beta, depth / 2, FALSE, move);
+                    reduced_beta = trans_score - 4 * depth;
+                    score = search_zw(game, incheck, reduced_beta, depth / 2, FALSE, move, move_count);
                     if (score < reduced_beta) {
                         extensions = 1;
                     }
@@ -116,19 +113,26 @@ int search_pv(GAME *game, UINT incheck, int alpha, int beta, int depth)
         }
 
         // Pruning or depth reductions
-        if (!gives_check && !incheck && !extensions && move_count > 1 && !is_mate_score(alpha) && !is_mate_score(beta)) {
+        if (!incheck && !extensions && move_count > 1 && !is_mate_score(alpha) && !is_mate_score(beta)) {
             assert(move != trans_move);
+
             // Quiet moves pruning/reductions
-            if (is_late_moves(&ml) && !is_free_pawn(&game->board, turn, move) && !is_killer(&game->move_order, turn, ply, move))  {
-                // futility pruning
-                if (move_is_quiet(move) && depth < 10 && evaluate(game, alpha, beta) + depth * 50 < alpha)
-                    continue;
-                // late move reductions
-                if (move_count > 3 && depth > 2) {
-                    reductions = 1;
-                    if (depth > 5 && has_bad_history(&game->move_order, turn, move))
-                        reductions += depth / 6;
-                    reductions = MIN(reductions, 5);
+            if (move_is_quiet(move) && !is_free_pawn(&game->board, turn, move) && !is_killer(&game->move_order, turn, ply, move))  {
+
+                if (!is_counter_move(&game->move_order, flip_color(turn), get_last_move_made(&game->board), move)) {
+
+                    // Futility pruning: eval + margin below beta.
+                    if (depth < 10 && evaluate(game, alpha, beta) + depth * 100 < alpha) {
+                        continue;
+                    }
+
+                    // Late move reductions: reduce depth for later moves
+                    if (move_count > 3 && depth > 2) {
+                        reductions = 1;
+                        if (depth > 5 && has_bad_history(&game->move_order, turn, move))
+                            reductions += depth / 6;
+                        reductions = MIN(reductions, 5);
+                    }
                 }
             }
         }
@@ -141,42 +145,40 @@ int search_pv(GAME *game, UINT incheck, int alpha, int beta, int depth)
             score = -search_pv(game, gives_check, -beta, -alpha, depth - 1 + extensions - reductions);
         }
         else  {
-            score = -search_zw(game, gives_check, -alpha, depth - 1 + extensions - reductions, 1, MOVE_NONE);
-            if (!game->search.abort && score > alpha && reductions)
-                score = -search_zw(game, gives_check, -alpha, depth - 1 + extensions, 1, MOVE_NONE);
-            if (!game->search.abort && score > alpha)
+            score = -search_zw(game, gives_check, -alpha, depth - 1 + extensions - reductions, 1, MOVE_NONE, move_count);
+            if (!game->search.abort && score > alpha && reductions) {
+                score = -search_zw(game, gives_check, -alpha, depth - 1 + extensions, 1, MOVE_NONE, move_count);
+            }
+            if (!game->search.abort && score > alpha) {
                 score = -search_pv(game, gives_check, -beta, -alpha, depth - 1 + extensions);
+            }
         }
         undo_move(&game->board);
-        if (game->search.abort)
-            return 0;
+        if (game->search.abort) return 0;
 
         //  Score verification.
         if (score > best_score) {
-            if (score >= beta) {
-                if (move_is_quiet(move))
-                    move_order_save(&game->move_order, turn, ply, move, &ml);
-                tt_save(&game->board, depth, score, TT_LOWER, move);
-                if (ply == 0)  {
-                    update_pv(&game->pv_line, ply, move);
-                    post_info(game, score, depth);
-                }
-                return score;
-            }
             if (score > alpha) {
                 update_pv(&game->pv_line, ply, move);
-                if (ply == 0)
-                    post_info(game, score, depth);
+                if (ply == 0) post_info(game, score, depth);
                 alpha = score;
                 best_move = move;
+                if (score >= beta) {
+                    if (move_is_quiet(move)) {
+                        move_order_save(&game->move_order, turn, ply, move, &ml, get_last_move_made(&game->board));
+                    }
+                    tt_save(&game->board, depth, score, TT_LOWER, move);
+                    return score;
+                }
             }
             best_score = score;
         }
     }
 
     //  Draw or checkmate.
-    if (best_score == -MAX_SCORE)
+    if (best_score == -MAX_SCORE) {
         return (incheck ? -MATE_VALUE + ply : 0);
+    }
 
     if (best_move != MOVE_NONE) 
         tt_save(&game->board, depth, best_score, TT_EXACT, best_move);

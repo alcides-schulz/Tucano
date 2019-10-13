@@ -21,8 +21,8 @@
 //    Pawn structure evaluation.
 //------------------------------------------------------------------------------------
 
-int is_backward(BOARD *board, int myc, int pcsq);
 int is_candidate(BOARD *board, int myc, int pcsq);
+int space_bonus(BOARD *board, int myc);
 
 int USE_PAWN_TABLE = TRUE;
 
@@ -49,10 +49,8 @@ void eval_pawns(BOARD *board, PAWN_TABLE *pawn_table, EVALUATION *eval_values)
         pawns.u64 = pawn_bb(board, myc);
         while (pawns.u64) {
             int pcsq = bb_first(pawns);
-//            int file = get_file(pcsq);
             int rank = get_rank(pcsq);
             int relative_rank = get_relative_rank(myc, rank);
-//            int relative_pcsq = get_relative_square(myc, pcsq);
 
             assert(piece_on_square(board, myc, pcsq) == PAWN);
 
@@ -64,14 +62,14 @@ void eval_pawns(BOARD *board, PAWN_TABLE *pawn_table, EVALUATION *eval_values)
             int weak = (!(weak_mask_bb(myc, pcsq) & pawn_bb(board, myc))) ? TRUE : FALSE;
             int isolated = (weak && !(isolated_mask_bb(pcsq) & pawn_bb(board, myc))) ? TRUE : FALSE;
             int opposing = (forward_path_bb(myc, pcsq) & pawn_bb(board, opp)) ? TRUE : FALSE;
-            int backward = (!isolated && weak && !passed && !connected && is_backward(board, myc, pcsq)) ? TRUE : FALSE;
-            int candidate = (!passed && !isolated && !backward && !opposing && is_candidate(board, myc, pcsq)) ? TRUE : FALSE;
+            int candidate = (!passed && !isolated && !weak && !opposing && is_candidate(board, myc, pcsq)) ? TRUE : FALSE;
 
             eval_values->pawn[myc] -= doubled ? P_DOUBLED : 0;
             eval_values->pawn[myc] += connected ? B_CONNECTED : 0;
             eval_values->pawn[myc] -= isolated ? (opposing ? P_ISOLATED : P_ISOLATED_OPEN) : 0;
-            eval_values->pawn[myc] -= backward ? (opposing ? P_BACKWARD : P_BACKWARD_OPEN) : 0;
             eval_values->pawn[myc] += candidate ? B_CANDIDATE * relative_rank : 0;
+            eval_values->pawn[myc] += space_bonus(board, myc);
+            eval_values->pawn[myc] -= weak ? P_WEAK : 0;
 
             if (passed) {
                 bb_set_bit(&eval_values->bb_passers[myc], pcsq);
@@ -83,7 +81,6 @@ void eval_pawns(BOARD *board, PAWN_TABLE *pawn_table, EVALUATION *eval_values)
             assert(pawn_is_passed(board, pcsq, myc) == passed);
             assert(pawn_is_weak(board, pcsq, myc) == weak);
             assert(pawn_is_isolated(board, pcsq, myc) == isolated);
-            assert(pawn_is_backward(board, pcsq, myc) == backward);
             assert(pawn_is_candidate(board, pcsq, myc) == candidate);
             
             bb_clear_bit(&pawns.u64, pcsq);
@@ -101,34 +98,30 @@ void eval_pawns(BOARD *board, PAWN_TABLE *pawn_table, EVALUATION *eval_values)
 }
 
 //------------------------------------------------------------------------------------
-//    Backward pawn
+//    Controled squares that are behind pawn chain.
 //------------------------------------------------------------------------------------
-int is_backward(BOARD *board, int myc, int pcsq)
+int space_bonus(BOARD *board, int myc) 
 {
-    BBIX    bb_my_pawn;
-    BBIX    bb_op_pawn;
-    int     file = get_file(pcsq);
-    int     opp = flip_color(myc);
+    BBIX space;
+    
+    space.u64 = pawn_bb(board, myc);
 
-    bb_my_pawn.u64 = bb_op_pawn.u64 = 0;
-    if (file > 0) {
-        bb_my_pawn.u64 |= (forward_path_bb(myc, pcsq - 1) & pawn_bb(board, myc));
-        bb_op_pawn.u64 |= (forward_path_bb(myc, pcsq - 1) & pawn_bb(board, opp));
+    if (myc == WHITE) {
+        space.u64 |= space.u64 >> 8;
+        space.u64 |= space.u64 >> 8;
+        space.u64 |= space.u64 >> 8;
+        space.u64 &= (U64)0x000000FFFFFF0000; // ranks 3, 4, 5
     }
-    if (file < 7) {
-        bb_my_pawn.u64 |= (forward_path_bb(myc, pcsq + 1) & pawn_bb(board, myc));
-        bb_op_pawn.u64 |= (forward_path_bb(myc, pcsq + 1) & pawn_bb(board, opp));
-    }
-    if (bb_op_pawn.u64) {
-        if (!bb_my_pawn.u64)
-            return TRUE;
-        if (myc == WHITE && get_rank(bb_last(bb_op_pawn)) > get_rank(bb_last(bb_my_pawn)))
-            return TRUE;
-        if (myc == BLACK && get_rank(bb_first(bb_op_pawn)) < get_rank(bb_first(bb_my_pawn)))
-            return TRUE;
+    else {
+        space.u64 |= space.u64 << 8;
+        space.u64 |= space.u64 << 8;
+        space.u64 |= space.u64 << 8;
+        space.u64 &= (U64)0x0000FFFFFF000000; // ranks 6, 5, 4
     }
 
-    return FALSE;
+    space.u64 &= (all_pieces_bb(board, myc) | empty_bb(board)) & ~pawn_bb(board, myc);
+
+    return bb_count(space) * B_PAWN_SPACE;
 }
 
 //------------------------------------------------------------------------------------

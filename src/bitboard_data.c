@@ -60,6 +60,7 @@ U64     pawn_isol_mask[64];     // mask to test isolated pawns
 //-------------------------------------------------------------------------------------------------
 void bb_data_init(void) 
 {
+    assert(valid_rank_file());
     init_king_moves();
     init_knight_moves();
     init_rankfile_moves();

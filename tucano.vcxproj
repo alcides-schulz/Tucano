@@ -63,6 +63,9 @@
     <LinkIncremental>false</LinkIncremental>
     <OutDir>$(SolutionDir)x32\$(Configuration)\</OutDir>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <PrecompiledHeader>
@@ -109,7 +112,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <FavorSizeOrSpeed>Neither</FavorSizeOrSpeed>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -118,10 +121,17 @@
       <FloatingPointModel>Fast</FloatingPointModel>
       <CompileAs>CompileAsC</CompileAs>
       <WarningLevel>EnableAllWarnings</WarningLevel>
-      <PreprocessorDefinitions>VS2017</PreprocessorDefinitions>
+      <PreprocessorDefinitions>VS2017;EGTB_SYZYGYxx</PreprocessorDefinitions>
+      <ObjectFileName>$(IntDir)OBJ\</ObjectFileName>
+      <Optimization>Full</Optimization>
     </ClCompile>
+    <Link>
+      <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
+    </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="src\fathom\tbconfig.h" />
+    <ClInclude Include="src\fathom\tbprobe.h" />
     <ClInclude Include="src\globals.h" />
   </ItemGroup>
   <ItemGroup>
@@ -142,15 +152,18 @@
     <ClCompile Include="src\eval_pieces.c" />
     <ClCompile Include="src\eval_pst.c" />
     <ClCompile Include="src\eval_utils.c" />
+    <ClCompile Include="src\fathom\tbcore.c" />
+    <ClCompile Include="src\fathom\tbprobe.c" />
     <ClCompile Include="src\game.c" />
     <ClCompile Include="src\move_gen_capture.c" />
     <ClCompile Include="src\move_gen_evasion.c" />
     <ClCompile Include="src\move_gen_quiet.c" />
-    <ClCompile Include="src\move_gen_quiet_checks.c" />
     <ClCompile Include="src\main.c" />
     <ClCompile Include="src\move.c" />
     <ClCompile Include="src\move_order.c" />
     <ClCompile Include="src\move_selector.c" />
+    <ClCompile Include="src\protocol_uci.c" />
+    <ClCompile Include="src\search_egtb_syzygy.c" />
     <ClCompile Include="src\search_main.c" />
     <ClCompile Include="src\search_pv.c" />
     <ClCompile Include="src\search_quiesce.c" />
@@ -183,6 +196,8 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="README.md" />
+    <None Include="src\fathom\LICENSE" />
+    <None Include="src\fathom\README.md" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

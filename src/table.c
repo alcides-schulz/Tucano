@@ -39,29 +39,30 @@ typedef struct trans_entry
 }   TT_ENTRY;
 
 TT_ENTRY    *trans_table = 0;
-int         trans_size;
+size_t      trans_size;
 int         trans_entries;
 S16         trans_age;
 
 //-------------------------------------------------------------------------------------------------
 //  Initialization.
 //-------------------------------------------------------------------------------------------------
-void tt_init(int size_mb)
+void tt_init(size_t size_mb)
 {
     assert(sizeof(TT_REC) == 16);
 
-    if (trans_table)
-        free(trans_table);
+    if (trans_table) free(trans_table);
+
     trans_size = 2;
-    while (trans_size * 2 <= size_mb)
+    while (trans_size * 2 <= size_mb) {
         trans_size *= 2;
+    }
     trans_size = trans_size * 1024 * 1024;
     trans_table = (TT_ENTRY *)malloc(trans_size);
     if (!trans_table)  {
         printf("no memory for transposition table!");
         exit(-1);
     }
-    trans_entries = trans_size / sizeof(TT_ENTRY);
+    trans_entries = (int)(trans_size / sizeof(TT_ENTRY));
     
     assert(trans_entries * (int)sizeof(TT_ENTRY) == trans_size);
 
@@ -124,16 +125,18 @@ void tt_save(BOARD *board, int depth, int search_score, S8 flag, MOVE best_move)
 
     if (record1 == NULL) {
         record1 = record2;
-        if (record1 == NULL)
+        if (record1 == NULL) {
             record1 = &trans_table[idx].record[0];
+        }
     }
 
     // Adjust mate score
-    if (search_score > MAX_EVAL)
+    if (search_score >= MATE_VALUE - MAX_PLY && search_score <= MATE_VALUE) {
         search_score += get_ply(board);
-    else
-        if (search_score < -MAX_EVAL)
-            search_score -= get_ply(board);
+    }
+    if (search_score >= -MATE_VALUE && search_score <= -MATE_VALUE + MAX_PLY) {
+        search_score -= get_ply(board);
+    }
 
     // Store entry
     record1->key = LOW32(board_key(board));
@@ -162,8 +165,8 @@ int tt_probe(BOARD *board, int depth, int alpha, int beta, int *search_score, MO
     *best_move = MOVE_NONE;
     
     for (rec = 0; rec < TT_BUCKETS; rec++) {
-        if (trans_table[idx].record[rec].key != LOW32(board_key(board)))
-            continue;
+
+        if (trans_table[idx].record[rec].key != LOW32(board_key(board))) continue;
 
         tt_depth = trans_table[idx].record[rec].depth;
         tt_flag = trans_table[idx].record[rec].flag;
@@ -175,11 +178,12 @@ int tt_probe(BOARD *board, int depth, int alpha, int beta, int *search_score, MO
         *search_score = trans_table[idx].record[rec].search_score;
 
         if (tt_depth >= depth) {
-            if (*search_score > MAX_EVAL)
+            if (*search_score >= MATE_VALUE - MAX_PLY && *search_score <= MATE_VALUE) {
                 *search_score -= get_ply(board);
-            else
-                if (*search_score < -MAX_EVAL)
-                    *search_score += get_ply(board);
+            }
+            if (*search_score >= -MATE_VALUE && *search_score <= -MATE_VALUE + MAX_PLY) {
+                *search_score += get_ply(board);
+            }
             if ((tt_flag == TT_UPPER && *search_score <= alpha) ||
                 (tt_flag == TT_LOWER && *search_score >= beta) ||
                 (tt_flag == TT_EXACT))

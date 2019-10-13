@@ -61,65 +61,6 @@ UINT util_get_time(void)
 #endif
 }
 
-//-------------------------------------------------------------------------------------------------
-//  Input available: Used by analysis and ponder.
-//-------------------------------------------------------------------------------------------------
-int util_input_available(void) 
-{
-#ifdef IS_WINDOWS
-    
-    static int      init = FALSE;
-    static int      is_pipe = FALSE;
-    static HANDLE   stdin_h;
-    
-    DWORD    val;
-
-#ifndef VS2017
-    // FIXME: create a thread to handle input
-    if (stdin->_cnt > 0) return TRUE;
-#endif
-
-    if (!init) {
-        init = TRUE;
-        stdin_h = GetStdHandle(STD_INPUT_HANDLE);
-        is_pipe = !GetConsoleMode(stdin_h, &val);
-        if (!is_pipe) {
-            SetConsoleMode(stdin_h, val&~(ENABLE_MOUSE_INPUT | ENABLE_WINDOW_INPUT));
-            FlushConsoleInputBuffer(stdin_h);
-        }
-    }
-
-    if (is_pipe) {
-        if (!PeekNamedPipe(stdin_h, NULL, 0, NULL, &val, NULL))
-            return TRUE;
-        return val > 0 ? TRUE : FALSE;
-    }
-    else {
-        GetNumberOfConsoleInputEvents(stdin_h, &val);
-        return val > 1 ? TRUE : FALSE;
-    }
-    
-#else // NON_WINDOWS
-   
-    int val;
-    fd_set set[1];
-    struct timeval time_val[1];
-
-    FD_ZERO(set);
-    FD_SET(STDIN_FILENO,set);
-
-    time_val->tv_sec = 0;
-    time_val->tv_usec = 0;
-
-    val = select(STDIN_FILENO+1,set,NULL,NULL,time_val);
-    if (val == -1 && val != EINTR) {
-        fprintf(stderr, "input_available(): select(): %s\n", strerror(errno));
-    }
-    return val > 0 ? TRUE : FALSE;
-
-#endif
-}
-
 #ifdef IS_WINDOWS
 //-------------------------------------------------------------------------------------------------
 // Use ASCII extended codes to draw board.

@@ -24,16 +24,14 @@
 //-------------------------------------------------------------------------------------------------
 //  Search nodes until a quiet position is found.
 //-------------------------------------------------------------------------------------------------
-int quiesce(GAME *game, UINT incheck, int alpha, int beta, int depth, int square_recap)
+int quiesce(GAME *game, UINT incheck, int alpha, int beta, int depth)
 {
     MOVE_LIST   ml;
     int     score;
     int     move_count = 0;
     MOVE    move = MOVE_NONE;
     int     best_score = -MAX_SCORE;
-    int     turn = side_on_move(&game->board);
     int     ply = get_ply(&game->board);
-    int     cppc;
     int     gives_check;
     MOVE    trans_move = MOVE_NONE;
     MOVE    best_move = MOVE_NONE;
@@ -63,53 +61,34 @@ int quiesce(GAME *game, UINT incheck, int alpha, int beta, int depth, int square
 
     if (!incheck) {
         best_score = evaluate(game, alpha, beta);
-        if (best_score >= beta)
-            return best_score;
-        if (best_score > alpha)
-            alpha = best_score;
+        if (best_score >= beta) return best_score;
+        if (best_score > alpha) alpha = best_score;
     }
 
     select_init(&ml, game, incheck, trans_move, TRUE);
-    if (!incheck) {
-        if (depth >= 0)
-            enable_quiet_checks(&ml);
-        if (depth < 0 && best_score + 300 <= alpha) {
-            ml.opp_pieces ^= pawn_bb(&game->board, flip_color(turn));
-        }
-    }
 
     while ((move = next_move(&ml)) != MOVE_NONE) {
 
         assert(is_valid(&game->board, move));
 
-        if (!is_pseudo_legal(&game->board, ml.pins, move))
-            continue;
-
-        //int see_old = see_move(&game->board, move);
-        //int see_new = see_move_new(&game->board, move);
-        //if ((see_old >= 0 && see_new < 0) || (see_old > 0 && see_new <= 0)) {
-        //    printf("see_old: %d see_new: %d ", see_old, see_new);
-        //    util_print_move(move, TRUE);
-        //    board_print(&game->board, "see");
-        //    see_move_new(&game->board, move);
-        //}
+        if (!is_pseudo_legal(&game->board, ml.pins, move)) continue;
 
         move_count++;
         gives_check = is_check(&game->board, move);
 
-        //  Skip moves that are not going to improve the position.
-        if (!incheck && !gives_check && unpack_type(move) == MT_CAPPC) {
-            cppc = unpack_capture(move);
+        // Prune checks with negative SEE score;
+        if (gives_check && see_move(&game->board, move) < 0) continue;
 
-            if (depth < -4 && unpack_to(move) != square_recap)
-                continue;
+        //  Skip moves that are not going to improve the position.
+        if (!incheck && unpack_type(move) == MT_CAPPC) {
 
             // Skip captures that will not improve alpha (delta pruning)
-            if (best_score + 150 + piece_value(cppc) <= alpha)
+            if (best_score + 240 + piece_value(unpack_capture(move)) <= alpha) {
                 continue;
+            }
 
             // Skip losing captures based on Static Exchange Evaluation (SEE).
-            if (piece_value_see(cppc) < piece_value_see(unpack_piece(move))) {
+            if (piece_value_see(unpack_capture(move)) < piece_value_see(unpack_piece(move))) {
                 if (see_move(&game->board, move) < 0) {
                     continue;
                 }
@@ -122,11 +101,10 @@ int quiesce(GAME *game, UINT incheck, int alpha, int beta, int depth, int square
         assert(valid_is_legal(&game->board, move));
 
         //  Search new position.
-        score = -quiesce(game, gives_check, -beta, -alpha, depth - 1, unpack_to(move));
+        score = -quiesce(game, gives_check, -beta, -alpha, depth - 1);
         
         undo_move(&game->board);
-        if (game->search.abort)
-            return 0;
+        if (game->search.abort) return 0;
 
         //  Score verification
         if (score > best_score) {
@@ -144,8 +122,9 @@ int quiesce(GAME *game, UINT incheck, int alpha, int beta, int depth, int square
     }
 
     //  Return only checkmate scores. We don't look at all moves unless in check.
-    if (move_count == 0 && incheck)
+    if (move_count == 0 && incheck) {
         return -MATE_VALUE + ply;
+    }
 
     if (!EVAL_TUNING) {
         if (best_move != MOVE_NONE)

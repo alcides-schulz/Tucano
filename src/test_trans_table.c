@@ -32,7 +32,7 @@ void trans_table_test(char *fen, char *desc)
 
     SETTINGS settings;
     settings.max_depth = MAX_DEPTH;
-    settings.moves_level = 0;
+    settings.moves_per_level = 0;
     settings.post_flag = POST_DEFAULT;
     settings.single_move_time = 10000; 
     settings.total_move_time = 0;

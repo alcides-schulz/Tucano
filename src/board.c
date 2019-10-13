@@ -95,8 +95,10 @@ void set_fen(BOARD *board, char *fen)
         }
         i++;
     }
-    board->key ^= zk_ks(side_on_move(board), board->state[side_on_move(board)].can_castle_ks);
-    board->key ^= zk_qs(side_on_move(board), board->state[side_on_move(board)].can_castle_qs);
+    board->key ^= zk_ks(WHITE, board->state[WHITE].can_castle_ks);
+    board->key ^= zk_qs(WHITE, board->state[WHITE].can_castle_qs);
+    board->key ^= zk_ks(BLACK, board->state[BLACK].can_castle_ks);
+    board->key ^= zk_qs(BLACK, board->state[BLACK].can_castle_qs);
 
     // En-passant square
     board->ep_square = 0;
@@ -143,6 +145,15 @@ void set_fen(BOARD *board, char *fen)
 U8 side_on_move(BOARD *board)
 {
     return board->side_on_move;
+}
+
+//-------------------------------------------------------------------------------------------------
+//  Get last move made on the board
+//-------------------------------------------------------------------------------------------------
+MOVE get_last_move_made(BOARD *board)
+{
+    if (board->histply == 0) return MOVE_NONE;
+    return board->history[board->histply - 1].move;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -249,12 +260,12 @@ void make_move(BOARD *board, MOVE move)
     board->ply++;
     board->histply++;
 
-    board->side_on_move = flip_color(board->side_on_move);
-
     board->key ^= zk_ks(board->side_on_move, board->state[board->side_on_move].can_castle_ks);
     board->key ^= zk_qs(board->side_on_move, board->state[board->side_on_move].can_castle_qs);
 
-    assert(zk_board_key(board) == board->key);
+    board->side_on_move = flip_color(board->side_on_move);
+
+    //assert(zk_board_key(board) == board->key);
     assert(board_state_is_ok(board));
     assert(board->ply <= MAX_PLY);
     assert(board->histply <= MAX_HIST);
@@ -366,33 +377,29 @@ int pieces_count(BOARD *board, int color)
 }
 
 //-------------------------------------------------------------------------------------------------
-//  Check if current board is draw.
+//  Check if current board position is draw.
 //-------------------------------------------------------------------------------------------------
 int is_draw(BOARD *board)
 {
-    if (is_threefold_repetition(board))
-        return TRUE;
-    if (board->fifty_move_rule > 100)
-        return TRUE;
-       if (insufficient_material(board))
-        return TRUE;
+    if (is_threefold_repetition(board)) return TRUE;
+    if (reached_fifty_move_rule(board)) return TRUE;
+    if (insufficient_material(board)) return TRUE;
     return FALSE;
 }
 
 //-------------------------------------------------------------------------------------------------
-//  Check if current position already happened before
+//  Check if current position already happened before.
 //-------------------------------------------------------------------------------------------------
 int is_threefold_repetition(BOARD *board)
 {
-    int        i;
-    int        reps = 0;
+    int repetitions = 0;
 
-    for (i = board->histply - board->fifty_move_rule; i < board->histply; i++)  {
-        if (board->history[i].board_key == board->key)
-            reps++;
+    for (int i = board->histply - board->fifty_move_rule; i < board->histply; i++)  {
+        if (board->history[i].board_key == board->key) repetitions++;
     }
 
-    if (reps >= 2)
+    // Uses repetition count as 2 instead of 3. Forces avoiding 3-fold at all.
+    if (repetitions >= 1)
         return TRUE;
     else
         return FALSE;
@@ -411,11 +418,11 @@ int insufficient_material(BOARD *board)
 }
 
 //-------------------------------------------------------------------------------------------------
-//  check if reached 50 move rule
+//  Check if reached 50 move rule
 //-------------------------------------------------------------------------------------------------
 int reached_fifty_move_rule(BOARD *board)
 {
-    if (board->fifty_move_rule > 100)
+    if (board->fifty_move_rule >= 100)
         return TRUE;
     else
         return FALSE;

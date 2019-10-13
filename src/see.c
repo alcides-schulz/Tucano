@@ -103,7 +103,7 @@ int see_move(BOARD *board, MOVE move)
 
 int is_see_promotion(int target_rank, int piece_type)
 {
-    assert(target_rank >= and target_rank <= 7);
+    assert(target_rank >= 0 && target_rank <= 7);
     assert(piece_type >= PAWN && piece_type <= KING);
 
     if (piece_type == PAWN && (target_rank == RANK1 || target_rank == RANK8))
@@ -114,7 +114,7 @@ int is_see_promotion(int target_rank, int piece_type)
 
 int get_piece_value_see(int target_rank, int piece_type)
 {
-    assert(target_rank >= and target_rank <= 7);
+    assert(target_rank >= 0 &&  target_rank <= 7);
     assert(piece_type >= PAWN && piece_type <= KING);
 
     if (piece_type == PAWN && (target_rank == RANK1 || target_rank == RANK8))

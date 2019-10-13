@@ -18,20 +18,18 @@
 #define EXTERN
 #include "globals.h"
 
-#define VERSION "7.00"
+#define ENGINE "Tucano"
+#define AUTHOR "Alcides Schulz"
+#define VERSION "8.00"
 
-void    develop_workbench(void);
-double  bench(int depth, int print);
-void    speed_test(void);
-int     valid_threads(int threads);
-int     valid_hash_size(int hash_size);
-void    settings_init(void);
+void        develop_workbench(void);
+double      bench(int depth, int print);
+void        speed_test(void);
+void        settings_init(void);
 
-GAME        main_game;
-SETTINGS    game_settings;
-SETTINGS    ponder_settings;
 char        line[MAX_READ];
 char        command[MAX_READ] = { '\0' };
+char        syzygy_path[1024] = "";
 
 //-------------------------------------------------------------------------------------------------
 //  Main loop
@@ -45,12 +43,13 @@ int main(int argc, char *argv[])
     char        epd_file[1000];
     int         ponder_on = FALSE;
     MOVE        ponder_move = MOVE_NONE;
+    THREAD_ID   ponder_thread = 0;
 
     // Options
     int         threads = 1;    // Number of Threads
     int         hash_size = 64; // Hash Table Size in MB
 
-    printf("tucano chess engine by Alcides Schulz - %s (type 'help' for information)\n", VERSION);
+    printf("%s chess engine by %s - %s (type 'help' for information)\n", ENGINE, AUTHOR, VERSION);
 
     EVAL_TUNING = FALSE;
     EVAL_PRINTING = FALSE;
@@ -66,10 +65,15 @@ int main(int argc, char *argv[])
         if (!strcmp("-ponder", argv[i])) {
             ponder_on = TRUE;
         }
+#ifdef EGTB_SYZYGY
+        if (!strcmp("-syzygy_path", argv[i])) {
+            if (++i < argc) strcpy(syzygy_path, argv[i]);
+        }
+#endif
     }
-    
+
     printf("   hash table: %d MB, threads: %d\n", hash_size, threads);
-    
+
     // Initializations
     srand((UINT)19810505);
     bb_init();
@@ -79,19 +83,22 @@ int main(int argc, char *argv[])
     book_init();
     tt_init(hash_size);
     threads_init(threads);
+#ifdef EGTB_SYZYGY
+    if (strlen(syzygy_path) != 0) {
+        if (tb_init(syzygy_path)) {
+            printf("# using egtb syzygy path=%s TB_LARGEST=%d\n", syzygy_path, TB_LARGEST);
+        }
+
+    }
+#endif
 
     settings_init();
 
     new_game(&main_game, FEN_NEW_GAME);
 
-    is_analysis = FALSE;
-    is_pondering = FALSE;
-    
 #ifndef NDEBUG
     printf("\nDEBUG MODE ON (running with asserts)\n");
 #endif
-
-    assert(valid_rank_file());
 
     signal(SIGINT, SIG_IGN);
     printf("\n");
@@ -99,25 +106,9 @@ int main(int argc, char *argv[])
     while (!stop) {
         fflush(stdout);
 
-        if (ponder_on && computer != -1 && side_on_move(&main_game.board) != computer && ponder_move != MOVE_NONE) {
-            if (is_valid(&main_game.board, ponder_move))  {
-                make_move(&main_game.board, ponder_move);
-                if (!is_illegal(&main_game.board, ponder_move)) {
-                    is_pondering = TRUE;
-                    search_run(&main_game, &ponder_settings);
-                    is_pondering = FALSE;
-                }
-                undo_move(&main_game.board);
-            }
-        }
-
         if (side_on_move(&main_game.board) == computer) {
+
             search_run(&main_game, &game_settings);
-            if (game_settings.post_flag == POST_DEFAULT) {
-                printf("\nNodes: %lld  Time spent: %3.2f  Nodes/Sec=%8.0f\n", 
-                    main_game.search.nodes, main_game.search.elapsed_time, main_game.search.nodes / main_game.search.elapsed_time);
-                printf("\n");
-            }
 
             if (!main_game.search.best_move) {
                 print_game_result(&main_game);
@@ -133,19 +124,36 @@ int main(int argc, char *argv[])
 
             if (get_game_result(&main_game) != GR_NOT_FINISH) {
                 print_game_result(&main_game);
+                continue;
+            }
+
+            if (ponder_on && ponder_move != MOVE_NONE && is_valid(&main_game.board, ponder_move)) {
+                memcpy(&ponder_game, &main_game, sizeof(GAME));
+                make_move(&ponder_game.board, ponder_move);
+                if (!is_illegal(&ponder_game.board, ponder_move)) {
+                    THREAD_CREATE(ponder_thread, ponder_search, &ponder_game);
+                }
             }
 
             continue;
         }
 
-        if (!fgets(line, MAX_READ, stdin))
-            return 0;
+        if (!fgets(line, MAX_READ, stdin)) return 0;
     
-        if (line[0] == '\n')
-            continue;
+        if (line[0] == '\n') continue;
         
         sscanf(line, "%s", command);
 
+        if (!strcmp(command, "uci")) {
+            uci_loop(ENGINE, VERSION, AUTHOR);
+            stop = TRUE;
+            continue;
+        }
+        if (ponder_on && ponder_thread != 0) {
+            ponder_game.search.abort = TRUE;
+            THREAD_WAIT(ponder_thread);
+            ponder_thread = 0;
+        }
         if (!strcmp(command, "xboard"))  {
             printf("\n");
             continue;
@@ -177,8 +185,8 @@ int main(int argc, char *argv[])
         }
         if (!strcmp(command, "level"))  {
             // just get the "moves to go". will use "time" command to calculate move time.
-            sscanf(line, "level %d", &game_settings.moves_level);
-            if (game_settings.moves_level < 0) game_settings.moves_level = 0;
+            sscanf(line, "level %d", &game_settings.moves_per_level);
+            if (game_settings.moves_per_level < 0) game_settings.moves_per_level = 0;
             continue;
         }
         if (!strcmp(command, "time"))  {
@@ -206,6 +214,9 @@ int main(int argc, char *argv[])
             printf("feature analyze=1\n");
             printf("feature option=\"Hash -spin 64 %d %d\"\n", MIN_HASH_SIZE, MAX_HASH_SIZE);
             printf("feature option=\"Threads -spin 1 %d %d\"\n", MIN_THREADS, MAX_THREADS);
+#ifdef EGTB_SYZYGY
+            printf("feature option=\"SyzygyPath -path \"\"\"\n");
+#endif
             printf("feature done=1\n");
             continue;
         }
@@ -220,6 +231,16 @@ int main(int argc, char *argv[])
                 threads = valid_threads(threads);
                 threads_init(threads);
             }
+#ifdef EGTB_SYZYGY
+            if (strstr(line, "SyzygyPath")) {
+                strcpy(syzygy_path, &line[strlen("option SyzygyPath=")]);
+                if (strlen(syzygy_path) != 0) {
+                    if (tb_init(syzygy_path)) {
+                        printf("# using egtb syzygy path=%s TB_LARGEST=%d\n", syzygy_path, TB_LARGEST);
+                    }
+                }
+            }
+#endif
             continue;
         }
         if (!strcmp(command, "undo")) {
@@ -258,22 +279,15 @@ int main(int argc, char *argv[])
             ponder_on = FALSE;
             continue;
         }
-        if (!strcmp(command, "otim")) 
-            continue;
-        if (!strcmp(command, "random"))
-            continue;
-        if (!strcmp(command, "computer"))
-            continue;
-        if (!strcmp(command, "white")) 
-            continue;
-        if (!strcmp(command, "black")) 
-            continue;
-        if (!strcmp(command, "accepted"))
-            continue;
-        if (!strcmp(command, "rejected"))
-            continue;
-        if (!strcmp(command, "result"))
-            continue;
+
+        if (!strcmp(command, "otim"))     continue;
+        if (!strcmp(command, "random"))   continue;
+        if (!strcmp(command, "computer")) continue;
+        if (!strcmp(command, "white"))    continue;
+        if (!strcmp(command, "black"))    continue;
+        if (!strcmp(command, "accepted")) continue;
+        if (!strcmp(command, "rejected")) continue;
+        if (!strcmp(command, "result"))   continue;
 
         //  Special commands (non Xboard)
         if (!strcmp(command, "post1")) {
@@ -288,7 +302,7 @@ int main(int argc, char *argv[])
             continue;
         }
         if (!strcmp(command, "eval")) {
-            //  Display current position evaluation score.
+            //  Display current position evaluation information.
             eval_print(&main_game);
             continue;
         }
@@ -397,7 +411,7 @@ int main(int argc, char *argv[])
             continue;
         }
         if (!strcmp(command, "help")) {
-            printf("Tucano accepts XBoard/Winboard commands.\n\n");
+            printf("Tucano supports XBoard/Winboard or UCI protocols.\n\n");
             printf("Other commands that can be used:\n\n");
             printf("             d: display current board\n");
             printf("          eval: print evaluation score for current position\n");
@@ -408,9 +422,10 @@ int main(int argc, char *argv[])
             printf("\n");
             printf("\n");
             printf("Command line options:\n\n");
-            printf(" tucano -hash <MB> -threads <#>\n");
+            printf(" tucano -hash <MB> -threads <#> -syzygy_path <path>\n");
             printf("   -hash indicates the size of hash table, default = 64 MB, minimum: %d MB, maximum: %d MB.\n", MIN_HASH_SIZE, MAX_HASH_SIZE);
             printf("   -threads indicates how many threads to use during search, minimum: %d, maximum: %d.\n", MIN_THREADS, MAX_THREADS);
+            printf("   -syzygy_path indicates the path of Syzygy end game tablebases.\n");
             printf("\n");
             continue;
         }
@@ -436,17 +451,10 @@ void settings_init(void)
 {
     game_settings.single_move_time = 10000; // 10 seconds
     game_settings.total_move_time = 0;
-    game_settings.moves_level = 0;
+    game_settings.moves_per_level = 0;
     game_settings.max_depth = MAX_DEPTH;
     game_settings.post_flag = POST_DEFAULT;
     game_settings.use_book = FALSE;
-
-    ponder_settings.single_move_time = MAX_TIME;
-    ponder_settings.total_move_time = MAX_TIME;
-    ponder_settings.moves_level = 0;
-    ponder_settings.max_depth = MAX_DEPTH;
-    ponder_settings.post_flag = POST_XBOARD;
-    ponder_settings.use_book = FALSE;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -485,7 +493,7 @@ double bench(int depth, int print)
 
     SETTINGS settings;
     settings.max_depth = depth;
-    settings.moves_level = 0;
+    settings.moves_per_level = 0;
     settings.post_flag = POST_NONE;
     settings.single_move_time = MAX_TIME;
     settings.total_move_time = MAX_TIME;
@@ -496,8 +504,8 @@ double bench(int depth, int print)
     int total_tests = 0;
     for (int i = 0; test[i]; i++) total_tests++;
 
-    U64     signature = 0;
-    double  elapsed = 0;
+    U64     nodes = 0;
+    int     elapsed = 1;
 
     for (int i = 0; test[i]; i++) {
         if (print) printf("%d/%d) %s\n", i + 1, total_tests, test[i]);
@@ -506,13 +514,13 @@ double bench(int depth, int print)
 
         search_run(game, &settings);
 
-        signature += game->search.nodes;
+        nodes += game->search.nodes;
         elapsed += game->search.elapsed_time;
     }
 
-    double nps = signature / elapsed;
+    double nps = 1000.0 * (double)nodes / elapsed;
 
-    if (print) printf("\nSignature: %llu  Time: %3.2f  Nodes/sec: %4.0fk\n", signature, elapsed, nps / 1000.0);
+    if (print) printf("\nSignature: %" PRIu64 "  Elapsed time: %3.2f secs  Nodes/sec: %4.0fk\n", nodes, (double)elapsed / 1000.0, nps / 1000.0);
 
     free(game);
 
@@ -572,8 +580,12 @@ int valid_hash_size(int hash_size) {
 //-------------------------------------------------------------------------------------------------
 //  Used for development tests.
 //-------------------------------------------------------------------------------------------------
+
+void eval_tune(void);
+
 void develop_workbench(void)
 {
+    eval_tune();
 }
 
 //END

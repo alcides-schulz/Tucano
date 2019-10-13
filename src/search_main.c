@@ -48,8 +48,22 @@ void threads_init(int threads_count)
     memset(thread_data, 0, (size_t)(sizeof(GAME) * additional_threads));
 }
 
+void ponder_search(GAME *game)
+{
+    SETTINGS    ponder_settings;
+
+    ponder_settings.single_move_time = MAX_TIME;
+    ponder_settings.total_move_time = MAX_TIME;
+    ponder_settings.moves_per_level = 0;
+    ponder_settings.max_depth = MAX_DEPTH;
+    ponder_settings.post_flag = POST_XBOARD;
+    ponder_settings.use_book = FALSE;
+
+    search_run(game, &ponder_settings);
+}
+
 //-------------------------------------------------------------------------------------------------
-//  Search data preparation and threads coordination
+//  Search preparation and threads coordination
 //-------------------------------------------------------------------------------------------------
 void search_run(GAME *game, SETTINGS *settings)
 {
@@ -64,16 +78,17 @@ void search_run(GAME *game, SETTINGS *settings)
     game->search.ponder_move = MOVE_NONE;
     game->search.abort = FALSE;
     game->search.nodes = 0;
+    game->search.tbhits = 0;
 
     game->is_main_thread = TRUE;
 
     //  Try to find a move from book.
-    if (game->search.use_book && !is_analysis) {
+    if (game->search.use_book) {
         MOVE bookmove = book_next_move(game);
         if (bookmove != MOVE_NONE) {
             game->search.best_move = bookmove;
             game->search.end_time = util_get_time();
-            game->search.elapsed_time = 0.0001;
+            game->search.elapsed_time = 1;
             return;
         }
     }
@@ -84,7 +99,7 @@ void search_run(GAME *game, SETTINGS *settings)
     memset(&game->move_order, 0, sizeof(MOVE_ORDER));
     tt_age();
 
-    // Multi Thread: copy data to additional threads and start them.
+    //  Multi Thread: copy data to additional threads and start them.
     for (int i = 0; i < additional_threads; i++) {
         memcpy(&thread_data[i].board, &game->board, sizeof(BOARD));
 		memcpy(&thread_data[i].search, &game->search, sizeof(SEARCH));
@@ -95,18 +110,39 @@ void search_run(GAME *game, SETTINGS *settings)
         THREAD_CREATE(thread_data[i].thread_handle, iterative_deepening, &thread_data[i]);
     }
 
-    // Search
+    //  Run main search
     iterative_deepening(game);
 
-	// Notify additional threads to finish and collect nodes count
+	//  Notify additional threads to finish
     for (int i = 0; i < additional_threads; i++) {
         thread_data[i].search.abort = TRUE;
         THREAD_WAIT(thread_data[i].thread_handle);
-        game->search.nodes += thread_data[i].search.nodes;
     }
 
     game->search.end_time = util_get_time();
-    game->search.elapsed_time = (double)(game->search.end_time - game->search.start_time) / 1000.0;
+    game->search.elapsed_time = game->search.end_time - game->search.start_time;
+}
+
+U64 get_additional_threads_nodes(void)
+{
+    U64     total = 0;
+
+    for (int i = 0; i < additional_threads; i++) {
+        total += thread_data[i].search.nodes;
+    }
+
+    return total;
+}
+
+U64 get_additional_threads_tbhits(void)
+{
+    U64     total = 0;
+
+    for (int i = 0; i < additional_threads; i++) {
+        total += thread_data[i].search.tbhits;
+    }
+
+    return total;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -116,8 +152,9 @@ void iterative_deepening(GAME *game)
 {
     test_cnt = test_hit = 0;
 
-    if (game->search.post_flag == POST_DEFAULT)
+    if (game->search.post_flag == POST_DEFAULT) {
         printf("Ply      Nodes  Score Time Principal Variation\n");
+    }
 
     int incheck = is_incheck(&game->board, side_on_move(&game->board));
 
@@ -144,16 +181,15 @@ void iterative_deepening(GAME *game)
         game->search.cur_depth = depth;
 
         int score = search_asp(game, incheck, depth, prev_score);
-        if (game->search.abort)
-            break;
+        if (game->search.abort) break;
 
         // Verify if score dropped from last iteration.
         if (depth > 4) {
-            if (score + 10 < prev_score)
+            if (score + 20 < prev_score)
                 var -= 3;
             else
                 var += 1;
-            if (score + 20 < prev_score)
+            if (score + 40 < prev_score)
                 var = -3;
         }
         if (var < 0)
@@ -161,22 +197,19 @@ void iterative_deepening(GAME *game)
         else
             game->search.score_drop = FALSE;
 
-        //  Used when testing mate positions.
-        if (game->search.mate_search != 0 && score == game->search.mate_search)
-            break;
-
         //  Don't start another iteration if most of time was used.
         UINT used_time = util_get_time() - game->search.start_time;
 
-        assert(used_time <= game->search.extended_move_time + 1000);
-
+        // normal termination after completed iteration.
         if (!game->search.score_drop && depth > 1) {
-            if ((double)used_time >= ((double)game->search.normal_move_time * 0.6))
+            if (used_time >= game->search.normal_move_time) {
                 break;
+            }
         }
         if (depth > 1) {
-            if ((double)used_time >= ((double)game->search.extended_move_time * 0.6))
+            if (used_time >= game->search.extended_move_time * 0.6) {
                 break;
+            }
         }
 
         prev_score = score;
@@ -192,8 +225,8 @@ void iterative_deepening(GAME *game)
     if (game->is_main_thread && test_cnt) {
         cnt += test_cnt;
         hit += test_hit;
-        printf("-------->  TEST  CNT=%llu HIT=%llu PCT=%3.4f\n", test_cnt, test_hit, (double)(test_cnt == 0 ? 0 : test_hit * 100.0 / test_cnt));
-        printf("-------->  TOTAL CNT=%llu HIT=%llu PCT=%3.4f\n", cnt, hit, (double)(cnt == 0 ? 0 : hit * 100.0 / cnt));
+        printf("-------->  TEST  CNT=%" PRIu64 " HIT=%" PRIu64 " PCT=%3.4f\n", test_cnt, test_hit, (double)(test_cnt == 0 ? 0 : test_hit * 100.0 / test_cnt));
+        printf("-------->  TOTAL CNT=%" PRIu64 " HIT=%" PRIu64 " PCT=%3.4f\n", cnt, hit, (double)(cnt == 0 ? 0 : hit * 100.0 / cnt));
     }
 }
 
@@ -208,7 +241,7 @@ int search_asp(GAME *game, int incheck, int depth, int prev_score)
     int    score;
 
     if (depth > 6) {
-        for (window = 25; window <= 400; window *= 4) {
+        for (window = 50; window <= 800; window *= 4) {
             alpha = prev_score - window;
             beta  = prev_score + window;
             score = search_pv(game, incheck, alpha, beta, depth);

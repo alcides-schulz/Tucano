@@ -88,7 +88,7 @@ void perftz_pos(GAME *game, char *fen, int depth, U64 expected)
         nodes = perftz_nodes(game, d + 1);
     }
     
-    printf("[%s] depth: %d count: %llu found: %llu\n", fen, depth, expected, nodes);
+    printf("[%s] depth: %d count: %" PRIu64 " found: %" PRIu64 "\n", fen, depth, expected, nodes);
 
     if (expected != nodes) {
         printf(" ERROR ****************** \n");

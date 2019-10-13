@@ -28,12 +28,11 @@ enum    {TRANS,
          NEXT_QUIET, 
          NEXT_LATE_MOVE, 
          GEN_EVASION, 
-         NEXT_EVASION, 
-         GEN_QUIET_CHECKS, 
-         NEXT_QUIET_CHECK};
+         NEXT_EVASION};
 
-#define    SORT_CAPS    200000000
-#define    SORT_KILL    100000000
+#define    SORT_CAPTURE   100000000
+#define    SORT_KILLER     10000000
+#define    SORT_COUNTER     1000000
 
 void    select_next(MOVE_LIST *ml);
 int     is_badcap(BOARD *board, MOVE move);
@@ -58,8 +57,6 @@ void select_init(MOVE_LIST *ml, GAME *game, int incheck, MOVE ttm, int caps)
     ml->ttm = ttm;
     ml->phase = TRANS;
     ml->sort = TRUE;
-    ml->gen_quiet_checks = FALSE;
-    ml->opp_pieces = all_pieces_bb(&game->board, flip_color(side_on_move(&game->board)));
     ml->board = &game->board;
     ml->move_order = &game->move_order;
 }
@@ -113,11 +110,6 @@ int is_bad_capture(MOVE_LIST *ml)
         return FALSE;
 }
 
-void enable_quiet_checks(MOVE_LIST *ml)
-{
-    ml->gen_quiet_checks = TRUE;
-}
-
 int skip_trans_move(MOVE_LIST *ml)
 {
     if (ml->moves[ml->next] == ml->ttm) {
@@ -159,12 +151,9 @@ MOVE next_move(MOVE_LIST *ml)
                 // Have to make the move in order to test for check legality.
                 // Some moves coming from tt are valid for the position but leave the king in check.
                 make_move(ml->board, ml->ttm);
-                if (is_illegal(ml->board, ml->ttm))
-                    ml->ttm = MOVE_NONE;
+                if (is_illegal(ml->board, ml->ttm)) ml->ttm = MOVE_NONE;
                 undo_move(ml->board);
-                if (ml->ttm != MOVE_NONE) {
-                    return ml->ttm;
-                }
+                if (ml->ttm != MOVE_NONE) return ml->ttm;
             }
             ml->ttm = MOVE_NONE;
         }
@@ -208,11 +197,8 @@ MOVE next_move(MOVE_LIST *ml)
         }
         ml->phase = NEXT_LATE_MOVE;
     case NEXT_LATE_MOVE:
-        if (ml->late_moves_next < ml->late_moves_count)
+        if (ml->late_moves_next < ml->late_moves_count) {
             return ml->late_moves[ml->late_moves_next++];
-        if (ml->gen_quiet_checks) {
-            ml->phase = GEN_QUIET_CHECKS;
-            return next_move(ml);
         }
         return MOVE_NONE;
     case GEN_EVASION:
@@ -222,19 +208,6 @@ MOVE next_move(MOVE_LIST *ml)
         assign_tactical_score(ml);
         ml->phase = NEXT_EVASION;
     case NEXT_EVASION:
-        while (ml->next < ml->count) {
-            select_next(ml);
-            if (skip_trans_move(ml)) continue;
-            return ml->moves[ml->next++];
-        }
-        return MOVE_NONE;
-    case GEN_QUIET_CHECKS:
-        ml->count = 0;
-        ml->next = 0;
-        gen_quiet_checks(ml->board, ml);
-        assign_tactical_score(ml);
-        ml->phase = NEXT_QUIET_CHECK;
-    case NEXT_QUIET_CHECK:
         while (ml->next < ml->count) {
             select_next(ml);
             if (skip_trans_move(ml)) continue;
@@ -294,21 +267,25 @@ void assign_tactical_score(MOVE_LIST *ml)
     for (i = 0; i < ml->count; i++) {
         switch (unpack_type(ml->moves[i])) {
         case MT_CAPPC:
-            ml->score[i] = SORT_KILL + VICTIM_VALUE[unpack_capture(ml->moves[i])] + ATTACKER_VALUE[unpack_piece(ml->moves[i])];
+            ml->score[i] = SORT_CAPTURE + VICTIM_VALUE[unpack_capture(ml->moves[i])] + ATTACKER_VALUE[unpack_piece(ml->moves[i])];
             break;
         case MT_EPCAP:
-            ml->score[i] = SORT_KILL + VICTIM_VALUE[PAWN] + ATTACKER_VALUE[PAWN];
+            ml->score[i] = SORT_CAPTURE + VICTIM_VALUE[PAWN] + ATTACKER_VALUE[PAWN];
             break;
         case MT_PROMO:
-            ml->score[i] = SORT_KILL + VICTIM_VALUE[unpack_prom_piece(ml->moves[i])];
+            ml->score[i] = SORT_CAPTURE + VICTIM_VALUE[unpack_prom_piece(ml->moves[i])];
             break;
         case MT_CPPRM:
-            ml->score[i] = SORT_KILL + VICTIM_VALUE[unpack_prom_piece(ml->moves[i])] + VICTIM_VALUE[unpack_capture(ml->moves[i])];
+            ml->score[i] = SORT_CAPTURE + VICTIM_VALUE[unpack_prom_piece(ml->moves[i])] + VICTIM_VALUE[unpack_capture(ml->moves[i])];
             break;
         default:
             ml->score[i] = get_history_value(ml->move_order, side_on_move(ml->board), ml->moves[i]);
-            if (is_killer(ml->move_order, side_on_move(ml->board), get_ply(ml->board), ml->moves[i]))
-                ml->score[i] += SORT_KILL / 10;
+            if (is_killer(ml->move_order, side_on_move(ml->board), get_ply(ml->board), ml->moves[i])) {
+                ml->score[i] += SORT_KILLER;
+            }
+            if (is_counter_move(ml->move_order, flip_color(side_on_move(ml->board)), get_last_move_made(ml->board), ml->moves[i])) {
+                ml->score[i] += SORT_COUNTER;
+            }
         }
     }
 }
@@ -322,8 +299,12 @@ void assign_quiet_score(MOVE_LIST *ml)
 
     for (i = 0; i < ml->count; i++) {
         ml->score[i] = get_history_value(ml->move_order, side_on_move(ml->board), ml->moves[i]);
-        if (is_killer(ml->move_order, side_on_move(ml->board), get_ply(ml->board), ml->moves[i]))
-            ml->score[i] += SORT_KILL;
+        if (is_killer(ml->move_order, side_on_move(ml->board), get_ply(ml->board), ml->moves[i])) {
+            ml->score[i] += SORT_CAPTURE;
+        }
+        if (is_counter_move(ml->move_order, flip_color(side_on_move(ml->board)), get_last_move_made(ml->board), ml->moves[i])) {
+            ml->score[i] += SORT_KILLER;
+        }
     }
 }
 

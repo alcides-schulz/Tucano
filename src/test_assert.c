@@ -62,14 +62,11 @@ int pawn_is_candidate(BOARD *board, int pcsq, int color)
     int     own = 0;
     int     enemy = 0;
 
-    if (pawn_is_passed(board, pcsq, color))
-        return FALSE;
-    if (pawn_is_isolated(board, pcsq, color))
-        return FALSE;
-    if (pawn_is_backward(board, pcsq, color))
-        return FALSE;
-    if (get_relative_rank(color, get_rank(pcsq)) < 2 || get_relative_rank(color, get_rank(pcsq)) > 5)
-        return FALSE;
+    if (pawn_is_passed(board, pcsq, color)) return FALSE;
+    if (pawn_is_isolated(board, pcsq, color)) return FALSE;
+    if (get_relative_rank(color, get_rank(pcsq)) < 2 || get_relative_rank(color, get_rank(pcsq)) > 5) return FALSE;
+    if (pawn_is_weak(board, pcsq, color)) return FALSE;
+
     // count supporting pawns on the side or behind.
     sq = pcsq;
     while (get_rank(sq) != RANK1 && get_rank(sq) != RANK8) {
@@ -92,46 +89,6 @@ int pawn_is_candidate(BOARD *board, int pcsq, int color)
     }
     if (own >= enemy)
         return TRUE;
-    return FALSE;
-}
-
-int pawn_is_backward(BOARD *board, int pcsq, int color)
-{
-    int     sq = (color == WHITE ? SQ_N(pcsq) : SQ_S(pcsq));
-    int     own = 0;
-    int     enemy = 0;
-
-    if (pawn_is_connected(board, pcsq, color))
-        return FALSE;
-    if (pawn_is_passed(board, pcsq, color))
-        return FALSE;
-    if (!pawn_is_weak(board, pcsq, color))
-        return FALSE;
-    if (pawn_is_isolated(board, pcsq, color))
-        return FALSE;
-
-    if (get_relative_rank(color, get_rank(pcsq)) > 5)
-        return FALSE;
-
-    while (get_rank(sq) != RANK1 && get_rank(sq) != RANK8) {
-        if (get_file(sq) > 0) {
-            if (piece_on_square(board, color, sq - 1) == PAWN)
-                own = 1;
-            if (piece_on_square(board, flip_color(color), sq - 1) == PAWN)
-                enemy = 1;
-        }
-        if (get_file(sq) < 7) {
-            if (piece_on_square(board, color, sq + 1) == PAWN)
-                own = 1;
-            if (piece_on_square(board, flip_color(color), sq + 1) == PAWN)
-                enemy = 1;
-        }
-        if (own)
-            return FALSE;
-        if (enemy)
-            return TRUE;
-        sq = (color == WHITE ? SQ_N(sq) : SQ_S(sq));
-    }
     return FALSE;
 }
 

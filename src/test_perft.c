@@ -47,7 +47,7 @@ void perft(int depth)
         double seconds = (double)duration / 1000.0;
 
         printf("%5d ", d);
-        printf("%9lld ", nodes);
+        printf("%9" PRIu64 " ", nodes);
         printf("%4.1f ", seconds);
         printf("%9.0f ", nodes_per_second);
         printf("\n");

@@ -98,10 +98,10 @@ void eval_material(BOARD *board, EVALUATION *eval_values)
                                  + bp * SCORE_PAWN
                                  + (bb >= 2 ? B_BISHOP_PAIR : 0);
 
-    //  Calculate the phase of the game based on material.
-    //  Opening = 0, Endgame = 24
-    //  Base value is 24: 2Q * 4 + 4R * 2 + 4B * 1 + 4N * 1
-    eval_values->phase = 24 - ((wq + bq) * 4 + (wr + br) * 2 + (wb + bb + wn + bn) * 1);
+    //  Calculate game phase based on piece values.
+    //  Opening = 0, Endgame = 48
+    //  Base value is 48: 2Q * 8 + 4R * 4 + 4B * 2 + 4N * 2
+    eval_values->phase = 48 - ((wq + bq) * 8 + (wr + br) * 4 + (wb + bb + wn + bn) * 2);
 
     //  Draw adjustment factor to reduce the material advantage in some cases.
     eval_values->draw_adjust = 64;
