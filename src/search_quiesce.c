@@ -28,7 +28,6 @@ int quiesce(GAME *game, UINT incheck, int alpha, int beta, int depth)
 {
     MOVE_LIST   ml;
     int     score;
-    int     move_count = 0;
     MOVE    move = MOVE_NONE;
     int     best_score = -MAX_SCORE;
     int     ply = get_ply(&game->board);
@@ -55,7 +54,7 @@ int quiesce(GAME *game, UINT incheck, int alpha, int beta, int depth)
     if (alpha >= beta) return alpha;
 
     // transposition table score or move hint
-    if (!EVAL_TUNING && tt_probe(&game->board, depth == 0 ? 0 : -1, alpha, beta, &score, &trans_move)) {
+    if (tt_probe(&game->board, depth == 0 ? 0 : -1, alpha, beta, &score, &trans_move)) {
         return score;
     }
 
@@ -70,14 +69,6 @@ int quiesce(GAME *game, UINT incheck, int alpha, int beta, int depth)
     while ((move = next_move(&ml)) != MOVE_NONE) {
 
         assert(is_valid(&game->board, move));
-
-        if (!is_pseudo_legal(&game->board, ml.pins, move)) continue;
-
-        move_count++;
-        gives_check = is_check(&game->board, move);
-
-        // Prune checks with negative SEE score;
-        if (gives_check && see_move(&game->board, move) < 0) continue;
 
         //  Skip moves that are not going to improve the position.
         if (!incheck && unpack_type(move) == MT_CAPPC) {
@@ -95,6 +86,10 @@ int quiesce(GAME *game, UINT incheck, int alpha, int beta, int depth)
             }
         }
 
+        if (!is_pseudo_legal(&game->board, ml.pins, move)) continue;
+
+        gives_check = is_check(&game->board, move);
+
         make_move(&game->board, move);
 
         assert(gives_check == is_incheck(&game->board, side_on_move(&game->board)));
@@ -110,7 +105,7 @@ int quiesce(GAME *game, UINT incheck, int alpha, int beta, int depth)
         if (score > best_score) {
             if (score > alpha)  {
                 if (score >= beta) {
-                    if (!EVAL_TUNING) tt_save(&game->board, depth == 0 ? 0 : -1, score, TT_LOWER, move);
+                    tt_save(&game->board, depth == 0 ? 0 : -1, score, TT_LOWER, move);
                     return score;
                 }
                 update_pv(&game->pv_line, ply, move);
@@ -122,16 +117,14 @@ int quiesce(GAME *game, UINT incheck, int alpha, int beta, int depth)
     }
 
     //  Return only checkmate scores. We don't look at all moves unless in check.
-    if (move_count == 0 && incheck) {
+    if (best_score == -MAX_SCORE && incheck) {
         return -MATE_VALUE + ply;
     }
 
-    if (!EVAL_TUNING) {
-        if (best_move != MOVE_NONE)
-            tt_save(&game->board, depth == 0 ? 0 : -1, best_score, TT_EXACT, best_move);
-        else
-            tt_save(&game->board, depth == 0 ? 0 : -1, best_score, TT_UPPER, MOVE_NONE);
-    }
+    if (best_move != MOVE_NONE)
+        tt_save(&game->board, depth == 0 ? 0 : -1, best_score, TT_EXACT, best_move);
+    else
+        tt_save(&game->board, depth == 0 ? 0 : -1, best_score, TT_UPPER, MOVE_NONE);
 
     return best_score;
 }

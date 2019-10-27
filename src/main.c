@@ -20,7 +20,7 @@
 
 #define ENGINE "Tucano"
 #define AUTHOR "Alcides Schulz"
-#define VERSION "8.01"
+#define VERSION "8.02"
 
 void        develop_workbench(void);
 double      bench(int depth, int print);
@@ -51,7 +51,6 @@ int main(int argc, char *argv[])
 
     printf("%s chess engine by %s - %s (type 'help' for information)\n", ENGINE, AUTHOR, VERSION);
 
-    EVAL_TUNING = FALSE;
     EVAL_PRINTING = FALSE;
 
     // Command line options

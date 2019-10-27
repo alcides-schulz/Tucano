@@ -32,7 +32,7 @@ void new_game(GAME *game, char *fen)
     memset(&game->pv_line, 0, sizeof(PV_LINE));
     memset(&game->eval_table, 0, sizeof(game->eval_table));
     memset(&game->pawn_table, 0, sizeof(game->pawn_table));
-    if (!EVAL_TUNING) tt_clear();
+    tt_clear();
     game->is_main_thread = TRUE;
 }
 

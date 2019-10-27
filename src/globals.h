@@ -373,7 +373,6 @@ typedef struct s_eval_table
 #define EVAL_TABLE_SIZE 32768
 
 EXTERN int EVAL_PRINTING;
-EXTERN int EVAL_TUNING;
 
 typedef struct s_eval_values
 {

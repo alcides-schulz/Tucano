@@ -35,7 +35,7 @@ void eval_pawns(BOARD *board, PAWN_TABLE *pawn_table, EVALUATION *eval_values)
     
     // Probe pawn evaluation table.
     PAWN_TABLE *ppt = pawn_table + (board_pawn_key(board) % PAWN_TABLE_SIZE);
-    if (USE_PAWN_TABLE && board_pawn_key(board) != 0 && ppt->key == board_pawn_key(board) && !EVAL_PRINTING && !EVAL_TUNING) {
+    if (USE_PAWN_TABLE && board_pawn_key(board) != 0 && ppt->key == board_pawn_key(board) && !EVAL_PRINTING) {
         eval_values->pawn[WHITE] = ppt->pawn_eval[WHITE];
         eval_values->pawn[BLACK] = ppt->pawn_eval[BLACK];
         eval_values->bb_passers[WHITE] = ppt->bb_passers[WHITE];
@@ -88,7 +88,7 @@ void eval_pawns(BOARD *board, PAWN_TABLE *pawn_table, EVALUATION *eval_values)
     }
 
     // Save information to pawn table.
-    if (USE_PAWN_TABLE && !EVAL_TUNING) {
+    if (USE_PAWN_TABLE) {
         ppt->key = board_pawn_key(board);
         ppt->pawn_eval[WHITE] = eval_values->pawn[WHITE];
         ppt->pawn_eval[BLACK] = eval_values->pawn[BLACK];

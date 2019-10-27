@@ -36,7 +36,7 @@ int evaluate(GAME *game, int alpha, int beta)
 {
     //  Return score from eval table if available.
     EVAL_TABLE *pet = game->eval_table + (board_key(&game->board) % EVAL_TABLE_SIZE);
-    if (USE_EVAL_TABLE && pet->key == board_key(&game->board) && !EVAL_PRINTING && !EVAL_TUNING) {
+    if (USE_EVAL_TABLE && pet->key == board_key(&game->board) && !EVAL_PRINTING) {
         return pet->score;
     }
 
@@ -125,7 +125,7 @@ int evaluate(GAME *game, int alpha, int beta)
     assert(score >= -MAX_EVAL && score <= MAX_EVAL);
 
     //  Save to eval table and return.
-    if (USE_EVAL_TABLE && !EVAL_TUNING) {
+    if (USE_EVAL_TABLE) {
         pet->key = board_key(&game->board);
         pet->score = score;
     }

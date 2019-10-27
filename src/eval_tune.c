@@ -105,8 +105,6 @@ void eval_tune(void)
     double  k = 0.4;
     char    option[1024];
 
-    EVAL_TUNING = TRUE;
-
     init_param_list();
 
     while (TRUE) {
