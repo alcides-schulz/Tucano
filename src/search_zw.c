@@ -117,7 +117,7 @@ int search_zw(GAME *game, UINT incheck, int beta, int depth, UINT can_null, MOVE
     }
 
     // Null move: Side to move has advantage that even allowing an extra move to opponent still keeps advantage.
-    if (!incheck && can_null && !is_mate_score(beta) && has_pieces(&game->board, turn)) {
+    if (exclude_move == MOVE_NONE && !incheck && can_null && !is_mate_score(beta) && has_pieces(&game->board, turn)) {
         // static null move
         if (depth < STAT_NULL_DEPTH && evaluate(game, beta - 1, beta) - STAT_NULL_MARGIN[depth] >= beta) {
             return evaluate(game, beta - 1, beta) - STAT_NULL_MARGIN[depth];
@@ -138,6 +138,23 @@ int search_zw(GAME *game, UINT incheck, int beta, int depth, UINT can_null, MOVE
         }
     }
 
+    //  Prob-Cut: after a capture a low depth with reduced beta indicates it is safe to ignore this node
+    if (exclude_move == MOVE_NONE && depth >= 5 && can_null && !incheck && !is_mate_score(beta) && move_is_capture(get_last_move_made(&game->board))) {
+        int beta_cut = beta + 100;
+        eval_score = evaluate(game, -MAX_SCORE, MAX_SCORE);
+        MOVE_LIST mlpc;
+        select_init(&mlpc, game, incheck, trans_move, TRUE);
+        while ((move = next_move(&mlpc)) != MOVE_NONE) {
+            if (move_is_quiet(move) || eval_score + see_move(&game->board, move) < beta_cut) continue;
+            if (!is_pseudo_legal(&game->board, mlpc.pins, move)) continue;
+            make_move(&game->board, move);
+            score = -search_zw(game, is_incheck(&game->board, side_on_move(&game->board)), 1 - beta_cut, depth - 4, FALSE, MOVE_NONE, 0);
+            undo_move(&game->board);
+            if (game->search.abort) return 0;
+            if (score >= beta_cut) return score;
+        }
+    }
+
     select_init(&ml, game, incheck, trans_move, FALSE);
     while ((move = next_move(&ml)) != MOVE_NONE) {
 
@@ -155,20 +172,21 @@ int search_zw(GAME *game, UINT incheck, int beta, int depth, UINT can_null, MOVE
         gives_check = is_check(&game->board, move);
         
         // extension if move puts opponent in check
-        if (gives_check && (depth < 4 || see_move(&game->board, move) >= 0)) extensions = 1;
+        if (gives_check && (depth < 4 || see_move(&game->board, move) >= 0)) {
+            extensions = 1;
+        }
 
         // pruning or depth reductions
         if (!incheck && !extensions && move_count > 1) {
             assert(move != trans_move);
 
-            if (eval_score == -MAX_SCORE) eval_score = evaluate(game, beta - 1, beta);
 
-            // Capture pruning
-            if (depth <= 8 && unpack_type(move) == MT_CAPPC && !is_free_pawn(&game->board, turn, move)) {
-                if (eval_score + depth * 100 + piece_value(unpack_capture(move)) + 200 < beta) {
-                    continue;
-                }
-            }
+            //// Capture pruning
+            //if (depth <= 8 && unpack_type(move) == MT_CAPPC && !is_free_pawn(&game->board, turn, move)) {
+            //    if (eval_score + depth * 100 + piece_value(unpack_capture(move)) + 200 < beta) {
+            //        continue;
+            //    }
+            //}
 
             // Quiet moves pruning/reductions
             if (move_is_quiet(move) && !is_killer(&game->move_order, turn, ply, move))  {
@@ -188,6 +206,8 @@ int search_zw(GAME *game, UINT incheck, int beta, int depth, UINT can_null, MOVE
                             continue;
                         }
                     }
+                    
+                    if (eval_score == -MAX_SCORE) eval_score = evaluate(game, beta - 1, beta);
 
                     // Futility pruning: eval + margin below beta.
                     if (depth < 10 && eval_score + depth * 100 < beta) {
