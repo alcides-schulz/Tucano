@@ -69,16 +69,13 @@ void prepare_search(GAME *game, SETTINGS *settings)
             moves_to_go = 40 - played_moves / 2;
             if (moves_to_go < 1) moves_to_go = 1;
         }
-        else {
-            if (moves_to_go > 20) moves_to_go = 20; // allocate more time for initial moves.
-        }
     }
 
     // allocate time for this move
-    game->search.normal_move_time = settings->total_move_time / moves_to_go;
+    game->search.normal_move_time = (UINT)(settings->total_move_time * 0.9) / moves_to_go;
 
     //  Calculate extended move time and allocate time buffer to avoid timeout
-    game->search.extended_move_time = game->search.normal_move_time * 4;
+    game->search.extended_move_time = game->search.normal_move_time * 3;
     int time_buffer = (int)(settings->total_move_time * 0.10);
     if (time_buffer > 1000) time_buffer = 1000;
     if (time_buffer < 200) time_buffer = settings->total_move_time / 2;
