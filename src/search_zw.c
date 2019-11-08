@@ -180,14 +180,6 @@ int search_zw(GAME *game, UINT incheck, int beta, int depth, UINT can_null, MOVE
         if (!incheck && !extensions && move_count > 1) {
             assert(move != trans_move);
 
-
-            //// Capture pruning
-            //if (depth <= 8 && unpack_type(move) == MT_CAPPC && !is_free_pawn(&game->board, turn, move)) {
-            //    if (eval_score + depth * 100 + piece_value(unpack_capture(move)) + 200 < beta) {
-            //        continue;
-            //    }
-            //}
-
             // Quiet moves pruning/reductions
             if (move_is_quiet(move) && !is_killer(&game->move_order, turn, ply, move))  {
 
@@ -210,8 +202,13 @@ int search_zw(GAME *game, UINT incheck, int beta, int depth, UINT can_null, MOVE
                     if (eval_score == -MAX_SCORE) eval_score = evaluate(game, beta - 1, beta);
 
                     // Futility pruning: eval + margin below beta.
-                    if (depth < 10 && eval_score + depth * 100 < beta) {
-                        continue;
+                    if (depth < 10) {
+                        int history_value = get_history_value(&game->move_order, turn, move);
+                        if (get_visit_count(&game->move_order, turn, move) == 0) history_value = 100;
+                        int pruning_margin = depth * (50 + history_value);
+                        if (eval_score + pruning_margin < beta) {
+                            continue;
+                        }
                     }
 
                     // Late move reductions: reduce depth for later moves

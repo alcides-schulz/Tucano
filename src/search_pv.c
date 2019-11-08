@@ -122,8 +122,13 @@ int search_pv(GAME *game, UINT incheck, int alpha, int beta, int depth)
                 if (!is_counter_move(&game->move_order, flip_color(turn), get_last_move_made(&game->board), move)) {
 
                     // Futility pruning: eval + margin below beta.
-                    if (depth < 10 && evaluate(game, alpha, beta) + depth * 100 < alpha) {
-                        continue;
+                    if (depth < 10) {
+                        int history_value = get_history_value(&game->move_order, turn, move);
+                        if (get_visit_count(&game->move_order, turn, move) == 0) history_value = 100;
+                        int pruning_margin = depth * (50 + history_value);
+                        if (evaluate(game, alpha, beta) + pruning_margin < alpha) {
+                            continue;
+                        }
                     }
 
                     // Late move reductions: reduce depth for later moves

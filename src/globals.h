@@ -551,6 +551,7 @@ int     is_eval_score(int score);
 //  Move ordering
 void    move_order_save(MOVE_ORDER *move_order, int color, int ply, MOVE best_move, MOVE_LIST *ml, MOVE previous_move);
 int     get_history_value(MOVE_ORDER *move_order, int color, MOVE move);
+int     get_visit_count(MOVE_ORDER *move_order, int color, MOVE move);
 int     has_bad_history(MOVE_ORDER *move_order, int color, MOVE move);
 int     is_killer(MOVE_ORDER *move_order, int color, int ply, MOVE move);
 int     is_counter_move(MOVE_ORDER *move_order, int prev_color, MOVE previous_move, MOVE current_move);

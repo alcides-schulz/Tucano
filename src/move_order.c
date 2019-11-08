@@ -74,6 +74,13 @@ int is_counter_move(MOVE_ORDER *move_order, int prev_color, MOVE previous_move, 
     return FALSE;
 }
 
+int get_visit_count(MOVE_ORDER *move_order, int color, MOVE move)
+{
+    int mvpc = unpack_piece(move);
+    int tosq = unpack_to(move);
+
+    return move_order->hist_tot[color][mvpc][tosq];
+}
 
 //-------------------------------------------------------------------------------------------------
 //  History value to be used at move ordering.
