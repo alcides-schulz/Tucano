@@ -177,7 +177,8 @@ int search_zw(GAME *game, UINT incheck, int beta, int depth, UINT can_null, MOVE
         }
 
         // pruning or depth reductions
-        if (!incheck && !extensions && move_count > 1) {
+        if (!extensions && move_count > 1) {
+
             assert(move != trans_move);
 
             // Quiet moves pruning/reductions
@@ -188,7 +189,7 @@ int search_zw(GAME *game, UINT incheck, int beta, int depth, UINT can_null, MOVE
                     int move_has_bad_history = has_bad_history(&game->move_order, turn, move);
                     
                     // Move count pruning: prune late moves based on move count.
-                    if (move_has_bad_history) {
+                    if (!incheck && move_has_bad_history) {
                         int pruning_threshold = 4 + depth * 2;
                         // additional pruning for later moves of previous moves
                         if (depth < 16 && prev_move_count / 8 < pruning_threshold / 2) {
@@ -202,7 +203,7 @@ int search_zw(GAME *game, UINT incheck, int beta, int depth, UINT can_null, MOVE
                     if (eval_score == -MAX_SCORE) eval_score = evaluate(game, beta - 1, beta);
 
                     // Futility pruning: eval + margin below beta.
-                    if (depth < 10) {
+                    if (!incheck && depth < 10) {
                         int history_value = get_history_value(&game->move_order, turn, move);
                         if (get_visit_count(&game->move_order, turn, move) == 0) history_value = 100;
                         int pruning_margin = depth * (50 + history_value);
@@ -214,7 +215,9 @@ int search_zw(GAME *game, UINT incheck, int beta, int depth, UINT can_null, MOVE
                     // Late move reductions: reduce depth for later moves
                     if (move_count > 3 && depth > 2) {
                         reductions = 1;
-                        if (depth > 5 && move_has_bad_history) reductions += depth / 6 + move_count / 6;
+                        if (!incheck && depth > 5 && move_has_bad_history) {
+                            reductions += depth / 6 + move_count / 6;
+                        }
                         reductions = MIN(reductions, 10);
                     }
                 }
