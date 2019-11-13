@@ -15,12 +15,14 @@
   You can find the GNU General Public License at http://www.gnu.org/licenses/
 -------------------------------------------------------------------------------*/
 
+// Signature: 36718639  Elapsed time: 20.99 secs  Nodes/sec: 1749k
+
 #define EXTERN
 #include "globals.h"
 
 #define ENGINE "Tucano"
 #define AUTHOR "Alcides Schulz"
-#define VERSION "8.06"
+#define VERSION "8.07"
 
 void        develop_workbench(void);
 double      bench(int depth, int print);

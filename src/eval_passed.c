@@ -65,8 +65,9 @@ void eval_passed(BOARD *board, EVALUATION *eval_values)
             eval_values->passed[myc] += *B_PASSED[relative_rank];
 
             // bonus for unblocked passed pawns
-            if (!(square_bb(fwsq) & occupied_bb(board)))
+            if (!(square_bb(fwsq) & occupied_bb(board))) {
                 eval_values->passed[myc] += *B_UNBLOCKED[relative_rank];
+            }
 
             // bonus/penalty according king distance to square in front
             king_dist[myc] = square_distance(king_square(board, myc), fwsq);

@@ -413,8 +413,8 @@ typedef struct s_move_history
 
 //  Move ordering data: history heuristic and killers. 
 typedef struct s_move_ordering {
-    int     hist_tot[COLORS][NUM_PIECES][64];
-    int     hist_hit[COLORS][NUM_PIECES][64];
+    int     search_count[COLORS][NUM_PIECES][64];
+    int     beta_cutoff_count[COLORS][NUM_PIECES][64];
     MOVE    killers[MAX_PLY][COLORS][2];
     MOVE    counter_move[COLORS][NUM_PIECES][64][2];
 }   MOVE_ORDER;
@@ -549,10 +549,10 @@ int     is_mate_score(int score);
 int     is_eval_score(int score);
 
 //  Move ordering
-void    move_order_save(MOVE_ORDER *move_order, int color, int ply, MOVE best_move, MOVE_LIST *ml, MOVE previous_move);
-int     get_history_value(MOVE_ORDER *move_order, int color, MOVE move);
-int     get_visit_count(MOVE_ORDER *move_order, int color, MOVE move);
-int     has_bad_history(MOVE_ORDER *move_order, int color, MOVE move);
+void    save_beta_cutoff_data(MOVE_ORDER *move_order, int color, int ply, MOVE best_move, MOVE_LIST *ml, MOVE previous_move);
+int     get_beta_cutoff_percent(MOVE_ORDER *move_order, int color, MOVE move);
+int     get_pruning_margin(MOVE_ORDER *move_order, int color, MOVE move);
+int     get_has_bad_history(MOVE_ORDER *move_order, int color, MOVE move);
 int     is_killer(MOVE_ORDER *move_order, int color, int ply, MOVE move);
 int     is_counter_move(MOVE_ORDER *move_order, int prev_color, MOVE previous_move, MOVE current_move);
 

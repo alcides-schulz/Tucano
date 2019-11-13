@@ -86,8 +86,7 @@ int search_pv(GAME *game, UINT incheck, int alpha, int beta, int depth)
 
         assert(is_valid(&game->board, move));
 
-        if (!is_pseudo_legal(&game->board, ml.pins, move))
-            continue;
+        if (!is_pseudo_legal(&game->board, ml.pins, move)) continue;
         
         move_count++;
 
@@ -97,7 +96,9 @@ int search_pv(GAME *game, UINT incheck, int alpha, int beta, int depth)
         gives_check = is_check(&game->board, move);
         
         // extension if move puts opponent in check
-        if (gives_check && (depth < 4 || see_move(&game->board, move) >= 0)) extensions = 1;
+        if (gives_check && (depth < 4 || see_move(&game->board, move) >= 0)) {
+            extensions = 1;
+        }
 
         // singular move extension
         if (try_singular_extension && move == trans_move && depth >= 8 && !extensions) {
@@ -114,6 +115,7 @@ int search_pv(GAME *game, UINT incheck, int alpha, int beta, int depth)
 
         // Pruning or depth reductions
         if (!incheck && !extensions && move_count > 1) {
+
             assert(move != trans_move);
 
             // Quiet moves pruning/reductions
@@ -123,9 +125,7 @@ int search_pv(GAME *game, UINT incheck, int alpha, int beta, int depth)
 
                     // Futility pruning: eval + margin below beta.
                     if (depth < 10) {
-                        int history_value = get_history_value(&game->move_order, turn, move);
-                        if (get_visit_count(&game->move_order, turn, move) == 0) history_value = 100;
-                        int pruning_margin = depth * (50 + history_value);
+                        int pruning_margin = depth * (50 + get_pruning_margin(&game->move_order, turn, move));
                         if (evaluate(game, alpha, beta) + pruning_margin < alpha) {
                             continue;
                         }
@@ -134,8 +134,9 @@ int search_pv(GAME *game, UINT incheck, int alpha, int beta, int depth)
                     // Late move reductions: reduce depth for later moves
                     if (move_count > 3 && depth > 2) {
                         reductions = 1;
-                        if (depth > 5 && has_bad_history(&game->move_order, turn, move))
+                        if (depth > 5 && get_has_bad_history(&game->move_order, turn, move)) {
                             reductions += depth / 6;
+                        }
                         reductions = MIN(reductions, 5);
                     }
                 }
@@ -144,6 +145,7 @@ int search_pv(GAME *game, UINT incheck, int alpha, int beta, int depth)
 
         // Make move and search new position.
         make_move(&game->board, move);
+
         assert(valid_is_legal(&game->board, move));
 
         if (best_score == -MAX_SCORE) {
@@ -158,6 +160,7 @@ int search_pv(GAME *game, UINT incheck, int alpha, int beta, int depth)
                 score = -search_pv(game, gives_check, -beta, -alpha, depth - 1 + extensions);
             }
         }
+
         undo_move(&game->board);
         if (game->search.abort) return 0;
 
@@ -170,7 +173,7 @@ int search_pv(GAME *game, UINT incheck, int alpha, int beta, int depth)
                 best_move = move;
                 if (score >= beta) {
                     if (move_is_quiet(move)) {
-                        move_order_save(&game->move_order, turn, ply, move, &ml, get_last_move_made(&game->board));
+                        save_beta_cutoff_data(&game->move_order, turn, ply, move, &ml, get_last_move_made(&game->board));
                     }
                     tt_save(&game->board, depth, score, TT_LOWER, move);
                     return score;

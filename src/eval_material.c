@@ -116,7 +116,7 @@ void eval_material(BOARD *board, EVALUATION *eval_values)
         DRAW_ADJUST(32);
     }
 
-    //  Don't calculate draw adjustment when in middle game or enough pawns
+    //  Don't calculate draw adjustment when in middle game or not enough pawns
     if (wp > 2 || bp > 2 || OPENING(eval_values->material[WHITE]) > 1400 || OPENING(eval_values->material[BLACK] > 1400))
         return;
 

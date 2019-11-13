@@ -116,14 +116,15 @@ int search_zw(GAME *game, UINT incheck, int beta, int depth, UINT can_null, MOVE
         }
     }
 
-    // Null move: Side to move has advantage that even allowing an extra move to opponent still keeps advantage.
+    // Null move heuristic: side to move has advantage that even allowing an extra move to opponent, still keeps advantage.
     if (exclude_move == MOVE_NONE && !incheck && can_null && !is_mate_score(beta) && has_pieces(&game->board, turn)) {
+
         // static null move
         if (depth < STAT_NULL_DEPTH && evaluate(game, beta - 1, beta) - STAT_NULL_MARGIN[depth] >= beta) {
             return evaluate(game, beta - 1, beta) - STAT_NULL_MARGIN[depth];
         }
         
-        // null move
+        // null move search
         if (depth >= 2 && (depth <= 4 || evaluate(game, beta - 1, beta) >= beta)) {
             make_move(&game->board, pack_null_move());
             score = -search_zw(game, incheck, 1 - beta, null_depth(depth), FALSE, MOVE_NONE, 0);
@@ -186,7 +187,7 @@ int search_zw(GAME *game, UINT incheck, int beta, int depth, UINT can_null, MOVE
 
                 if (!is_counter_move(&game->move_order, flip_color(turn), get_last_move_made(&game->board), move)) {
                     
-                    int move_has_bad_history = has_bad_history(&game->move_order, turn, move);
+                    int move_has_bad_history = get_has_bad_history(&game->move_order, turn, move);
                     
                     // Move count pruning: prune late moves based on move count.
                     if (!incheck && move_has_bad_history) {
@@ -202,11 +203,9 @@ int search_zw(GAME *game, UINT incheck, int beta, int depth, UINT can_null, MOVE
                     
                     if (eval_score == -MAX_SCORE) eval_score = evaluate(game, beta - 1, beta);
 
-                    // Futility pruning: eval + margin below beta.
+                    // Futility pruning: eval + margin below beta. Uses beta cutoff history.
                     if (!incheck && depth < 10) {
-                        int history_value = get_history_value(&game->move_order, turn, move);
-                        if (get_visit_count(&game->move_order, turn, move) == 0) history_value = 100;
-                        int pruning_margin = depth * (50 + history_value);
+                        int pruning_margin = depth * (50 + get_pruning_margin(&game->move_order, turn, move));
                         if (eval_score + pruning_margin < beta) {
                             continue;
                         }
@@ -244,7 +243,7 @@ int search_zw(GAME *game, UINT incheck, int beta, int depth, UINT can_null, MOVE
                 if (exclude_move == MOVE_NONE) {
                     update_pv(&game->pv_line, ply, move);
                     if (move_is_quiet(move)) {
-                        move_order_save(&game->move_order, turn, ply, move, &ml, get_last_move_made(&game->board));
+                        save_beta_cutoff_data(&game->move_order, turn, ply, move, &ml, get_last_move_made(&game->board));
                     }
                     tt_save(&game->board, depth, score, TT_LOWER, move);
                 }

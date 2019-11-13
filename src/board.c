@@ -705,12 +705,6 @@ int piece_on_square(BOARD *board, int color, int square)
 {
     assert(color == WHITE || color == BLACK);
     assert(square >= 0 && square < 64);
-
-    //for (int type = 0; type < NUM_PIECES; type++)
-    //    if (board->state[color].piece[type].u64 & square_bb(square))
-    //        return type;
-
-    //return NO_PIECE;
     return board->state[color].square[square];
 }
 

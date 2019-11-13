@@ -24,27 +24,27 @@
 //-------------------------------------------------------------------------------------------------
 //  Update history table and killer move list for quiet moves.
 //-------------------------------------------------------------------------------------------------
-void move_order_save(MOVE_ORDER *move_order, int color, int ply, MOVE best_move, MOVE_LIST *ml, MOVE previous_move)
+void save_beta_cutoff_data(MOVE_ORDER *move_order, int color, int ply, MOVE best_move, MOVE_LIST *ml, MOVE previous_move)
 {
-    // update good history for best move found
+    // Update good history for best move found
     int mvpc = unpack_piece(best_move);
     int tosq = unpack_to(best_move);
 
-    move_order->hist_tot[color][mvpc][tosq] += 1;
-    move_order->hist_hit[color][mvpc][tosq] += 1;
+    move_order->search_count[color][mvpc][tosq] += 1;
+    move_order->beta_cutoff_count[color][mvpc][tosq] += 1;
 
     if (move_order->killers[ply][color][0] != best_move) {
         move_order->killers[ply][color][1] = move_order->killers[ply][color][0];
         move_order->killers[ply][color][0] = best_move;
     }
 
-    // update bad history for all other quiet moves.
+    // Update bad history for all other quiet moves. Searched but didn't cause a cutoff
     MOVE bad_move = prev_move(ml); // discard last move which is the best move
     while ((bad_move = prev_move(ml)) != MOVE_NONE) {
-        move_order->hist_tot[color][unpack_piece(bad_move)][unpack_to(bad_move)] += 1;
+        move_order->search_count[color][unpack_piece(bad_move)][unpack_to(bad_move)] += 1;
     }
 
-    // save counter move
+    // Save counter move data
     int prev_color = flip_color(color);
     int prev_piece = unpack_piece(previous_move);
     int prev_tosq = unpack_to(previous_move);
@@ -74,38 +74,44 @@ int is_counter_move(MOVE_ORDER *move_order, int prev_color, MOVE previous_move, 
     return FALSE;
 }
 
-int get_visit_count(MOVE_ORDER *move_order, int color, MOVE move)
+//-------------------------------------------------------------------------------------------------
+//  Pruning margin value based on cutoff percentage
+//-------------------------------------------------------------------------------------------------
+int get_pruning_margin(MOVE_ORDER *move_order, int color, MOVE move)
 {
     int mvpc = unpack_piece(move);
     int tosq = unpack_to(move);
 
-    return move_order->hist_tot[color][mvpc][tosq];
+    // if move was not searched yet, we assume a margin to avoid an early pruning.
+    if (move_order->search_count[color][mvpc][tosq] == 0) return 100;
+
+    return move_order->beta_cutoff_count[color][mvpc][tosq] * 100 / move_order->search_count[color][mvpc][tosq];
 }
 
 //-------------------------------------------------------------------------------------------------
 //  History value to be used at move ordering.
 //-------------------------------------------------------------------------------------------------
-int get_history_value(MOVE_ORDER *move_order, int color, MOVE move)
+int get_beta_cutoff_percent(MOVE_ORDER *move_order, int color, MOVE move)
 {
     int mvpc = unpack_piece(move);
     int tosq = unpack_to(move);
 
-    if (move_order->hist_tot[color][mvpc][tosq] == 0) return 0;
+    if (move_order->search_count[color][mvpc][tosq] == 0) return 0;
 
-    return move_order->hist_hit[color][mvpc][tosq] * 100 / move_order->hist_tot[color][mvpc][tosq];
+    return move_order->beta_cutoff_count[color][mvpc][tosq] * 100 / move_order->search_count[color][mvpc][tosq];
 }
 
 //-------------------------------------------------------------------------------------------------
-//  Indicate if move had history percentage.
+//  Indicate if move had cutoff percentage.
 //-------------------------------------------------------------------------------------------------
-int has_bad_history(MOVE_ORDER *move_order, int color, MOVE move)
+int get_has_bad_history(MOVE_ORDER *move_order, int color, MOVE move)
 {
     int mvpc = unpack_piece(move);
     int tosq = unpack_to(move);
 
-    if (move_order->hist_tot[color][mvpc][tosq] == 0) return FALSE;
+    if (move_order->search_count[color][mvpc][tosq] == 0) return FALSE;
 
-    return move_order->hist_hit[color][mvpc][tosq] * 100 / move_order->hist_tot[color][mvpc][tosq] < 60 ? TRUE : FALSE;
+    return move_order->beta_cutoff_count[color][mvpc][tosq] * 100 / move_order->search_count[color][mvpc][tosq] < 60 ? TRUE : FALSE;
 }
 
 // end

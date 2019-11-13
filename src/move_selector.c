@@ -279,7 +279,7 @@ void assign_tactical_score(MOVE_LIST *ml)
             ml->score[i] = SORT_CAPTURE + VICTIM_VALUE[unpack_prom_piece(ml->moves[i])] + VICTIM_VALUE[unpack_capture(ml->moves[i])];
             break;
         default:
-            ml->score[i] = get_history_value(ml->move_order, side_on_move(ml->board), ml->moves[i]);
+            ml->score[i] = get_beta_cutoff_percent(ml->move_order, side_on_move(ml->board), ml->moves[i]);
             if (is_killer(ml->move_order, side_on_move(ml->board), get_ply(ml->board), ml->moves[i])) {
                 ml->score[i] += SORT_KILLER;
             }
@@ -298,7 +298,7 @@ void assign_quiet_score(MOVE_LIST *ml)
     int     i;
 
     for (i = 0; i < ml->count; i++) {
-        ml->score[i] = get_history_value(ml->move_order, side_on_move(ml->board), ml->moves[i]);
+        ml->score[i] = get_beta_cutoff_percent(ml->move_order, side_on_move(ml->board), ml->moves[i]);
         if (is_killer(ml->move_order, side_on_move(ml->board), get_ply(ml->board), ml->moves[i])) {
             ml->score[i] += SORT_CAPTURE;
         }
@@ -331,99 +331,73 @@ int is_valid(BOARD *board, MOVE move)
     static int promo_rank_to[2] = {RANK8, RANK1};
     static int is_slider[NUM_PIECES] = {0, 0, 1, 1, 1, 0};
 
-    int     mvpc = unpack_piece(move);
-    int     frsq = unpack_from(move);
-    int     tosq = unpack_to(move);
-    int     type = unpack_type(move);
+    int moving_piece = unpack_piece(move);
+    int from_square = unpack_from(move);
+    int to_square = unpack_to(move);
+    int turn = side_on_move(board);
 
-    assert(frsq != tosq);
+    assert(from_square != to_square);
 
     //  moving piece is not on square
-    if (mvpc != piece_on_square(board, side_on_move(board), frsq))
-        return 0;
+    if (moving_piece != piece_on_square(board, turn, from_square)) return FALSE;
+
     //  pawn should be moving forward
-    if (mvpc == PAWN) {
-        if (side_on_move(board) == WHITE) {
-            if (get_rank(frsq) < get_rank(tosq))
-                return 0;
+    if (moving_piece == PAWN) {
+        if (turn == WHITE) {
+            if (get_rank(from_square) < get_rank(to_square)) return FALSE;
         }
         else {
-            if (get_rank(frsq) > get_rank(tosq))
-                return 0;
+            if (get_rank(from_square) > get_rank(to_square)) return FALSE;
         }
     }
 
     //  Specific type validation
-    switch (type)  {
+    switch (unpack_type(move))  {
     case MT_QUIET:
-        if (bb_is_one(occupied_bb(board), tosq))
-            return 0;
-        if (is_slider[piece_on_square(board, side_on_move(board), frsq)])
-            return (from_to_path_bb(frsq, tosq) & occupied_bb(board) ? 0 : 1);
-        return 1;
+        if (bb_is_one(occupied_bb(board), to_square)) return FALSE;
+        if (is_slider[piece_on_square(board, turn, from_square)]) {
+            if (from_to_path_bb(from_square, to_square) & occupied_bb(board)) return FALSE;
+        }
+        break;
     case MT_CAPPC:
-        if (piece_on_square(board, flip_color(side_on_move(board)), tosq) != unpack_capture(move))
-            return 0;
-        if (is_slider[piece_on_square(board, side_on_move(board), frsq)])
-            return (from_to_path_bb(frsq, tosq) & occupied_bb(board) ? 0 : 1);
-        return 1;
+        if (piece_on_square(board, flip_color(turn), to_square) != unpack_capture(move)) {
+            return FALSE;
+        }
+        if (is_slider[piece_on_square(board, turn, from_square)]) {
+            if (from_to_path_bb(from_square, to_square) & occupied_bb(board)) return FALSE;
+        }
+        break;
     case MT_EPCAP:
-        if (tosq != ep_square(board))
-            return 0;
-        if (piece_on_square(board, flip_color(side_on_move(board)), unpack_ep_pawn_square(move)) != PAWN)
-            return 0;
-        return 1;
+        if (to_square != ep_square(board)) return FALSE;
+        if (piece_on_square(board, flip_color(turn), unpack_ep_pawn_square(move)) != PAWN) return FALSE;
+        break;
     case MT_PAWN2:
-        if (bb_is_one(occupied_bb(board), tosq))
-            return 0;
-        return (from_to_path_bb(frsq, tosq) & occupied_bb(board) ? 0 : 1);
+        if (bb_is_one(occupied_bb(board), to_square)) return FALSE;
+        if (from_to_path_bb(from_square, to_square) & occupied_bb(board)) return FALSE;
+        break;
     case MT_PROMO:
-        if (bb_is_one(occupied_bb(board), tosq))
-            return 0;
-        if (get_rank(tosq) != promo_rank_to[side_on_move(board)])
-            return 0;
-        return 1;
+        if (bb_is_one(occupied_bb(board), to_square)) return FALSE;
+        if (get_rank(to_square) != promo_rank_to[turn]) return FALSE;
+        return TRUE;
     case MT_CPPRM:
-        if (piece_on_square(board, flip_color(side_on_move(board)), tosq) != unpack_capture(move))
-            return 0;
-        if (get_rank(tosq) != promo_rank_to[side_on_move(board)])
-            return 0;
-        return 1;
+        if (piece_on_square(board, flip_color(turn), to_square) != unpack_capture(move)) return FALSE;
+        if (get_rank(to_square) != promo_rank_to[turn]) return FALSE;
+        break;
     case MT_CSWKS:
-        if (!can_generate_castle_ks(board, side_on_move(board)))
-            return 0;
-        if (from_to_path_bb(E1, H1) & occupied_bb(board))
-            return 0;
-        if (piece_on_square(board, WHITE, H1) != ROOK)
-            return 0;
-        return 1;
+        if (!can_generate_castle_ks(board, turn)) return FALSE;
+        break;
     case MT_CSWQS:
-        if (!can_generate_castle_qs(board, side_on_move(board)))
-            return 0;
-        if (from_to_path_bb(E1, A1) & occupied_bb(board))
-            return 0;
-        if (piece_on_square(board, WHITE, A1) != ROOK)
-            return 0;
-        return 1;
+        if (!can_generate_castle_qs(board, turn)) return FALSE;
+        break;
     case MT_CSBKS:
-        if (!can_generate_castle_ks(board, side_on_move(board)))
-            return 0;
-        if (from_to_path_bb(E8, H8) & occupied_bb(board))
-            return 0;
-        if (piece_on_square(board, BLACK, H8) != ROOK)
-            return 0;
-        return 1;
+        if (!can_generate_castle_ks(board, turn)) return FALSE;
+        break;
     case MT_CSBQS:
-        if (!can_generate_castle_qs(board, side_on_move(board)))
-            return 0;
-        if (from_to_path_bb(E8, A8) & occupied_bb(board))
-            return 0;
-        if (piece_on_square(board, BLACK, A8) != ROOK)
-            return 0;
-        return 1;
+        if (!can_generate_castle_qs(board, turn)) return FALSE;
+        break;
     }
 
-    return 1;
+    return TRUE;
 }
 
 //END
