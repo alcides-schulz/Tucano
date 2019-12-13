@@ -24,6 +24,8 @@
 #define AUTHOR "Alcides Schulz"
 #define VERSION "8.07"
 
+// 8.07 - test time control
+
 void        develop_workbench(void);
 double      bench(int depth, int print);
 void        speed_test(void);
