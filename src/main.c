@@ -24,7 +24,7 @@
 #define AUTHOR "Alcides Schulz"
 #define VERSION "8.07"
 
-// 8.07 - test time control
+// 8.07 - TCEC Winter 2019
 
 void        develop_workbench(void);
 double      bench(int depth, int print);
