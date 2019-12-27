@@ -56,7 +56,7 @@ enum    {SINGLE_VALUE, OPENING_ENDGAME} LINK_TYPE;
 #define MAX_LINE_SIZE       100
 
 typedef struct {
-    HANDLE      thread_id;
+    THREAD_ID   thread_id;
     char        position[MAX_POS_PER_THREAD][MAX_LINE_SIZE];
     int         position_count;
     double      k;
