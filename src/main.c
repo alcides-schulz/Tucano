@@ -22,8 +22,9 @@
 
 #define ENGINE "Tucano"
 #define AUTHOR "Alcides Schulz"
-#define VERSION "8.07"
+#define VERSION "8.08"
 
+// 8.08 - parameter tuning
 // 8.07 - TCEC Winter 2019
 
 void        develop_workbench(void);
