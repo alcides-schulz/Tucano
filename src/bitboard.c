@@ -29,15 +29,6 @@ You can find the GNU General Public License at http://www.gnu.org/licenses/
 //  
 //-------------------------------------------------------------------------------------------------
 
-//  Note: For portability reasons, it only uses the BBIX structure when int type 
-//        is 4 bytes and short type is 2 bytes. Otherwise we use a different approach.
-//        UINT_MAX and USHRT_MAX are defined in limits.h.
-#if (UINT_MAX == 0xffffffff && USHRT_MAX == 0xffff)
-#define USE_BBIX_STRUCT
-#else
-#undef USE_BBIX_STRUCT
-#endif
-
 // Bitboards
 U64     bb_square[64];           // bitboard for each board square
 U64     bb_clear[64];            // bitboard used to clear bits
@@ -243,7 +234,7 @@ int bb_count_u64(U64 bb)
     return __builtin_popcountll(bb);
 #elif defined(_WIN64) && defined(_MSC_VER)
     return (int)_mm_popcnt_u64(bb);
-#elif defined(USE_BBIX_STRUCT)
+#else
     return bit_count_table[(bb & (U64)0xFFFF000000000000) >> 48] +
            bit_count_table[(bb & (U64)0x0000FFFF00000000) >> 32] +
            bit_count_table[(bb & (U64)0x00000000FFFF0000) >> 16] +

@@ -64,15 +64,13 @@ U32 egtb_probe_wdl(BOARD *board, int depth, int ply)
 U64 convert_to_fathom(U64 bitboard)
 {
     U64 fathom_bb = 0;
-    BBIX bbix;
-    bbix.u64 = bitboard;
-    while (bbix.u64) {
-        int square = bb_first(bbix);
+    while (bitboard) {
+        int square = bb_first_index(bitboard);
         int rank = 7 - get_rank(square);
         int file = get_file(square);
         int fathom_square = rank * 8 + file;
         fathom_bb |= (U64)1 << fathom_square;
-        bb_clear_bit(&bbix.u64, square);
+        bb_clear_bit(&bitboard, square);
     }
     return fathom_bb;
 }
