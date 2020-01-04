@@ -28,11 +28,13 @@ void new_game(GAME *game, char *fen)
 {
     set_fen(&game->board, fen);
     memset(&game->search, 0, sizeof(SEARCH));
-    memset(&game->move_order, 0, sizeof(MOVE_ORDER));
     memset(&game->pv_line, 0, sizeof(PV_LINE));
-    memset(&game->eval_table, 0, sizeof(game->eval_table));
-    memset(&game->pawn_table, 0, sizeof(game->pawn_table));
-    tt_clear();
+    if (!EVAL_TUNING) {
+        memset(&game->move_order, 0, sizeof(MOVE_ORDER));
+        memset(&game->eval_table, 0, sizeof(game->eval_table));
+        memset(&game->pawn_table, 0, sizeof(game->pawn_table));
+        tt_clear();
+    }
     game->is_main_thread = TRUE;
 }
 

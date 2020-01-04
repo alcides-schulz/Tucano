@@ -54,7 +54,7 @@ int quiesce(GAME *game, UINT incheck, int alpha, int beta, int depth)
     if (alpha >= beta) return alpha;
 
     // transposition table score or move hint
-    if (tt_probe(&game->board, depth == 0 ? 0 : -1, alpha, beta, &score, &trans_move)) {
+    if (!EVAL_TUNING && tt_probe(&game->board, depth == 0 ? 0 : -1, alpha, beta, &score, &trans_move)) {
         return score;
     }
 
@@ -105,7 +105,7 @@ int quiesce(GAME *game, UINT incheck, int alpha, int beta, int depth)
         if (score > best_score) {
             if (score > alpha)  {
                 if (score >= beta) {
-                    tt_save(&game->board, depth == 0 ? 0 : -1, score, TT_LOWER, move);
+                    if (!EVAL_TUNING) tt_save(&game->board, depth == 0 ? 0 : -1, score, TT_LOWER, move);
                     return score;
                 }
                 update_pv(&game->pv_line, ply, move);
@@ -121,10 +121,12 @@ int quiesce(GAME *game, UINT incheck, int alpha, int beta, int depth)
         return -MATE_VALUE + ply;
     }
 
-    if (best_move != MOVE_NONE)
-        tt_save(&game->board, depth == 0 ? 0 : -1, best_score, TT_EXACT, best_move);
-    else
-        tt_save(&game->board, depth == 0 ? 0 : -1, best_score, TT_UPPER, MOVE_NONE);
+    if (!EVAL_TUNING) {
+        if (best_move != MOVE_NONE)
+            tt_save(&game->board, depth == 0 ? 0 : -1, best_score, TT_EXACT, best_move);
+        else
+            tt_save(&game->board, depth == 0 ? 0 : -1, best_score, TT_UPPER, MOVE_NONE);
+    }
 
     return best_score;
 }

@@ -361,8 +361,6 @@ typedef struct s_eval_table
 #define PAWN_TABLE_SIZE 16384
 #define EVAL_TABLE_SIZE 32768
 
-EXTERN int EVAL_PRINTING;
-
 typedef struct s_eval_values
 {
     int     phase;
@@ -813,6 +811,12 @@ void    perftz(void);
 // Tests
 void    epd(char *file_name, SETTINGS *settings);
 void    eval_test(char *file_name);
+
+// Feature configuration: used for tests/tuning.
+EXTERN  int EVAL_PRINTING;
+EXTERN  int EVAL_TUNING;
+EXTERN  int USE_EVAL_TABLE;
+EXTERN  int USE_PAWN_TABLE;
 
 #ifndef NDEBUG
 // Assert functions.

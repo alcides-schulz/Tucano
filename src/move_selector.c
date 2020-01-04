@@ -262,9 +262,7 @@ void select_next(MOVE_LIST *ml)
 //-------------------------------------------------------------------------------------------------
 void assign_tactical_score(MOVE_LIST *ml)
 {
-    int     i;
-
-    for (i = 0; i < ml->count; i++) {
+    for (int i = 0; i < ml->count; i++) {
         switch (unpack_type(ml->moves[i])) {
         case MT_CAPPC:
             ml->score[i] = SORT_CAPTURE + VICTIM_VALUE[unpack_capture(ml->moves[i])] + ATTACKER_VALUE[unpack_piece(ml->moves[i])];

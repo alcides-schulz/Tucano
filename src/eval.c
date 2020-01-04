@@ -27,8 +27,6 @@ void    eval_passed(BOARD *board, EVALUATION *eval_values);
 void    eval_kings(BOARD *board, EVALUATION *eval_values);
 void    eval_pieces(BOARD *board, EVALUATION *eval_values);
 
-int USE_EVAL_TABLE = TRUE;
-
 //-------------------------------------------------------------------------------------------------
 //  Calculate the score for current position.
 //-------------------------------------------------------------------------------------------------

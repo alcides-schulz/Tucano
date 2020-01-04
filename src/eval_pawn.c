@@ -24,8 +24,6 @@
 int is_candidate(BOARD *board, int myc, int pcsq);
 int space_bonus(BOARD *board, int myc);
 
-int USE_PAWN_TABLE = TRUE;
-
 //------------------------------------------------------------------------------------
 //    Evaluate pawns and indicate what pawns are passed to be evaluated later.
 //------------------------------------------------------------------------------------

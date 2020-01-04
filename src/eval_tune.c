@@ -50,7 +50,7 @@ int TUNE_PST_KING    = TRUE;
 
 enum    {SINGLE_VALUE, OPENING_ENDGAME} LINK_TYPE;
 
-#define MAX_POSITIONS       5600000
+#define MAX_POSITIONS       11200000
 #define MAX_TUNE_THREADS    14
 #define MAX_POS_PER_THREAD  (MAX_POSITIONS / MAX_TUNE_THREADS)
 #define MAX_LINE_SIZE       100
@@ -105,6 +105,10 @@ void eval_tune(void)
     double  k = 0.4;
     char    option[1024];
 
+    EVAL_TUNING = TRUE;
+    USE_EVAL_TABLE = FALSE;
+    USE_PAWN_TABLE = FALSE;
+
     init_param_list();
 
     while (TRUE) {
@@ -131,6 +135,7 @@ void eval_tune(void)
 
         if (!strcmp(option, "c\n")) {
             load_positions(TUNE_POSITIONS_FILE);
+            getchar();
             k = calc_min_k();
             continue;
         }
@@ -152,6 +157,10 @@ void eval_tune(void)
             break;
         }
     }
+
+    EVAL_TUNING = FALSE;
+    USE_EVAL_TABLE = TRUE;
+    USE_PAWN_TABLE = TRUE;
 }
 
 void exec_tune(char *results_filename, double k)
@@ -164,6 +173,9 @@ void exec_tune(char *results_filename, double k)
 
     printf("TIME=%u seconds\n", (util_get_time() - start) / 1000);
 }
+
+GAME g1;
+SETTINGS s1;
 
 void load_positions(char *positions_file_name)
 {
@@ -183,10 +195,40 @@ void load_positions(char *positions_file_name)
         tune_thread[i].position_count = 0;
     }
 
+    s1.max_depth = MAX_DEPTH;
+    s1.moves_per_level = 0;
+    s1.post_flag = POST_NONE;
+    s1.single_move_time = MAX_TIME;
+    s1.total_move_time = MAX_TIME;
+    s1.use_book = FALSE;
+
     char line[1000];
     while (fgets(line, 1000, f)) {
         line[strlen(line) - 1] = 0;
         if (strlen(line) > MAX_LINE_SIZE - 1) continue;
+        if (line[0] == '#') continue; // comments
+        
+        new_game(&g1, &line[2]);
+        prepare_search(&g1, &s1);
+
+        g1.search.start_time = util_get_time();
+        g1.search.normal_finish_time = g1.search.start_time + g1.search.normal_move_time;
+        g1.search.extended_finish_time = g1.search.start_time + g1.search.extended_move_time;
+        g1.search.score_drop = FALSE;
+        g1.search.best_move = MOVE_NONE;
+        g1.search.ponder_move = MOVE_NONE;
+        g1.search.abort = FALSE;
+        g1.search.nodes = 0;
+        g1.search.tbhits = 0;
+
+        int in_check = is_incheck(&g1.board, side_on_move(&g1.board));
+        int score = quiesce(&g1, in_check, -MAX_SCORE, MAX_SCORE, 0);
+        if (is_mate_score(score)) {
+            //printf("%s %d\n", &line[2], score);
+            //board_print(&g1.board, "");
+            continue;
+        }
+        
         strcpy(tune_thread[thread_index].position[tune_thread[thread_index].position_count++], line);
         if (tune_thread[thread_index].position_count >= MAX_POS_PER_THREAD) {
             thread_index++;
@@ -231,7 +273,6 @@ void local_tune(char *results_filename, double k, int param_size, int original[]
         for (i = 0; i < param_size; i++) {
             copy_values(param_size, best_param, new_param);
             new_param[i] += TUNE_INC;
-            //new_e = calc_e(k, new_param);
             new_e = calc_e_main(k, new_param, MAX_TUNE_THREADS, tune_thread);
             if (new_e < best_e) {
                 best_e = new_e;
@@ -241,7 +282,6 @@ void local_tune(char *results_filename, double k, int param_size, int original[]
             }
             else {
                 new_param[i] -= (TUNE_INC * 2);
-                //new_e = calc_e(k, new_param);
                 new_e = calc_e_main(k, new_param, MAX_TUNE_THREADS, tune_thread);
                 if (new_e < best_e) {
                     best_e = new_e;
@@ -521,6 +561,7 @@ void calc_e_sub(TUNE_THREAD *thread_data)
 
     for (int i = 0; i < MAX_POS_PER_THREAD; i++) {
         char *line = thread_data->position[i];
+
         thread_data->position_count++;
 
         switch (line[0]) {
@@ -544,7 +585,7 @@ void calc_e_sub(TUNE_THREAD *thread_data)
         thread_data->game.search.tbhits = 0;
         
         int in_check = is_incheck(&thread_data->game.board, side_on_move(&thread_data->game.board));
-        double eval = (double)quiesce(&thread_data->game,in_check, -MAX_SCORE, MAX_SCORE, 0);
+        double eval = (double)quiesce(&thread_data->game, in_check, -MAX_SCORE, MAX_SCORE, 0);
         
         x = -(thread_data->k * eval / 400.0);
         x = 1.0 / (1.0 + pow(10, x));
@@ -569,12 +610,14 @@ double calc_min_k(void)
     double s = 9999;
 
     for (i = -2; i <= 2; i += 0.1)  {
+        unsigned start = util_get_time();
         e = calc_e_main(i, tune_param_value, MAX_TUNE_THREADS, tune_thread);
         if (e < s) {
             k = i;
             s = e;
         }
-        printf("i=%3.10f e=%3.10f k=%3.10f\n", i, e, k);
+        double elapsed = (double)(util_get_time() - start) / 1000.0;
+        printf("i=%3.10f e=%3.10f k=%3.10f elapsed: %3.2f\n", i, e, k, elapsed);
     }
     
     printf("\nk=%1.8f\n", k);

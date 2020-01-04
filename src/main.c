@@ -58,6 +58,9 @@ int main(int argc, char *argv[])
     printf("%s chess engine by %s - %s (type 'help' for information)\n", ENGINE, AUTHOR, VERSION);
 
     EVAL_PRINTING = FALSE;
+    EVAL_TUNING = FALSE;
+    USE_EVAL_TABLE = TRUE;
+    USE_PAWN_TABLE = TRUE;
 
     // Command line options
     for (int i = 0; i < argc; i++) {
