@@ -130,11 +130,11 @@ void set_fen(BOARD *board, char *fen)
     board->ply = 0;
     board->histply = 0;
     for (i = 0; i < NUM_PIECES; i++)  {
-        board->state[WHITE].all_pieces |= board->state[WHITE].piece[i].u64;
-        board->state[BLACK].all_pieces |= board->state[BLACK].piece[i].u64;
+        board->state[WHITE].all_pieces |= board->state[WHITE].piece[i];
+        board->state[BLACK].all_pieces |= board->state[BLACK].piece[i];
     }
-    board->state[WHITE].king_square = (U8)bb_first(board->state[WHITE].piece[KING]);
-    board->state[BLACK].king_square = (U8)bb_first(board->state[BLACK].piece[KING]);
+    board->state[WHITE].king_square = (U8)bb_first_index(board->state[WHITE].piece[KING]);
+    board->state[BLACK].king_square = (U8)bb_first_index(board->state[BLACK].piece[KING]);
 
     assert(board_state_is_ok(board));
 }
@@ -410,10 +410,8 @@ int is_threefold_repetition(BOARD *board)
 //-------------------------------------------------------------------------------------------------
 int insufficient_material(BOARD *board)
 {
-    if (board->state[WHITE].all_pieces != board->state[WHITE].piece[KING].u64)
-        return FALSE;
-    if (board->state[BLACK].all_pieces != board->state[BLACK].piece[KING].u64)
-        return FALSE;
+    if (board->state[WHITE].all_pieces != board->state[WHITE].piece[KING]) return FALSE;
+    if (board->state[BLACK].all_pieces != board->state[BLACK].piece[KING]) return FALSE;
     return TRUE;
 }
 
@@ -436,7 +434,7 @@ void move_piece(BOARD *board, int color, int type, int frsq, int tosq)
     U64     bb_from_to = square_bb(frsq) ^ square_bb(tosq);
 
     board->state[color].square[frsq] = NO_PIECE;
-    board->state[color].piece[type].u64 ^= bb_from_to;
+    board->state[color].piece[type] ^= bb_from_to;
     board->state[color].all_pieces ^= bb_from_to;
     board->key ^= zk_square(color, type, frsq);
     board->state[color].square[tosq] = (U8)type; 
@@ -455,7 +453,7 @@ void set_piece(BOARD *board, int color, int type, int tosq)
     U64     bb_set = square_bb(tosq);
 
     board->state[color].square[tosq] = (U8)type; 
-    board->state[color].piece[type].u64 ^= bb_set;
+    board->state[color].piece[type] ^= bb_set;
     board->state[color].all_pieces ^= bb_set;
     board->key ^= zk_square(color, type, tosq);
     if (type == PAWN) board->pawn_key ^= zk_square(color, PAWN, tosq);
@@ -470,7 +468,7 @@ void remove_piece(BOARD *board, int color, int type, int frsq)
     U64     bb_remove = square_bb(frsq);
 
     board->state[color].square[frsq] = NO_PIECE;
-    board->state[color].piece[type].u64 ^= bb_remove;
+    board->state[color].piece[type] ^= bb_remove;
     board->state[color].all_pieces ^= bb_remove;
     board->key ^= zk_square(color, type, frsq);
     if (type == PAWN) board->pawn_key ^= zk_square(color, PAWN, frsq);
@@ -485,7 +483,7 @@ void move_piece_undo(BOARD *board, int color, int type, int frsq, int tosq)
     U64     bb_from_to = square_bb(frsq) ^ square_bb(tosq);
 
     board->state[color].square[frsq] = NO_PIECE;
-    board->state[color].piece[type].u64 ^= bb_from_to;
+    board->state[color].piece[type] ^= bb_from_to;
     board->state[color].all_pieces ^= bb_from_to;
     board->state[color].square[tosq] = (U8)type; 
 }
@@ -498,7 +496,7 @@ void set_piece_undo(BOARD *board, int color, int type, int index)
     U64     bb_set = square_bb(index);
 
     board->state[color].square[index] = (U8)type;
-    board->state[color].piece[type].u64 ^= bb_set;
+    board->state[color].piece[type] ^= bb_set;
     board->state[color].all_pieces ^= bb_set;
     board->state[color].count[type]++;
 }
@@ -511,7 +509,7 @@ void remove_piece_undo(BOARD *board, int color, int type, int index)
     U64     bb_remove = square_bb(index);
 
     board->state[color].square[index] = NO_PIECE;
-    board->state[color].piece[type].u64 ^= bb_remove;
+    board->state[color].piece[type] ^= bb_remove;
     board->state[color].all_pieces ^= bb_remove;
     board->state[color].count[type]--;
 }
@@ -536,7 +534,7 @@ int square_distance(int square1, int square2)
 U64 king_bb(BOARD *board, int color)
 {
     assert(valid_color(color));
-    return board->state[color].piece[KING].u64;
+    return board->state[color].piece[KING];
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -554,7 +552,7 @@ int king_count(BOARD *board, int color)
 U64 queen_bb(BOARD *board, int color)
 {
     assert(valid_color(color));
-    return board->state[color].piece[QUEEN].u64;
+    return board->state[color].piece[QUEEN];
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -572,7 +570,7 @@ int queen_count(BOARD *board, int color)
 U64 rook_bb(BOARD *board, int color)
 {
     assert(valid_color(color));
-    return board->state[color].piece[ROOK].u64;
+    return board->state[color].piece[ROOK];
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -590,7 +588,7 @@ int rook_count(BOARD *board, int color)
 U64 bishop_bb(BOARD *board, int color)
 {
     assert(valid_color(color));
-    return board->state[color].piece[BISHOP].u64;
+    return board->state[color].piece[BISHOP];
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -608,7 +606,7 @@ int bishop_count(BOARD *board, int color)
 U64 knight_bb(BOARD *board, int color)
 {
     assert(valid_color(color));
-    return board->state[color].piece[KNIGHT].u64;
+    return board->state[color].piece[KNIGHT];
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -626,7 +624,7 @@ int knight_count(BOARD *board, int color)
 U64 pawn_bb(BOARD *board, int color)
 {
     assert(valid_color(color));
-    return board->state[color].piece[PAWN].u64;
+    return board->state[color].piece[PAWN];
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -661,7 +659,7 @@ U64 empty_bb(BOARD *board)
 U64 queen_bishop_bb(BOARD *board, int color)
 {
     assert(valid_color(color));
-    return board->state[color].piece[QUEEN].u64 | board->state[color].piece[BISHOP].u64;
+    return board->state[color].piece[QUEEN] | board->state[color].piece[BISHOP];
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -670,7 +668,7 @@ U64 queen_bishop_bb(BOARD *board, int color)
 U64 queen_rook_bb(BOARD *board, int color)
 {
     assert(valid_color(color));
-    return board->state[color].piece[QUEEN].u64 | board->state[color].piece[ROOK].u64;
+    return board->state[color].piece[QUEEN] | board->state[color].piece[ROOK];
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -733,7 +731,7 @@ U64 piece_bb(BOARD *board, int color, int piece)
 {
     assert(valid_color(color));
     assert(piece >= PAWN && piece <= KING);
-    return board->state[color].piece[piece].u64;
+    return board->state[color].piece[piece];
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -742,9 +740,9 @@ U64 piece_bb(BOARD *board, int color, int piece)
 int has_pieces(BOARD *board, int color)
 {
     assert(valid_color(color));
-    if (board->state[color].piece[QUEEN].u64 || board->state[color].piece[ROOK].u64)
+    if (board->state[color].piece[QUEEN] || board->state[color].piece[ROOK])
         return TRUE;
-    if (board->state[color].piece[BISHOP].u64 || board->state[color].piece[KNIGHT].u64)
+    if (board->state[color].piece[BISHOP] || board->state[color].piece[KNIGHT])
         return TRUE;
     return FALSE;
 }
@@ -791,7 +789,7 @@ int can_generate_castle_ks(BOARD *board, int color)
 
     assert(valid_color(color));
 
-    if (board->state[color].can_castle_ks && bb_is_one(board->state[color].piece[ROOK].u64, ROOK_SQUARE[color]))
+    if (board->state[color].can_castle_ks && bb_is_one(board->state[color].piece[ROOK], ROOK_SQUARE[color]))
         if (!(KR_SQUARES[color] & occupied_bb(board)))
             return TRUE;
 
@@ -808,7 +806,7 @@ int can_generate_castle_qs(BOARD *board, int color)
 
     assert(valid_color(color));
 
-    if (board->state[color].can_castle_qs && bb_is_one(board->state[color].piece[ROOK].u64, ROOK_SQUARE[color]))
+    if (board->state[color].can_castle_qs && bb_is_one(board->state[color].piece[ROOK], ROOK_SQUARE[color]))
         if (!(KR_SQUARES[color] & occupied_bb(board)))
             return TRUE;
 

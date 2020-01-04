@@ -136,39 +136,39 @@ int is_target_attacked(BOARD *board, int target_square, U64 occup, int color)
 
 int get_lowest_attacker(BOARD *board, int target_square, U64 *occup, int color)
 {
-    BBIX    temp;
+    U64     temp;
 
-    temp.u64 = pawn_attack_bb(color, target_square) & (*occup) & pawn_bb(board, color);
-    if (temp.u64) {
-        (*occup) &= ~square_bb(bb_first(temp));
+    temp = pawn_attack_bb(color, target_square) & (*occup) & pawn_bb(board, color);
+    if (temp) {
+        (*occup) &= ~square_bb(bb_first_index(temp));
         return PAWN;
     }
-    temp.u64 = knight_moves_bb(target_square) & (*occup) & knight_bb(board, color);
-    if (temp.u64) {
-        (*occup) &= ~square_bb(bb_first(temp));
+    temp = knight_moves_bb(target_square) & (*occup) & knight_bb(board, color);
+    if (temp) {
+        (*occup) &= ~square_bb(bb_first_index(temp));
         return KNIGHT;
     }
     U64 ba = bb_bishop_attacks(target_square, (*occup));
-    temp.u64 = ba & bishop_bb(board, color) & (*occup);
-    if (temp.u64) {
-        (*occup) &= ~square_bb(bb_first(temp));
+    temp = ba & bishop_bb(board, color) & (*occup);
+    if (temp) {
+        (*occup) &= ~square_bb(bb_first_index(temp));
         return BISHOP;
     }
     U64 ra = bb_rook_attacks(target_square, (*occup));
-    temp.u64 = ra & rook_bb(board, color) & (*occup);
-    if (temp.u64) {
-        (*occup) &= ~square_bb(bb_first(temp));
+    temp = ra & rook_bb(board, color) & (*occup);
+    if (temp) {
+        (*occup) &= ~square_bb(bb_first_index(temp));
         return ROOK;
     }
-    temp.u64 = (ra | ba) & (queen_bb(board, color) & (*occup));
-    if (temp.u64) {
-        (*occup) &= ~square_bb(bb_first(temp));
+    temp = (ra | ba) & (queen_bb(board, color) & (*occup));
+    if (temp) {
+        (*occup) &= ~square_bb(bb_first_index(temp));
         return QUEEN;
 
     }
-    temp.u64 = king_moves_bb(target_square) & king_bb(board, color) & (*occup);
-    if (temp.u64) {
-        (*occup) &= ~square_bb(bb_first(temp));
+    temp = king_moves_bb(target_square) & king_bb(board, color) & (*occup);
+    if (temp) {
+        (*occup) &= ~square_bb(bb_first_index(temp));
         return KING;
     }
     return NO_PIECE;

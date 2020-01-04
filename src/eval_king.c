@@ -106,16 +106,16 @@ int pawn_shelter_penalty(BOARD *board, int pcsq, int color)
 //------------------------------------------------------------------------------------
 int pawn_storm_penalty(BOARD *board, int pcsq, int color)
 {
-    BBIX    opp_pawn;
-    int        penalty = 0;
+    U64     opp_pawn;
+    int     penalty = 0;
 
     assert(valid_square(pcsq));
     assert(valid_color(color));
 
     if (color == WHITE) {
-        opp_pawn.u64 = north_moves_bb(pcsq) & pawn_bb(board, BLACK);
-        if (opp_pawn.u64) {
-            switch (get_rank(bb_last(opp_pawn))) {
+        opp_pawn = north_moves_bb(pcsq) & pawn_bb(board, BLACK);
+        if (opp_pawn) {
+            switch (get_rank(bb_last_index(opp_pawn))) {
             case RANK5: penalty += P_PAWN_STORM * 1; break;
             case RANK4: penalty += P_PAWN_STORM * 2; break;
             case RANK3: penalty += P_PAWN_STORM * 3; break;
@@ -123,15 +123,14 @@ int pawn_storm_penalty(BOARD *board, int pcsq, int color)
         }
     }
     else {
-        opp_pawn.u64 = south_moves_bb(pcsq) & pawn_bb(board, WHITE);
-        if (opp_pawn.u64) {
-            switch (get_rank(bb_first(opp_pawn))) {
+        opp_pawn = south_moves_bb(pcsq) & pawn_bb(board, WHITE);
+        if (opp_pawn) {
+            switch (get_rank(bb_first_index(opp_pawn))) {
             case RANK4: penalty += P_PAWN_STORM * 1; break;
             case RANK5: penalty += P_PAWN_STORM * 2; break;
             case RANK6: penalty += P_PAWN_STORM * 3; break;
             }
         }
-
     }
 
     return penalty;

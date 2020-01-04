@@ -313,23 +313,25 @@ U64 zk_board_key(BOARD *board)
 U64 zk_pawn_key(BOARD *board)
 {
     U64     pkey = 0;
-    BBIX    piece;
+    U64     piece;
     int     pcsq;
 
-    piece.u64 = pawn_bb(board, WHITE);
-    while (piece.u64) {
-        pcsq = bb_first(piece);
+    piece = pawn_bb(board, WHITE);
+    while (piece) {
+        pcsq = bb_first_index(piece);
         pkey ^= square_keys[WHITE][PAWN][pcsq];
-        bb_clear_bit(&piece.u64, pcsq);
+        bb_clear_bit(&piece, pcsq);
     }
-    piece.u64 = pawn_bb(board, BLACK);
-    while (piece.u64) {
-        pcsq = bb_first(piece);
+
+    piece = pawn_bb(board, BLACK);
+    while (piece) {
+        pcsq = bb_first_index(piece);
         pkey ^= square_keys[BLACK][PAWN][pcsq];
-        bb_clear_bit(&piece.u64, pcsq);
+        bb_clear_bit(&piece, pcsq);
     }
-    if (side_on_move(board) == BLACK)
-        pkey ^= color_key;
+
+    if (side_on_move(board) == BLACK) pkey ^= color_key;
+
     return pkey;
 }
 

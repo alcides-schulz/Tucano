@@ -252,20 +252,16 @@ MOVE util_parse_move(GAME *game, char *move_string)
 //-------------------------------------------------------------------------------------------------
 //  Utility to print a bitboard to screen.
 //-------------------------------------------------------------------------------------------------
-void bb_print(char *msg, U64 b)
+void bb_print(char *msg, U64 bb)
 {
-    BBIX    bbix;
-
-    bbix.u64 = b;
-
-    int last_index = bb_last(bbix);
-    int first_index = bb_first(bbix);
-    int bit_count = bb_count(bbix);
+    int last_index = bb_last_index(bb);
+    int first_index = bb_first_index(bb);
+    int bit_count = bb_count_u64(bb);
     
-    printf("%s: FirstIndex: %d LastIndex: %d BitCount: %d Hex: ((U64)0x%016" PRIX64 ")\n", msg, first_index, last_index, bit_count, bbix.u64);
+    printf("%s: FirstIndex: %d LastIndex: %d BitCount: %d Hex: ((U64)0x%016" PRIX64 ")\n", msg, first_index, last_index, bit_count, bb);
 
     for (int i = 0; i < 64; i++) {
-        printf("%c", (bb_is_one(bbix.u64, i)) ? '1' : '0');
+        printf("%c", (bb_is_one(bb, i)) ? '1' : '0');
         if ((i + 1) % 8 == 0) printf("\n");
     }
 }
@@ -440,77 +436,75 @@ void util_get_board_fen(BOARD *board, char *fen)
 //-------------------------------------------------------------------------------------------------
 //  Create a list of chars representing current board position.
 //-------------------------------------------------------------------------------------------------
-void util_get_board_chars(BOARD *board, char b[64])
+void util_get_board_chars(BOARD *board, char board_string[64])
 {
-    int     index;
-    BBIX    piece;
+    int index;
+    U64 piece;
 
-    memset(b, ' ', 64);
+    memset(board_string, ' ', 64);
 
-    if (king_bb(board, BLACK))
-        b[king_square(board, BLACK)] = 'k';
-    if (king_bb(board, WHITE))
-        b[king_square(board, WHITE)] = 'K';
+    if (king_bb(board, BLACK)) board_string[king_square(board, BLACK)] = 'k';
+    if (king_bb(board, WHITE)) board_string[king_square(board, WHITE)] = 'K';
 
-    piece.u64 = knight_bb(board, BLACK);
-    while (piece.u64) {
-        index = bb_first(piece);
-        b[index] = 'n';
-        bb_clear_bit(&piece.u64, index);
+    piece = knight_bb(board, BLACK);
+    while (piece) {
+        index = bb_first_index(piece);
+        board_string[index] = 'n';
+        bb_clear_bit(&piece, index);
     }
-    piece.u64 = rook_bb(board, BLACK);
-    while (piece.u64) {
-        index = bb_first(piece);
-        b[index] = 'r';
-        bb_clear_bit(&piece.u64, index);
+    piece = rook_bb(board, BLACK);
+    while (piece) {
+        index = bb_first_index(piece);
+        board_string[index] = 'r';
+        bb_clear_bit(&piece, index);
     }
-    piece.u64 = bishop_bb(board, BLACK);
-    while (piece.u64) {
-        index = bb_first(piece);
-        b[index] = 'b';
-        bb_clear_bit(&piece.u64, index);
+    piece = bishop_bb(board, BLACK);
+    while (piece) {
+        index = bb_first_index(piece);
+        board_string[index] = 'b';
+        bb_clear_bit(&piece, index);
     }
-    piece.u64 = queen_bb(board, BLACK);
-    while (piece.u64) {
-        index = bb_first(piece);
-        b[index] = 'q';
-        bb_clear_bit(&piece.u64, index);
+    piece = queen_bb(board, BLACK);
+    while (piece) {
+        index = bb_first_index(piece);
+        board_string[index] = 'q';
+        bb_clear_bit(&piece, index);
     }
-    piece.u64 = pawn_bb(board, BLACK);
-    while (piece.u64) {
-        index = bb_first(piece);
-        b[index] = 'p';
-        bb_clear_bit(&piece.u64, index);
+    piece = pawn_bb(board, BLACK);
+    while (piece) {
+        index = bb_first_index(piece);
+        board_string[index] = 'p';
+        bb_clear_bit(&piece, index);
     }
-    piece.u64 = knight_bb(board, WHITE);
-    while (piece.u64) {
-        index = bb_first(piece);
-        b[index] = 'N';
-        bb_clear_bit(&piece.u64, index);
+    piece = knight_bb(board, WHITE);
+    while (piece) {
+        index = bb_first_index(piece);
+        board_string[index] = 'N';
+        bb_clear_bit(&piece, index);
     }
-    piece.u64 = rook_bb(board, WHITE);
-    while (piece.u64) {
-        index = bb_first(piece);
-        b[index] = 'R';
-        bb_clear_bit(&piece.u64, index);
+    piece = rook_bb(board, WHITE);
+    while (piece) {
+        index = bb_first_index(piece);
+        board_string[index] = 'R';
+        bb_clear_bit(&piece, index);
     }
-    piece.u64 = bishop_bb(board, WHITE);
-    while (piece.u64) {
-        index = bb_first(piece);
-        b[index] = 'B';
-        bb_clear_bit(&piece.u64, index);
+    piece = bishop_bb(board, WHITE);
+    while (piece) {
+        index = bb_first_index(piece);
+        board_string[index] = 'B';
+        bb_clear_bit(&piece, index);
     }
-    piece.u64 = queen_bb(board, WHITE);
-    while (piece.u64) {
-        index = bb_first(piece);
-        b[index] = 'Q';
-        bb_clear_bit(&piece.u64, index);
+    piece = queen_bb(board, WHITE);
+    while (piece) {
+        index = bb_first_index(piece);
+        board_string[index] = 'Q';
+        bb_clear_bit(&piece, index);
     }
-    piece.u64 = pawn_bb(board, WHITE);
-    while (piece.u64) {
-        index = bb_first(piece);
-        b[index] = 'P';
-        bb_clear_bit(&piece.u64, index);
+    piece = pawn_bb(board, WHITE);
+    while (piece) {
+        index = bb_first_index(piece);
+        board_string[index] = 'P';
+        bb_clear_bit(&piece, index);
     }
 }
 

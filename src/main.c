@@ -15,15 +15,16 @@
   You can find the GNU General Public License at http://www.gnu.org/licenses/
 -------------------------------------------------------------------------------*/
 
-// Signature: 36718639  Elapsed time: 20.99 secs  Nodes/sec: 1749k
+// Signature: 38476616  Elapsed time: 20.75 secs  Nodes/sec: 1855k
 
 #define EXTERN
 #include "globals.h"
 
 #define ENGINE "Tucano"
 #define AUTHOR "Alcides Schulz"
-#define VERSION "8.08"
+#define VERSION "8.09"
 
+// 8.09 - builtin bitboard functions.
 // 8.08 - parameter tuning
 // 8.07 - TCEC Winter 2019
 

@@ -17,6 +17,10 @@ You can find the GNU General Public License at http://www.gnu.org/licenses/
 
 #include "globals.h"
 
+#if defined(_WIN64) && defined(_MSC_VER)
+#include <intrin.h>
+#endif
+
 //-------------------------------------------------------------------------------------------------
 //  Bitboard functions.
 //
@@ -191,76 +195,42 @@ U64 square_color_bb(int index)
 }
 
 //-------------------------------------------------------------------------------------------------
-//  Return index of the first "1" bit of BBIX: 0 to 63, or -1 when bitboard is 0
+//  Return index of the first "1" bit of a bitboard: 0 to 63.
 //-------------------------------------------------------------------------------------------------
-int bb_first(BBIX bbix)
+int bb_first_index(U64 bb)
 {
-#if defined(USE_BBIX_STRUCT)
-    if (bbix.u32[1]) {
-        if (bbix.u16[3])
-            return (int)first_index_table[0][bbix.u16[3]];
-        else
-            return (int)first_index_table[1][bbix.u16[2]];
-    }
-    else {
-        if (bbix.u16[1])
-            return (int)first_index_table[2][bbix.u16[1]];
-        else
-            return (int)first_index_table[3][bbix.u16[0]];
-    }
+    assert(bb);
+#if defined(__GNUC__)
+    return __builtin_clzll(bb);
+#elif defined(_WIN64) && defined(_MSC_VER)
+    unsigned long idx;
+    _BitScanReverse64(&idx, bb);
+    return 63 - (int)idx;
 #else
-    if (bbix.u64 & (U64)0xFFFF000000000000)
-        return first_index_table[0][(bbix.u64 & (U64)0xFFFF000000000000) >> 48];
-    if (bbix.u64 & (U64)0x0000FFFF00000000)
-        return first_index_table[1][(bbix.u64 & (U64)0x0000FFFF00000000) >> 32];
-    if (bbix.u64 & (U64)0x00000000FFFF0000)
-        return first_index_table[2][(bbix.u64 & (U64)0x00000000FFFF0000) >> 16];
-    return first_index_table[3][(bbix.u64 & (U64)0x000000000000FFFF)];
+    if (bb & (U64)0xFFFF000000000000) return first_index_table[0][(bb & (U64)0xFFFF000000000000) >> 48];
+    if (bb & (U64)0x0000FFFF00000000) return first_index_table[1][(bb & (U64)0x0000FFFF00000000) >> 32];
+    if (bb & (U64)0x00000000FFFF0000) return first_index_table[2][(bb & (U64)0x00000000FFFF0000) >> 16];
+    return first_index_table[3][(bb & (U64)0x000000000000FFFF)];
 #endif
 }
 
 //-------------------------------------------------------------------------------------------------
-//  Return index of the last "1" bit of BBIX: 0 to 63, or -1 when bitboard is 0
+//  Return index of the last "1" bit of a bitboard: 0 to 63.
 //-------------------------------------------------------------------------------------------------
-int bb_last(BBIX bbix)
+int bb_last_index(U64 bb)
 {
-#ifdef USE_BBIX_STRUCT
-    if (bbix.u32[0]) {
-        if (bbix.u16[0])
-            return (int)last_index_table[3][bbix.u16[0]];
-        else
-            return (int)last_index_table[2][bbix.u16[1]];
-    }
-    else {
-        if (bbix.u16[2])
-            return (int)last_index_table[1][bbix.u16[2]];
-        else
-            return (int)last_index_table[0][bbix.u16[3]];
-    }
+    assert(bb);
+#if defined(__GNUC__)
+    return 63 - __builtin_ctzll(bb);
+#elif defined(_WIN64) && defined(_MSC_VER)
+    unsigned long idx;
+    _BitScanForward64(&idx, bb);
+    return 63 - (int)idx;
 #else
-    if (bbix.u64 & (U64)0x000000000000FFFF)
-        return last_index_table[3][bbix.u64 & (U64)0x000000000000FFFF];
-    if (bbix.u64 & (U64)0x00000000FFFF0000)
-        return last_index_table[2][(bbix.u64 & (U64)0x00000000FFFF0000) >> 16];
-    if (bbix.u64 & (U64)0x0000FFFF00000000)
-        return last_index_table[1][(bbix.u64 & (U64)0x0000FFFF00000000) >> 32];
-    return last_index_table[0][(bbix.u64 & (U64)0xFFFF000000000000) >> 48];
-#endif
-}
-
-//-------------------------------------------------------------------------------------------------
-//  Number of "1" bits in the BBIX
-//-------------------------------------------------------------------------------------------------
-int bb_count(BBIX bbix)
-{
-#ifdef USE_BBIX_STRUCT
-    return (int)(bit_count_table[bbix.u16[0]] + bit_count_table[bbix.u16[1]] +
-                 bit_count_table[bbix.u16[2]] + bit_count_table[bbix.u16[3]]);
-#else
-    return (int)(bit_count_table[(bbix.u64 & (U64)0xFFFF000000000000) >> 48] + 
-                 bit_count_table[(bbix.u64 & (U64)0x0000FFFF00000000) >> 32] +
-                 bit_count_table[(bbix.u64 & (U64)0x00000000FFFF0000) >> 16] + 
-                 bit_count_table[(bbix.u64 & (U64)0x000000000000FFFF)]);
+    if (bb & (U64)0x000000000000FFFF) return last_index_table[3][bb & (U64)0x000000000000FFFF];
+    if (bb & (U64)0x00000000FFFF0000) return last_index_table[2][(bb & (U64)0x00000000FFFF0000) >> 16];
+    if (bb & (U64)0x0000FFFF00000000) return last_index_table[1][(bb & (U64)0x0000FFFF00000000) >> 32];
+    return last_index_table[0][(bb & (U64)0xFFFF000000000000) >> 48];
 #endif
 }
 
@@ -269,31 +239,16 @@ int bb_count(BBIX bbix)
 //-------------------------------------------------------------------------------------------------
 int bb_count_u64(U64 bb)
 {
+#if defined(__GNUC__)
+    return __builtin_popcountll(bb);
+#elif defined(_WIN64) && defined(_MSC_VER)
+    return (int)_mm_popcnt_u64(bb);
+#elif defined(USE_BBIX_STRUCT)
     return bit_count_table[(bb & (U64)0xFFFF000000000000) >> 48] +
            bit_count_table[(bb & (U64)0x0000FFFF00000000) >> 32] +
            bit_count_table[(bb & (U64)0x00000000FFFF0000) >> 16] +
            bit_count_table[(bb & (U64)0x000000000000FFFF)];
-}
-
-
-//-------------------------------------------------------------------------------------------------
-//  Get first index of U64 bitboard
-//-------------------------------------------------------------------------------------------------
-int first_index(U64 bb)
-{
-    BBIX temp;
-    temp.u64 = bb;
-    return bb_first(temp);
-}
-
-//-------------------------------------------------------------------------------------------------
-//  Get last index of U64 bitboard
-//-------------------------------------------------------------------------------------------------
-int last_index(U64 bb)
-{
-    BBIX temp;
-    temp.u64 = bb;
-    return bb_last(temp);
+#endif
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -316,8 +271,9 @@ U8 get_bit_count(U64 bb)
 //-------------------------------------------------------------------------------------------------
 S8 get_first_index(U16 value)
 {
-    for (S8 i = 0; i < 16; i++)
+    for (S8 i = 0; i < 16; i++) {
         if (value & (1 << (15 - i))) return i;
+    }
     return -1;
 }
 
@@ -328,8 +284,9 @@ S8 get_first_index(U16 value)
 //-------------------------------------------------------------------------------------------------
 S8 get_last_index(U16 value)
 {
-    for (S8 i = 0; i < 16; i++)
+    for (S8 i = 0; i < 16; i++) {
         if (value & (1 << i)) return (S8)(15 - i);
+    }
     return -1;
 }
 

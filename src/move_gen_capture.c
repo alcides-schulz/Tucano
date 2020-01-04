@@ -29,8 +29,10 @@ void    gen_black_pawn_captures(BOARD *board, MOVE_LIST *ml);
 //-------------------------------------------------------------------------------------------------
 void gen_caps(BOARD *board, MOVE_LIST *ml)
 {
-    BBIX    piece, attacks;
-    int     from, to;
+    U64     piece;
+    U64     attacks;
+    int     from;
+    int     to;
     int     turn = side_on_move(board);
     int     opp = flip_color(turn);
 
@@ -43,53 +45,53 @@ void gen_caps(BOARD *board, MOVE_LIST *ml)
         gen_black_pawn_captures(board, ml);
 
     //  Knight
-    piece.u64 = knight_bb(board, turn);
-    while (piece.u64) {
-        from = bb_first(piece);
-        attacks.u64 = knight_moves_bb(from) & all_pieces_bb(board, opp);
-        while (attacks.u64) {
-            to = (turn == WHITE ? bb_first(attacks) : bb_last(attacks));
+    piece = knight_bb(board, turn);
+    while (piece) {
+        from = bb_first_index(piece);
+        attacks = knight_moves_bb(from) & all_pieces_bb(board, opp);
+        while (attacks) {
+            to = (turn == WHITE ? bb_first_index(attacks) : bb_last_index(attacks));
             add_move(ml, pack_capture(KNIGHT, piece_on_square(board, opp, to), from, to));
-            bb_clear_bit(&attacks.u64, to);
+            bb_clear_bit(&attacks, to);
         }
-        bb_clear_bit(&piece.u64, from);
+        bb_clear_bit(&piece, from);
     }
 
     //  Rook and queen
-    piece.u64 = queen_rook_bb(board, turn);
-    while (piece.u64) {
-        from = bb_first(piece);
+    piece = queen_rook_bb(board, turn);
+    while (piece) {
+        from = bb_first_index(piece);
 
-        attacks.u64 = bb_rook_attacks(from, occupied_bb(board)) & all_pieces_bb(board, opp);
-        while (attacks.u64) {
-            to = (turn == WHITE ? bb_first(attacks) : bb_last(attacks));
+        attacks = bb_rook_attacks(from, occupied_bb(board)) & all_pieces_bb(board, opp);
+        while (attacks) {
+            to = (turn == WHITE ? bb_first_index(attacks) : bb_last_index(attacks));
             add_move(ml, pack_capture(piece_on_square(board, turn, from), piece_on_square(board, opp, to), from, to));
-            bb_clear_bit(&attacks.u64, to);
+            bb_clear_bit(&attacks, to);
         }
 
-        bb_clear_bit(&piece.u64, from);
+        bb_clear_bit(&piece, from);
     }
 
     //  Bishop and Queen
-    piece.u64 = queen_bishop_bb(board, turn);
-    while (piece.u64) {
-        from = bb_first(piece);
-        attacks.u64 = bb_bishop_attacks(from, occupied_bb(board)) & all_pieces_bb(board, opp);
-        while (attacks.u64) {
-            to = (turn == WHITE ? bb_first(attacks) : bb_last(attacks));
+    piece = queen_bishop_bb(board, turn);
+    while (piece) {
+        from = bb_first_index(piece);
+        attacks = bb_bishop_attacks(from, occupied_bb(board)) & all_pieces_bb(board, opp);
+        while (attacks) {
+            to = (turn == WHITE ? bb_first_index(attacks) : bb_last_index(attacks));
             add_move(ml, pack_capture(piece_on_square(board, turn, from), piece_on_square(board, opp, to), from, to));
-            bb_clear_bit(&attacks.u64, to);
+            bb_clear_bit(&attacks, to);
         }
-        bb_clear_bit(&piece.u64, from);
+        bb_clear_bit(&piece, from);
     }
 
     //  King
     from = king_square(board, turn);
-    attacks.u64 = king_moves_bb(from) & all_pieces_bb(board, opp);
-    while (attacks.u64) {
-        to = (turn == WHITE ? bb_first(attacks) : bb_last(attacks));
+    attacks = king_moves_bb(from) & all_pieces_bb(board, opp);
+    while (attacks) {
+        to = (turn == WHITE ? bb_first_index(attacks) : bb_last_index(attacks));
         add_move(ml, pack_capture(KING, piece_on_square(board, opp, to), from, to));
-        bb_clear_bit(&attacks.u64, to);
+        bb_clear_bit(&attacks, to);
     }
 }
 
@@ -98,51 +100,53 @@ void gen_caps(BOARD *board, MOVE_LIST *ml)
 //-------------------------------------------------------------------------------------------------
 void gen_white_pawn_captures(BOARD *board, MOVE_LIST *ml)
 {
-    BBIX    moves, attacks, ep_capture;
-    int     from, to;
+    U64     attacks;
+    U64     ep_capture;
+    int     from;
+    int     to;
     int     opp = flip_color(side_on_move(board));
 
     // promotions
-    moves.u64 = ((pawn_bb(board, WHITE) & BB_RANK_7) << 8) & empty_bb(board);
-    while (moves.u64) {
-        to = bb_first(moves);
+    U64 moves = ((pawn_bb(board, WHITE) & BB_RANK_7) << 8) & empty_bb(board);
+    while (moves) {
+        to = bb_first_index(moves);
         add_all_promotions(ml, to + 8, to);
-        bb_clear_bit(&moves.u64, to);
+        bb_clear_bit(&moves, to);
     }
 
     //  attacks to northwest
-    attacks.u64 = (pawn_bb(board, WHITE) & BB_NO_AFILE) << 9;
-    ep_capture.u64 = attacks.u64 & ep_square_bb(board);
-    attacks.u64 &= all_pieces_bb(board, opp);
-    while (attacks.u64) {
-        to = bb_first(attacks);
+    attacks = (pawn_bb(board, WHITE) & BB_NO_AFILE) << 9;
+    ep_capture = attacks & ep_square_bb(board);
+    attacks &= all_pieces_bb(board, opp);
+    while (attacks) {
+        to = bb_first_index(attacks);
         from = to + 9;
         if (to < 8)
             add_all_capture_promotions(ml, from, to, piece_on_square(board, BLACK, to));
         else
             add_move(ml, pack_capture(PAWN, piece_on_square(board, BLACK, to), from, to));
-        bb_clear_bit(&attacks.u64, to);
+        bb_clear_bit(&attacks, to);
     }
-    if (ep_capture.u64) {
-        to = bb_last(ep_capture);
+    if (ep_capture) {
+        to = bb_last_index(ep_capture);
         add_move(ml, pack_en_passant_capture(to + 9, to, to + 8));
     }
 
     // attacks northeast
-    attacks.u64 = (pawn_bb(board, WHITE) & BB_NO_HFILE) << 7;
-    ep_capture.u64 = attacks.u64 & ep_square_bb(board);
-    attacks.u64 &= all_pieces_bb(board, opp);
-    while (attacks.u64) {
-        to = bb_first(attacks);
+    attacks = (pawn_bb(board, WHITE) & BB_NO_HFILE) << 7;
+    ep_capture = attacks & ep_square_bb(board);
+    attacks &= all_pieces_bb(board, opp);
+    while (attacks) {
+        to = bb_first_index(attacks);
         from = to + 7;
         if (to < 8)
             add_all_capture_promotions(ml, from, to, piece_on_square(board, BLACK, to));
         else
             add_move(ml, pack_capture(PAWN, piece_on_square(board, BLACK, to), from, to));
-        bb_clear_bit(&attacks.u64, to);
+        bb_clear_bit(&attacks, to);
     }
-    if (ep_capture.u64) {
-        to = bb_last(ep_capture);
+    if (ep_capture) {
+        to = bb_last_index(ep_capture);
         add_move(ml, pack_en_passant_capture(to + 7, to, to + 8));
     }
 }
@@ -152,49 +156,51 @@ void gen_white_pawn_captures(BOARD *board, MOVE_LIST *ml)
 //-------------------------------------------------------------------------------------------------
 void gen_black_pawn_captures(BOARD *board, MOVE_LIST *ml) 
 {
-    BBIX    moves, attacks, ep_capture;
-    int     from, to;
+    U64     attacks;
+    U64     ep_capture;
+    int     from;
+    int     to;
     int     opp = flip_color(side_on_move(board));
 
     //  promotions
-       moves.u64 = ((pawn_bb(board, BLACK) & BB_RANK_2) >> 8) & empty_bb(board);
-    while (moves.u64) {
-        to = bb_last(moves);
+    U64 moves = ((pawn_bb(board, BLACK) & BB_RANK_2) >> 8) & empty_bb(board);
+    while (moves) {
+        to = bb_last_index(moves);
         add_all_promotions(ml, to - 8, to);
-        bb_clear_bit(&moves.u64, to);
+        bb_clear_bit(&moves, to);
     }
     // attacks southeast
-    attacks.u64 = (pawn_bb(board, BLACK) & BB_NO_HFILE) >> 9;
-    ep_capture.u64 = attacks.u64 & ep_square_bb(board);
-    attacks.u64 &= all_pieces_bb(board, opp);
-    while (attacks.u64) {
-        to = bb_last(attacks);
+    attacks = (pawn_bb(board, BLACK) & BB_NO_HFILE) >> 9;
+    ep_capture = attacks & ep_square_bb(board);
+    attacks &= all_pieces_bb(board, opp);
+    while (attacks) {
+        to = bb_last_index(attacks);
         from = to - 9;
         if (to > 55)
             add_all_capture_promotions(ml, from, to, piece_on_square(board, WHITE, to));
         else
             add_move(ml, pack_capture(PAWN, piece_on_square(board, WHITE, to), from, to));
-        bb_clear_bit(&attacks.u64, to);
+        bb_clear_bit(&attacks, to);
     }
-    if (ep_capture.u64) {
-        to = bb_last(ep_capture);
+    if (ep_capture) {
+        to = bb_last_index(ep_capture);
         add_move(ml, pack_en_passant_capture(to - 9, to, to - 8));
     }
     // attacks southwest
-    attacks.u64 = (pawn_bb(board, BLACK) & BB_NO_AFILE) >> 7;
-    ep_capture.u64 = attacks.u64 & ep_square_bb(board);
-    attacks.u64 &= all_pieces_bb(board, opp);
-    while (attacks.u64) {
-        to = bb_last(attacks);
+    attacks = (pawn_bb(board, BLACK) & BB_NO_AFILE) >> 7;
+    ep_capture = attacks & ep_square_bb(board);
+    attacks &= all_pieces_bb(board, opp);
+    while (attacks) {
+        to = bb_last_index(attacks);
         from = to - 7;
         if (to > 55)
             add_all_capture_promotions(ml, from, to, piece_on_square(board, WHITE, to));
         else
             add_move(ml, pack_capture(PAWN, piece_on_square(board, WHITE, to), from, to));
-        bb_clear_bit(&attacks.u64, to);
+        bb_clear_bit(&attacks, to);
     }
-    if (ep_capture.u64) {
-        to = bb_last(ep_capture);
+    if (ep_capture) {
+        to = bb_last_index(ep_capture);
         add_move(ml, pack_en_passant_capture(to - 7, to, to - 8));
     }
 }

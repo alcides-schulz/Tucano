@@ -27,12 +27,12 @@ void    gm_evasion_king_moves(BOARD *board, MOVE_LIST *ml, int king_square);
 //-------------------------------------------------------------------------------------------------
 void gen_check_evasions(BOARD *board, MOVE_LIST *ml)
 {
-    BBIX    temp;
-    int     idx;
+    U64     temp;
+    int     index;
     int     king_pcsq = king_square(board, side_on_move(board));
     int     attack_count = 0;
     int     attack_square = 0;
-    BBIX    attack_path;
+    U64     attack_path;
     int     block_square;
     U64     pawns, moves, moves2sq;
     int     ep_pos[COLORS] = {-8, +8};
@@ -44,35 +44,35 @@ void gen_check_evasions(BOARD *board, MOVE_LIST *ml)
     // step 1: count how many pieces are attacking the king.
 
     // knight attacks (we can't have 2 knights attacking the king)
-    temp.u64 = knight_moves_bb(king_pcsq) & knight_bb(board, opp);
-    if (temp.u64) {
-        idx = bb_last(temp);
-        attack_square = idx;
+    temp = knight_moves_bb(king_pcsq) & knight_bb(board, opp);
+    if (temp) {
+        index = bb_last_index(temp);
+        attack_square = index;
         attack_count++;
     }
     // queen or rook attack.
-    temp.u64 = bb_rook_attacks(king_pcsq, occupied_bb(board)) & queen_rook_bb(board, opp);
-    while (temp.u64)  {
-        idx = bb_last(temp);
-        attack_square = idx;
+    temp = bb_rook_attacks(king_pcsq, occupied_bb(board)) & queen_rook_bb(board, opp);
+    while (temp)  {
+        index = bb_last_index(temp);
+        attack_square = index;
         attack_count++;
-        bb_clear_bit(&temp.u64, idx);
+        bb_clear_bit(&temp, index);
     }
     //  queen or bishop attacks
-    temp.u64 = bb_bishop_attacks(king_pcsq, occupied_bb(board)) & queen_bishop_bb(board, opp);
-    while (temp.u64) {
-        idx = bb_last(temp);
-        attack_square = idx;
+    temp = bb_bishop_attacks(king_pcsq, occupied_bb(board)) & queen_bishop_bb(board, opp);
+    while (temp) {
+        index = bb_last_index(temp);
+        attack_square = index;
         attack_count++;
-        bb_clear_bit(&temp.u64, idx);
+        bb_clear_bit(&temp, index);
     }
     //  pawn attacks
-    temp.u64 = pawn_attack_bb(opp, king_pcsq) & pawn_bb(board, opp);
-    while (temp.u64) {
-        idx = bb_last(temp);
-        attack_square = idx;
+    temp = pawn_attack_bb(opp, king_pcsq) & pawn_bb(board, opp);
+    while (temp) {
+        index = bb_last_index(temp);
+        attack_square = index;
         attack_count++;
-        bb_clear_bit(&temp.u64, idx);
+        bb_clear_bit(&temp, index);
     }
 
     // Step 2: generate king escape moves
@@ -87,72 +87,72 @@ void gen_check_evasions(BOARD *board, MOVE_LIST *ml)
     int attacker_piece = piece_on_square(board, opp, attack_square);
 
     //  capture with knight
-    temp.u64 = knight_moves_bb(attack_square) & knight_bb(board, myc);
-    while (temp.u64) {
-        idx = bb_last(temp);
-        add_move(ml, pack_capture(KNIGHT, attacker_piece, idx, attack_square));
-        bb_clear_bit(&temp.u64, idx);
+    temp = knight_moves_bb(attack_square) & knight_bb(board, myc);
+    while (temp) {
+        index = bb_last_index(temp);
+        add_move(ml, pack_capture(KNIGHT, attacker_piece, index, attack_square));
+        bb_clear_bit(&temp, index);
     }
     //  capture with queen or rook
-    temp.u64 = bb_rook_attacks(attack_square, occupied_bb(board)) & queen_rook_bb(board, myc);
-    while (temp.u64) {
-        idx = bb_last(temp);
-        add_move(ml, pack_capture(piece_on_square(board, myc, idx), attacker_piece, idx, attack_square));
-        bb_clear_bit(&temp.u64, idx);
+    temp = bb_rook_attacks(attack_square, occupied_bb(board)) & queen_rook_bb(board, myc);
+    while (temp) {
+        index = bb_last_index(temp);
+        add_move(ml, pack_capture(piece_on_square(board, myc, index), attacker_piece, index, attack_square));
+        bb_clear_bit(&temp, index);
     }
     //  capture with queen or bishop
-    temp.u64 = bb_bishop_attacks(attack_square, occupied_bb(board)) & queen_bishop_bb(board, myc);
-    while (temp.u64) {
-        idx = bb_last(temp);
-        add_move(ml, pack_capture(piece_on_square(board, myc, idx), attacker_piece, idx, attack_square));
-        bb_clear_bit(&temp.u64, idx);
+    temp = bb_bishop_attacks(attack_square, occupied_bb(board)) & queen_bishop_bb(board, myc);
+    while (temp) {
+        index = bb_last_index(temp);
+        add_move(ml, pack_capture(piece_on_square(board, myc, index), attacker_piece, index, attack_square));
+        bb_clear_bit(&temp, index);
     }
     //  capture with pawn including capture/promotion
-    temp.u64 = pawn_attack_bb(myc, attack_square) & pawn_bb(board, myc);
-    while (temp.u64)  {
-        idx = bb_last(temp);
+    temp = pawn_attack_bb(myc, attack_square) & pawn_bb(board, myc);
+    while (temp)  {
+        index = bb_last_index(temp);
         if (attack_square < 8 || attack_square > 55)
-            add_all_capture_promotions(ml, idx, attack_square, attacker_piece);
+            add_all_capture_promotions(ml, index, attack_square, attacker_piece);
         else
-            add_move(ml, pack_capture(PAWN, attacker_piece, idx, attack_square));
-        bb_clear_bit(&temp.u64, idx);
+            add_move(ml, pack_capture(PAWN, attacker_piece, index, attack_square));
+        bb_clear_bit(&temp, index);
     }
     //  if attacker is pawn verify if can be ep-captured.
     if (attacker_piece == PAWN && ep_square_bb(board)) {
-        idx = ep_square(board);
-        if (attack_square + ep_pos[myc] == idx) {
+        index = ep_square(board);
+        if (attack_square + ep_pos[myc] == index) {
             if (get_file(attack_square) > FILEA && piece_on_square(board, myc, attack_square - 1) == PAWN)
-                add_move(ml, pack_en_passant_capture(attack_square - 1, idx, attack_square));
+                add_move(ml, pack_en_passant_capture(attack_square - 1, index, attack_square));
             if (get_file(attack_square) < FILEH && piece_on_square(board, myc, attack_square + 1) == PAWN)
-                add_move(ml, pack_en_passant_capture(attack_square + 1, idx, attack_square));
+                add_move(ml, pack_en_passant_capture(attack_square + 1, index, attack_square));
         }
     }
 
     //  Step 4: generate moves that place a piece between king and attacker.
-    attack_path.u64 = from_to_path_bb(king_pcsq, attack_square);
-    while (attack_path.u64) {
-        block_square = bb_first(attack_path);
+    attack_path = from_to_path_bb(king_pcsq, attack_square);
+    while (attack_path) {
+        block_square = bb_first_index(attack_path);
 
         //  block with knight
-        temp.u64 = knight_moves_bb(block_square) & knight_bb(board, myc);
-        while (temp.u64) {
-            idx = bb_last(temp);
-            add_move(ml, pack_quiet(KNIGHT, idx, block_square));
-            bb_clear_bit(&temp.u64, idx);
+        temp = knight_moves_bb(block_square) & knight_bb(board, myc);
+        while (temp) {
+            index = bb_last_index(temp);
+            add_move(ml, pack_quiet(KNIGHT, index, block_square));
+            bb_clear_bit(&temp, index);
         }
         //  block with queen or rook
-        temp.u64 = bb_rook_attacks(block_square, occupied_bb(board)) & queen_rook_bb(board, myc);
-        while (temp.u64) {
-            idx = bb_last(temp);
-            add_move(ml, pack_quiet(piece_on_square(board, myc, idx), idx, block_square));
-            bb_clear_bit(&temp.u64, idx);
+        temp = bb_rook_attacks(block_square, occupied_bb(board)) & queen_rook_bb(board, myc);
+        while (temp) {
+            index = bb_last_index(temp);
+            add_move(ml, pack_quiet(piece_on_square(board, myc, index), index, block_square));
+            bb_clear_bit(&temp, index);
         }
         //  block with queen or bishop
-        temp.u64 = bb_bishop_attacks(block_square, occupied_bb(board)) & queen_bishop_bb(board, myc);
-        while (temp.u64)  {
-            idx = bb_last(temp);
-            add_move(ml, pack_quiet(piece_on_square(board, myc, idx), idx, block_square));
-            bb_clear_bit(&temp.u64, idx);
+        temp = bb_bishop_attacks(block_square, occupied_bb(board)) & queen_bishop_bb(board, myc);
+        while (temp)  {
+            index = bb_last_index(temp);
+            add_move(ml, pack_quiet(piece_on_square(board, myc, index), index, block_square));
+            bb_clear_bit(&temp, index);
         }
         //  block with pawn moves, including promotions
         if (side_on_move(board) == WHITE) {
@@ -182,7 +182,7 @@ void gen_check_evasions(BOARD *board, MOVE_LIST *ml)
                 add_move(ml, pack_pawn_2square(block_square - 16, block_square, block_square - 8));
         }
 
-        bb_clear_bit(&attack_path.u64, block_square);
+        bb_clear_bit(&attack_path, block_square);
     }
 }
 
@@ -191,21 +191,21 @@ void gen_check_evasions(BOARD *board, MOVE_LIST *ml)
 //-------------------------------------------------------------------------------------------------
 void gm_evasion_king_moves(BOARD *board, MOVE_LIST *ml, int king_square)
 {
-    BBIX    temp;
+    U64     temp;
     int     to;
     int     opp = flip_color(side_on_move(board));
 
-    temp.u64 = king_moves_bb(king_square) & all_pieces_bb(board, flip_color(side_on_move(board)));
-    while (temp.u64) {
-        to = bb_first(temp);
+    temp = king_moves_bb(king_square) & all_pieces_bb(board, flip_color(side_on_move(board)));
+    while (temp) {
+        to = bb_first_index(temp);
         add_move(ml, pack_capture(KING, piece_on_square(board, opp, to), king_square, to));
-        bb_clear_bit(&temp.u64, to);
+        bb_clear_bit(&temp, to);
     }
-    temp.u64 = king_moves_bb(king_square) & empty_bb(board);
-    while (temp.u64) {
-        to = bb_first(temp);
+    temp = king_moves_bb(king_square) & empty_bb(board);
+    while (temp) {
+        to = bb_first_index(temp);
         add_move(ml, pack_quiet(KING, king_square, to));
-        bb_clear_bit(&temp.u64, to);
+        bb_clear_bit(&temp, to);
     }
 }
 

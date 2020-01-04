@@ -160,28 +160,17 @@ enum    {RANK8, RANK7, RANK6, RANK5, RANK4, RANK3, RANK2, RANK1};
 #define RANKS       8
 #define FILES       8
 
-U64  square_bb(int index);
-void bb_set_bit(U64 *bb, int index);
-void bb_set_bit_rf(U64 *bb, int rank, int file);
-void bb_clear_bit(U64 *bb, int index);
-int  bb_is_one(U64 bb, int index);
-U64  square_color_bb(int index);
-
-// This union is used to get first and last index, and bit counts.
-typedef union u_bitboard_index
-{
-    U64     u64;
-    U32     u32[2];
-    U16     u16[4];
-}   BBIX;
+U64     square_bb(int index);
+void    bb_set_bit(U64 *bb, int index);
+void    bb_set_bit_rf(U64 *bb, int rank, int file);
+void    bb_clear_bit(U64 *bb, int index);
+int     bb_is_one(U64 bb, int index);
+U64     square_color_bb(int index);
 
 void    bb_init(void);
-int     bb_first(BBIX bbix);
-int     bb_last(BBIX bbix);
-int     bb_count(BBIX bbix);
+int     bb_first_index(U64 bb);
+int     bb_last_index(U64 bb);
 int     bb_count_u64(U64 bb);
-int     first_index(U64 bb);
-int     last_index(U64 bb);
 
 U64     king_moves_bb(int from_square);
 U64     knight_moves_bb(int from_square);
@@ -425,7 +414,7 @@ typedef struct s_board
     struct s_state
     {
         U64     all_pieces;     // bb for all pieces combined
-        BBIX    piece[6];       // bb for each piece type
+        U64     piece[6];       // bb for each piece type
         U8      count[6];       // piece count
         U8      can_castle_ks;  // king side
         U8      can_castle_qs;  // queen side

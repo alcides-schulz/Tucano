@@ -109,7 +109,7 @@ void eval_material(BOARD *board, EVALUATION *eval_values)
     // bishop vs pawns, usually draw if there's up 2 pawns difference.
     if (BISHOP_PAWNSvsBISHOP_PAWNS) {
         if (wb == 1 && bb == 1) {
-            if (square_color_bb(first_index(bishop_bb(board, WHITE))) != square_color_bb(first_index(bishop_bb(board, BLACK))))
+            if (square_color_bb(bb_first_index(bishop_bb(board, WHITE))) != square_color_bb(bb_first_index(bishop_bb(board, BLACK))))
                 DRAW_ADJUST(8);
             DRAW_ADJUST(16);
         }
@@ -188,8 +188,8 @@ void eval_kbp_k(BOARD *board, EVALUATION *eval_values)
     k_color = flip_color(kbp_color);
 
     kbp_king = king_square(board, kbp_color);
-    kbp_bishop = first_index(bishop_bb(board, kbp_color));
-    kbp_pawn = first_index(pawn_bb(board, kbp_color));
+    kbp_bishop = bb_first_index(bishop_bb(board, kbp_color));
+    kbp_pawn = bb_first_index(pawn_bb(board, kbp_color));
     k_king = king_square(board, k_color);
 
     if (get_file(kbp_pawn) != FILEA && get_file(kbp_pawn) != FILEH)

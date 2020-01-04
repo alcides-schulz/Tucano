@@ -126,8 +126,8 @@ void flip_ranks(BOARD *board)
 
     board->key = zk_board_key(board);
     board->pawn_key = zk_pawn_key(board);
-    board->state[WHITE].king_square = (U8)bb_first(board->state[WHITE].piece[KING]);
-    board->state[BLACK].king_square = (U8)bb_first(board->state[BLACK].piece[KING]);
+    board->state[WHITE].king_square = (U8)bb_first_index(board->state[WHITE].piece[KING]);
+    board->state[BLACK].king_square = (U8)bb_first_index(board->state[BLACK].piece[KING]);
 }
 
 void flip_files(BOARD *board)
@@ -159,8 +159,8 @@ void flip_files(BOARD *board)
 
     board->key = zk_board_key(board);
     board->pawn_key = zk_pawn_key(board);
-    board->state[WHITE].king_square = (U8)bb_first(board->state[WHITE].piece[KING]);
-    board->state[BLACK].king_square = (U8)bb_first(board->state[BLACK].piece[KING]);
+    board->state[WHITE].king_square = (U8)bb_first_index(board->state[WHITE].piece[KING]);
+    board->state[BLACK].king_square = (U8)bb_first_index(board->state[BLACK].piece[KING]);
 }
 
 int get_piece_color(BOARD *board, int square)

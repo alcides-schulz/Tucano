@@ -31,8 +31,6 @@ int USE_PAWN_TABLE = TRUE;
 //------------------------------------------------------------------------------------
 void eval_pawns(BOARD *board, PAWN_TABLE *pawn_table, EVALUATION *eval_values)
 {
-    BBIX        pawns;
-    
     // Probe pawn evaluation table.
     PAWN_TABLE *ppt = pawn_table + (board_pawn_key(board) % PAWN_TABLE_SIZE);
     if (USE_PAWN_TABLE && board_pawn_key(board) != 0 && ppt->key == board_pawn_key(board) && !EVAL_PRINTING) {
@@ -46,9 +44,9 @@ void eval_pawns(BOARD *board, PAWN_TABLE *pawn_table, EVALUATION *eval_values)
     // Evaluate each pawn.
     for (int myc = WHITE; myc <= BLACK; myc++) {
         int opp = flip_color(myc);
-        pawns.u64 = pawn_bb(board, myc);
-        while (pawns.u64) {
-            int pcsq = bb_first(pawns);
+        U64 pawns = pawn_bb(board, myc);
+        while (pawns) {
+            int pcsq = bb_first_index(pawns);
             int rank = get_rank(pcsq);
             int relative_rank = get_relative_rank(myc, rank);
 
@@ -83,7 +81,7 @@ void eval_pawns(BOARD *board, PAWN_TABLE *pawn_table, EVALUATION *eval_values)
             assert(pawn_is_isolated(board, pcsq, myc) == isolated);
             assert(pawn_is_candidate(board, pcsq, myc) == candidate);
             
-            bb_clear_bit(&pawns.u64, pcsq);
+            bb_clear_bit(&pawns, pcsq);
         }
     }
 
@@ -102,26 +100,24 @@ void eval_pawns(BOARD *board, PAWN_TABLE *pawn_table, EVALUATION *eval_values)
 //------------------------------------------------------------------------------------
 int space_bonus(BOARD *board, int myc) 
 {
-    BBIX space;
-    
-    space.u64 = pawn_bb(board, myc);
+    U64 space = pawn_bb(board, myc);
 
     if (myc == WHITE) {
-        space.u64 |= space.u64 >> 8;
-        space.u64 |= space.u64 >> 8;
-        space.u64 |= space.u64 >> 8;
-        space.u64 &= (U64)0x000000FFFFFF0000; // ranks 3, 4, 5
+        space |= space >> 8;
+        space |= space >> 8;
+        space |= space >> 8;
+        space &= (U64)0x000000FFFFFF0000; // ranks 3, 4, 5
     }
     else {
-        space.u64 |= space.u64 << 8;
-        space.u64 |= space.u64 << 8;
-        space.u64 |= space.u64 << 8;
-        space.u64 &= (U64)0x0000FFFFFF000000; // ranks 6, 5, 4
+        space |= space << 8;
+        space |= space << 8;
+        space |= space << 8;
+        space &= (U64)0x0000FFFFFF000000; // ranks 6, 5, 4
     }
 
-    space.u64 &= (all_pieces_bb(board, myc) | empty_bb(board)) & ~pawn_bb(board, myc);
+    space &= (all_pieces_bb(board, myc) | empty_bb(board)) & ~pawn_bb(board, myc);
 
-    return bb_count(space) * B_PAWN_SPACE;
+    return bb_count_u64(space) * B_PAWN_SPACE;
 }
 
 //------------------------------------------------------------------------------------
@@ -129,28 +125,26 @@ int space_bonus(BOARD *board, int myc)
 //------------------------------------------------------------------------------------
 int is_candidate(BOARD *board, int myc, int pcsq)
 {
-    int     opp = flip_color(myc);
-    int     relative_rank = get_relative_rank(myc, get_rank(pcsq));
-    BBIX    bb_my_pawn;
-    BBIX    bb_op_pawn;
+    int relative_rank = get_relative_rank(myc, get_rank(pcsq));
 
-    if (relative_rank < 2 || relative_rank > 5)
-        return FALSE;
-    bb_my_pawn.u64 = bb_op_pawn.u64 = 0;
+    if (relative_rank < 2 || relative_rank > 5) return FALSE;
+
+    U64 bb_my_pawn = 0;
+    U64 bb_op_pawn = 0;
+    int opp = flip_color(myc);
+
     if (get_file(pcsq) > 0) {
-        bb_my_pawn.u64 |= (square_bb(pcsq - 1) & pawn_bb(board, myc));
-        bb_my_pawn.u64 |= (backward_path_bb(myc, pcsq - 1) & pawn_bb(board, myc));
-        bb_op_pawn.u64 |= (forward_path_bb(myc, pcsq - 1) & pawn_bb(board, opp));
+        bb_my_pawn |= (square_bb(pcsq - 1) & pawn_bb(board, myc));
+        bb_my_pawn |= (backward_path_bb(myc, pcsq - 1) & pawn_bb(board, myc));
+        bb_op_pawn |= (forward_path_bb(myc, pcsq - 1) & pawn_bb(board, opp));
     }
     if (get_file(pcsq) < 7) {
-        bb_my_pawn.u64 |= (square_bb(pcsq + 1) & pawn_bb(board, myc));
-        bb_my_pawn.u64 |= (backward_path_bb(myc, pcsq + 1) & pawn_bb(board, myc));
-        bb_op_pawn.u64 |= (forward_path_bb(myc, pcsq + 1) & pawn_bb(board, opp));
+        bb_my_pawn |= (square_bb(pcsq + 1) & pawn_bb(board, myc));
+        bb_my_pawn |= (backward_path_bb(myc, pcsq + 1) & pawn_bb(board, myc));
+        bb_op_pawn |= (forward_path_bb(myc, pcsq + 1) & pawn_bb(board, opp));
     }
-    if (bb_count(bb_op_pawn) <= bb_count(bb_my_pawn))
-        return TRUE;
 
-    return FALSE;
+    return (bb_count_u64(bb_op_pawn) <= bb_count_u64(bb_my_pawn)) ? TRUE : FALSE;
 }
 
 // END

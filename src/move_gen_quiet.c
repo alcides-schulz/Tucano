@@ -30,8 +30,8 @@ void    gen_black_pawn_moves(BOARD *board, MOVE_LIST *ml, U64 empty_squares);
 void gen_moves(BOARD *board, MOVE_LIST *ml)
 {
     int     from, to;
-    BBIX    piece;
-    BBIX    moves;
+    U64     piece;
+    U64     moves;
     U64     empty_squares = empty_bb(board);
     int     turn = side_on_move(board);
 
@@ -42,55 +42,55 @@ void gen_moves(BOARD *board, MOVE_LIST *ml)
         gen_black_pawn_moves(board, ml, empty_squares);
 
     //  Knight
-    piece.u64 = knight_bb(board, turn);
-    while (piece.u64) {
-        from = bb_last(piece);
-        moves.u64 = knight_moves_bb(from) & empty_squares;
-        while (moves.u64) {
-            to = (turn == WHITE ? bb_first(moves) : bb_last(moves));
+    piece = knight_bb(board, turn);
+    while (piece) {
+        from = bb_last_index(piece);
+        moves = knight_moves_bb(from) & empty_squares;
+        while (moves) {
+            to = (turn == WHITE ? bb_first_index(moves) : bb_last_index(moves));
             add_move(ml, pack_quiet(KNIGHT, from, to));
-            bb_clear_bit(&moves.u64, to);
+            bb_clear_bit(&moves, to);
         }
-        bb_clear_bit(&piece.u64, from);
+        bb_clear_bit(&piece, from);
     }
 
     //  Rook and Queen
-    piece.u64 = queen_rook_bb(board, turn);
-    while (piece.u64) {
-        from = bb_first(piece);
+    piece = queen_rook_bb(board, turn);
+    while (piece) {
+        from = bb_first_index(piece);
 
-        moves.u64 = bb_rook_attacks(from, occupied_bb(board)) & empty_squares;
-        while (moves.u64) {
-            to = (turn == WHITE ? bb_first(moves) : bb_last(moves));
+        moves = bb_rook_attacks(from, occupied_bb(board)) & empty_squares;
+        while (moves) {
+            to = (turn == WHITE ? bb_first_index(moves) : bb_last_index(moves));
             add_move(ml, pack_quiet(piece_on_square(board, turn, from), from, to));
-            bb_clear_bit(&moves.u64, to);
+            bb_clear_bit(&moves, to);
         }
 
-        bb_clear_bit(&piece.u64, from);
+        bb_clear_bit(&piece, from);
     }
 
     //  Bishop and Queen
-    piece.u64 = queen_bishop_bb(board, turn);
-    while (piece.u64) {
-        from = bb_first(piece);
+    piece = queen_bishop_bb(board, turn);
+    while (piece) {
+        from = bb_first_index(piece);
 
-        moves.u64 = bb_bishop_attacks(from, occupied_bb(board)) & empty_squares;
-        while (moves.u64) {
-            to = (turn == WHITE ? bb_first(moves) : bb_last(moves));
+        moves = bb_bishop_attacks(from, occupied_bb(board)) & empty_squares;
+        while (moves) {
+            to = (turn == WHITE ? bb_first_index(moves) : bb_last_index(moves));
             add_move(ml, pack_quiet(piece_on_square(board, turn, from), from, to));
-            bb_clear_bit(&moves.u64, to);
+            bb_clear_bit(&moves, to);
         }
 
-        bb_clear_bit(&piece.u64, from);
+        bb_clear_bit(&piece, from);
     }
 
     //  King
     from = king_square(board, turn);
-    moves.u64 = king_moves_bb(from) & empty_squares;
-    while (moves.u64) {
-        to = bb_first(moves);
+    moves = king_moves_bb(from) & empty_squares;
+    while (moves) {
+        to = bb_first_index(moves);
         add_move(ml, pack_quiet(KING, from, to));
-        bb_clear_bit(&moves.u64, to);
+        bb_clear_bit(&moves, to);
     }
 
     //  Castle
@@ -109,23 +109,19 @@ void gen_moves(BOARD *board, MOVE_LIST *ml)
 //-------------------------------------------------------------------------------------------------
 void gen_white_pawn_moves(BOARD *board, MOVE_LIST *ml, U64 empty_squares)
 {
-    BBIX    moves1sq;
-    BBIX    moves2sq;
-    int     to;
-
-    moves1sq.u64 = ((pawn_bb(board, WHITE) & ~BB_RANK_7) << 8) & empty_squares;
-    moves2sq.u64 = (((moves1sq.u64 & BB_RANK_3) << 8) & empty_squares);
+    U64 moves1sq = ((pawn_bb(board, WHITE) & ~BB_RANK_7) << 8) & empty_squares;
+    U64 moves2sq = (((moves1sq & BB_RANK_3) << 8) & empty_squares);
     //  1 square move
-    while (moves1sq.u64) {
-        to = bb_first(moves1sq);
+    while (moves1sq) {
+        int to = bb_first_index(moves1sq);
         add_move(ml, pack_quiet(PAWN, to + 8, to));
-        bb_clear_bit(&moves1sq.u64, to);
+        bb_clear_bit(&moves1sq, to);
     }
     // 2 square move
-    while (moves2sq.u64) {
-        to = bb_first(moves2sq);
+    while (moves2sq) {
+        int to = bb_first_index(moves2sq);
         add_move(ml, pack_pawn_2square(to + 16, to, to + 8));
-        bb_clear_bit(&moves2sq.u64, to);
+        bb_clear_bit(&moves2sq, to);
     }
 }
 
@@ -134,24 +130,20 @@ void gen_white_pawn_moves(BOARD *board, MOVE_LIST *ml, U64 empty_squares)
 //-------------------------------------------------------------------------------------------------
 void gen_black_pawn_moves(BOARD *board, MOVE_LIST *ml, U64 empty_squares) 
 {
-    BBIX    moves1sq;
-    BBIX    moves2sq;
-    int     to;
-
-    moves1sq.u64 = ((pawn_bb(board, BLACK) & ~BB_RANK_2) >> 8) & empty_squares;
-    moves2sq.u64 = (((moves1sq.u64 & BB_RANK_6) >> 8) & empty_squares);
+    U64 moves1sq = ((pawn_bb(board, BLACK) & ~BB_RANK_2) >> 8) & empty_squares;
+    U64 moves2sq = (((moves1sq & BB_RANK_6) >> 8) & empty_squares);
 
     // 1 square move
-    while (moves1sq.u64) {
-        to = bb_last(moves1sq);
+    while (moves1sq) {
+        int to = bb_last_index(moves1sq);
         add_move(ml, pack_quiet(PAWN, to - 8, to));
-        bb_clear_bit(&moves1sq.u64, to);
+        bb_clear_bit(&moves1sq, to);
     }
     // 2 square move
-    while (moves2sq.u64) {
-        to = bb_last(moves2sq);
+    while (moves2sq) {
+        int to = bb_last_index(moves2sq);
         add_move(ml, pack_pawn_2square(to - 16, to, to - 8));
-        bb_clear_bit(&moves2sq.u64, to);
+        bb_clear_bit(&moves2sq, to);
     }
 }
 

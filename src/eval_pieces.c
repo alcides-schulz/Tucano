@@ -95,15 +95,9 @@ void eval_pieces_finalize(EVALUATION *eval_values, int myc, int opp)
 //-------------------------------------------------------------------------------------------------
 void eval_knights(BOARD *board, EVALUATION *eval_values, int myc, int opp)
 {
-    BBIX    piece;
-    int     pcsq;
-    BBIX    mobility;
-    BBIX    attacks;
-    int     attacked;
-
-    piece.u64 = knight_bb(board, myc);
-    while (piece.u64) {
-        pcsq = bb_first(piece);
+    U64 piece = knight_bb(board, myc);
+    while (piece) {
+        int pcsq = bb_first_index(piece);
 
         assert(piece_on_square(board, myc, pcsq) == KNIGHT);
 
@@ -111,16 +105,16 @@ void eval_knights(BOARD *board, EVALUATION *eval_values, int myc, int opp)
         eval_values->pieces[myc] += eval_pst_knight(pcsq);
         
         // mobility
-        mobility.u64 = knight_moves_bb(pcsq) & eval_values->mobility_target[myc] & ~eval_values->pawn_attacks[opp];
-        eval_values->mobility[myc] += B_KNIGHT_MOBILITY * bb_count(mobility);
+        U64 mobility = knight_moves_bb(pcsq) & eval_values->mobility_target[myc] & ~eval_values->pawn_attacks[opp];
+        eval_values->mobility[myc] += B_KNIGHT_MOBILITY * bb_count_u64(mobility);
 
         // threats to opponent pieces
-        attacks.u64 = mobility.u64 & eval_values->undefended[opp];
-        while (attacks.u64) {
-            attacked = bb_first(attacks);
+        U64 attacks = mobility & eval_values->undefended[opp];
+        while (attacks) {
+            int attacked = bb_first_index(attacks);
 			assert(piece_on_square(board, opp, attacked) >= PAWN && piece_on_square(board, opp, attacked) <= KING);
             eval_values->pieces[myc] += *B_THREAT[piece_on_square(board, opp, attacked)];
-            bb_clear_bit(&attacks.u64, attacked);
+            bb_clear_bit(&attacks, attacked);
         }
 
         // checks on next move
@@ -144,7 +138,7 @@ void eval_knights(BOARD *board, EVALUATION *eval_values, int myc, int opp)
             eval_values->pieces[myc] -= P_PAWN_ATK_KNIGHT;
         }
 
-        bb_clear_bit(&piece.u64, pcsq);
+        bb_clear_bit(&piece, pcsq);
     }
 }
 
@@ -153,16 +147,9 @@ void eval_knights(BOARD *board, EVALUATION *eval_values, int myc, int opp)
 //-------------------------------------------------------------------------------------------------
 void eval_bishops(BOARD *board, EVALUATION *eval_values, int myc, int opp)
 {
-    BBIX    piece;
-    int     pcsq;
-    BBIX    mobility;
-    BBIX    attacks;
-    int     attacked;
-    U64     moves;
-
-    piece.u64 = bishop_bb(board, myc);
-    while (piece.u64) {
-        pcsq = bb_first(piece);
+    U64 piece = bishop_bb(board, myc);
+    while (piece) {
+        int pcsq = bb_first_index(piece);
 
         assert(piece_on_square(board, myc, pcsq) == BISHOP);
 
@@ -170,17 +157,17 @@ void eval_bishops(BOARD *board, EVALUATION *eval_values, int myc, int opp)
         eval_values->pieces[myc] += eval_pst_bishop(pcsq);
 
         // mobility
-        moves = bb_bishop_attacks(pcsq, occupied_bb(board));
-        mobility.u64 = moves & eval_values->mobility_target[myc];
-        eval_values->mobility[myc] += B_BISHOP_MOBILITY * bb_count(mobility);
+        U64 moves = bb_bishop_attacks(pcsq, occupied_bb(board));
+        U64 mobility = moves & eval_values->mobility_target[myc];
+        eval_values->mobility[myc] += B_BISHOP_MOBILITY * bb_count_u64(mobility);
 
         // threats to opponent pieces
-        attacks.u64 = mobility.u64 & eval_values->undefended[opp];
-        while (attacks.u64) {
-            attacked = bb_first(attacks);
+        U64 attacks = mobility & eval_values->undefended[opp];
+        while (attacks) {
+            int attacked = bb_first_index(attacks);
 			assert(piece_on_square(board, opp, attacked) >= PAWN && piece_on_square(board, opp, attacked) <= KING);
             eval_values->pieces[myc] += *B_THREAT[piece_on_square(board, opp, attacked)];
-            bb_clear_bit(&attacks.u64, attacked);
+            bb_clear_bit(&attacks, attacked);
         }
 
         // penalty for pawns on same square of the bishop color
@@ -207,7 +194,7 @@ void eval_bishops(BOARD *board, EVALUATION *eval_values, int myc, int opp)
             eval_values->pieces[myc] -= P_PAWN_ATK_BISHOP;
         }
 
-        bb_clear_bit(&piece.u64, pcsq);
+        bb_clear_bit(&piece, pcsq);
     }
 }
 
@@ -216,17 +203,9 @@ void eval_bishops(BOARD *board, EVALUATION *eval_values, int myc, int opp)
 //-------------------------------------------------------------------------------------------------
 void eval_rooks(BOARD *board, EVALUATION *eval_values, int myc, int opp)
 {
-    BBIX    piece;
-    int     pcsq;
-    BBIX    mobility;
-    BBIX    attacks;
-    int     attacked;
-    U64     moves;
-    U64     rook_file_bb;
-
-    piece.u64 = rook_bb(board, myc);
-    while (piece.u64) {
-        pcsq = bb_first(piece);
+    U64 piece = rook_bb(board, myc);
+    while (piece) {
+        int pcsq = bb_first_index(piece);
 
         assert(piece_on_square(board, myc, pcsq) == ROOK);
 
@@ -234,17 +213,17 @@ void eval_rooks(BOARD *board, EVALUATION *eval_values, int myc, int opp)
         eval_values->pieces[myc] += eval_pst_rook(pcsq);
 
         // mobility
-        moves = bb_rook_attacks(pcsq, occupied_bb(board));
-        mobility.u64 = moves & eval_values->mobility_target[myc];
-        eval_values->mobility[myc] += B_ROOK_MOBILITY * bb_count(mobility);
+        U64 moves = bb_rook_attacks(pcsq, occupied_bb(board));
+        U64 mobility = moves & eval_values->mobility_target[myc];
+        eval_values->mobility[myc] += B_ROOK_MOBILITY * bb_count_u64(mobility);
 
         // threats to opponent pieces
-        attacks.u64 = mobility.u64 & eval_values->undefended[opp];
-        while (attacks.u64) {
-            attacked = bb_first(attacks);
+        U64 attacks = mobility & eval_values->undefended[opp];
+        while (attacks) {
+            int attacked = bb_first_index(attacks);
 			assert(piece_on_square(board, opp, attacked) >= PAWN && piece_on_square(board, opp, attacked) <= KING);
             eval_values->pieces[myc] += *B_THREAT[piece_on_square(board, opp, attacked)];
-            bb_clear_bit(&attacks.u64, attacked);
+            bb_clear_bit(&attacks, attacked);
         }
 
         // checks on next move
@@ -269,7 +248,7 @@ void eval_rooks(BOARD *board, EVALUATION *eval_values, int myc, int opp)
         }
 
         // rook in open file.
-        rook_file_bb = north_moves_bb(pcsq) | south_moves_bb(pcsq);
+        U64 rook_file_bb = north_moves_bb(pcsq) | south_moves_bb(pcsq);
         if (!(rook_file_bb & pawn_bb(board, myc))) {
             if (!(rook_file_bb & pawn_bb(board, opp)))
                 eval_values->pieces[myc] += B_ROOK_FULL_OPEN;
@@ -277,7 +256,7 @@ void eval_rooks(BOARD *board, EVALUATION *eval_values, int myc, int opp)
                 eval_values->pieces[myc] += B_ROOK_SEMI_OPEN;
         }
 
-        bb_clear_bit(&piece.u64, pcsq);
+        bb_clear_bit(&piece, pcsq);
     }
 }
 
@@ -286,16 +265,9 @@ void eval_rooks(BOARD *board, EVALUATION *eval_values, int myc, int opp)
 //-------------------------------------------------------------------------------------------------
 void eval_queens(BOARD *board, EVALUATION *eval_values, int myc, int opp)
 {
-    BBIX    piece;
-    int     pcsq;
-    BBIX    mobility;
-    BBIX    attacks;
-    int     attacked;
-
-    piece.u64 = queen_bb(board, myc);
-    while (piece.u64) {
-
-        pcsq = bb_first(piece);
+    U64 piece = queen_bb(board, myc);
+    while (piece) {
+        int pcsq = bb_first_index(piece);
 
         assert(piece_on_square(board, myc, pcsq) == QUEEN);
 
@@ -308,16 +280,16 @@ void eval_queens(BOARD *board, EVALUATION *eval_values, int myc, int opp)
         moves |= bb_bishop_attacks(pcsq, occupied_bb(board));
 
         // mobility
-        mobility.u64 = moves & eval_values->mobility_target[myc];
-        eval_values->mobility[myc] += B_QUEEN_MOBILITY * bb_count(mobility);
+        U64 mobility = moves & eval_values->mobility_target[myc];
+        eval_values->mobility[myc] += B_QUEEN_MOBILITY * bb_count_u64(mobility);
 
         // threats to opponent pieces
-        attacks.u64 = moves & eval_values->undefended[opp];
-        while (attacks.u64) {
-            attacked = bb_first(attacks);
+        U64 attacks = moves & eval_values->undefended[opp];
+        while (attacks) {
+            int attacked = bb_first_index(attacks);
 			assert(piece_on_square(board, opp, attacked) >= PAWN && piece_on_square(board, opp, attacked) <= KING);
 			eval_values->pieces[myc] += *B_THREAT[piece_on_square(board, opp, attacked)];
-            bb_clear_bit(&attacks.u64, attacked);
+            bb_clear_bit(&attacks, attacked);
         }
 
         // checks on next move
@@ -342,7 +314,7 @@ void eval_queens(BOARD *board, EVALUATION *eval_values, int myc, int opp)
             eval_values->pieces[myc] -= P_PAWN_ATK_QUEEN;
         }
 
-        bb_clear_bit(&piece.u64, pcsq);
+        bb_clear_bit(&piece, pcsq);
     }
 }
 

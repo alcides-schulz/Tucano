@@ -45,16 +45,15 @@ int *B_UNBLOCKED[RANKS] = {&SCORE_ZERO,
 //-------------------------------------------------------------------------------------------------
 void eval_passed(BOARD *board, EVALUATION *eval_values)
 {
-    BBIX    pawns;
     int     king_dist[2];
 
     for (int myc = WHITE; myc <= BLACK; myc++) {
         int opp = flip_color(myc);
 
         // additional bonus/penalties for passed pawns considering king/pieces.
-        pawns.u64 = eval_values->bb_passers[myc];
-        while (pawns.u64) {
-            int pcsq = bb_first(pawns);
+        U64 pawns = eval_values->bb_passers[myc];
+        while (pawns) {
+            int pcsq = bb_first_index(pawns);
             int rank = get_rank(pcsq);
             int relative_rank = get_relative_rank(myc, rank);
             int fwsq = get_front_square(myc, pcsq);
@@ -75,7 +74,7 @@ void eval_passed(BOARD *board, EVALUATION *eval_values)
             eval_values->passed[myc] -= (king_dist[myc] * P_KING_FAR_MYC);
             eval_values->passed[myc] += (king_dist[opp] * B_KING_FAR_OPP);
 
-            bb_clear_bit(&pawns.u64, pcsq);
+            bb_clear_bit(&pawns, pcsq);
         }
 
     }

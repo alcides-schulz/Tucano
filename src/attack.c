@@ -109,22 +109,21 @@ int is_pseudo_legal(BOARD *board, U64 pins, MOVE move)
 //-------------------------------------------------------------------------------------------------
 U64 find_pins(BOARD *board)
 {
-    BBIX    attacks;
-    BBIX    pinned;
-    int     opp = flip_color(side_on_move(board));
-    int     from;
-    U64     pins = 0;
-    
-    attacks.u64 = rankfile_moves_bb(king_square(board, side_on_move(board))) & (queen_rook_bb(board, opp));
-    attacks.u64 |= diagonal_moves_bb(king_square(board, side_on_move(board))) & (queen_bishop_bb(board, opp));
+    U64 pins = 0;
+    int opp = flip_color(side_on_move(board));
 
-    while (attacks.u64) {
-        from = bb_first(attacks);
-        pinned.u64 = from_to_path_bb(king_square(board, side_on_move(board)), from) & occupied_bb(board);
-        if (bb_count(pinned) == 1 && (pinned.u64 & all_pieces_bb(board, side_on_move(board))))
-            pins |= pinned.u64;
-        bb_clear_bit(&attacks.u64, from);
+    U64 attacks = 0;
+    attacks |= rankfile_moves_bb(king_square(board, side_on_move(board))) & (queen_rook_bb(board, opp));
+    attacks |= diagonal_moves_bb(king_square(board, side_on_move(board))) & (queen_bishop_bb(board, opp));
+    
+    while (attacks) {
+        int from = bb_first_index(attacks);
+        U64 pinned = from_to_path_bb(king_square(board, side_on_move(board)), from) & occupied_bb(board);
+        if (bb_count_u64(pinned) == 1 && (pinned & all_pieces_bb(board, side_on_move(board))))
+            pins |= pinned;
+        bb_clear_bit(&attacks, from);
     }
+
     return pins;
 }
 
@@ -323,12 +322,12 @@ int is_check(BOARD *board, MOVE move)
     int     mvpc = unpack_piece(move);
     int     tosq = unpack_to(move);
     int     frsq = unpack_from(move);
+    U64     piece;
     int     my_color = side_on_move(board);
     int     op_color = flip_color(my_color);
     U64     opp_king = king_bb(board, op_color);
     int     oksq = king_square(board, op_color);
     U64     occup = occupied_bb(board);
-    BBIX    piece;
     int     pcsq;
     int     epsq;
 
@@ -410,40 +409,40 @@ int is_check(BOARD *board, MOVE move)
     case MT_EPCAP:
         epsq = unpack_ep_pawn_square(move);
         bb_clear_bit(&occup, epsq);
-        piece.u64 = rankfile_moves_bb(epsq) & queen_rook_bb(board, my_color);
-        while (piece.u64) {
-            pcsq = bb_first(piece);
+        piece = rankfile_moves_bb(epsq) & queen_rook_bb(board, my_color);
+        while (piece) {
+            pcsq = bb_first_index(piece);
             if ((rankfile_moves_bb(pcsq) & opp_king) && !(from_to_path_bb(pcsq, oksq) & occup))
                 return TRUE;
-            bb_clear_bit(&piece.u64, pcsq);
+            bb_clear_bit(&piece, pcsq);
         }
-        piece.u64 = diagonal_moves_bb(epsq) & queen_bishop_bb(board, my_color);
-        while (piece.u64) {
-            pcsq = bb_first(piece);
+        piece = diagonal_moves_bb(epsq) & queen_bishop_bb(board, my_color);
+        while (piece) {
+            pcsq = bb_first_index(piece);
             if ((diagonal_moves_bb(pcsq) & opp_king) && !(from_to_path_bb(pcsq, oksq) & occup))
                 return TRUE;
-            bb_clear_bit(&piece.u64, pcsq);
+            bb_clear_bit(&piece, pcsq);
         }
         break;
     }
 
     // discovered checks after moving piece
     if (rankfile_moves_bb(frsq) & opp_king) {
-        piece.u64 = rankfile_moves_bb(frsq) & queen_rook_bb(board, my_color);
-        while (piece.u64) {
-            pcsq = bb_first(piece);
+        piece = rankfile_moves_bb(frsq) & queen_rook_bb(board, my_color);
+        while (piece) {
+            pcsq = bb_first_index(piece);
             if ((rankfile_moves_bb(pcsq) & opp_king) && !(from_to_path_bb(pcsq, oksq) & occup))
                 return TRUE;
-            bb_clear_bit(&piece.u64, pcsq);
+            bb_clear_bit(&piece, pcsq);
         }
     }
     if (diagonal_moves_bb(frsq) & opp_king) {
-        piece.u64 = diagonal_moves_bb(frsq) & queen_bishop_bb(board, my_color);
-        while (piece.u64) {
-            pcsq = bb_first(piece);
+        piece = diagonal_moves_bb(frsq) & queen_bishop_bb(board, my_color);
+        while (piece) {
+            pcsq = bb_first_index(piece);
             if ((diagonal_moves_bb(pcsq) & opp_king) && !(from_to_path_bb(pcsq, oksq) & occup))
                 return TRUE;
-            bb_clear_bit(&piece.u64, pcsq);
+            bb_clear_bit(&piece, pcsq);
         }
     }
     return FALSE;
