@@ -22,9 +22,10 @@
 
 #define ENGINE "Tucano"
 #define AUTHOR "Alcides Schulz"
-#define VERSION "8.10"
+#define VERSION "8.11"
 
-// 8.10 - review of eval tuning process.
+// 8.11 - review eval_material method.
+// 8.10 - review eval tuning.
 // 8.09 - builtin bitboard functions.
 // 8.08 - parameter tuning
 // 8.07 - TCEC Winter 2019

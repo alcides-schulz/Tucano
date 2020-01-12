@@ -174,9 +174,6 @@ void exec_tune(char *results_filename, double k)
     printf("TIME=%u seconds\n", (util_get_time() - start) / 1000);
 }
 
-GAME g1;
-SETTINGS s1;
-
 void load_positions(char *positions_file_name)
 {
     FILE *f = fopen(positions_file_name, "r");
@@ -195,40 +192,10 @@ void load_positions(char *positions_file_name)
         tune_thread[i].position_count = 0;
     }
 
-    s1.max_depth = MAX_DEPTH;
-    s1.moves_per_level = 0;
-    s1.post_flag = POST_NONE;
-    s1.single_move_time = MAX_TIME;
-    s1.total_move_time = MAX_TIME;
-    s1.use_book = FALSE;
-
     char line[1000];
     while (fgets(line, 1000, f)) {
         line[strlen(line) - 1] = 0;
         if (strlen(line) > MAX_LINE_SIZE - 1) continue;
-        if (line[0] == '#') continue; // comments
-        
-        new_game(&g1, &line[2]);
-        prepare_search(&g1, &s1);
-
-        g1.search.start_time = util_get_time();
-        g1.search.normal_finish_time = g1.search.start_time + g1.search.normal_move_time;
-        g1.search.extended_finish_time = g1.search.start_time + g1.search.extended_move_time;
-        g1.search.score_drop = FALSE;
-        g1.search.best_move = MOVE_NONE;
-        g1.search.ponder_move = MOVE_NONE;
-        g1.search.abort = FALSE;
-        g1.search.nodes = 0;
-        g1.search.tbhits = 0;
-
-        int in_check = is_incheck(&g1.board, side_on_move(&g1.board));
-        int score = quiesce(&g1, in_check, -MAX_SCORE, MAX_SCORE, 0);
-        if (is_mate_score(score)) {
-            //printf("%s %d\n", &line[2], score);
-            //board_print(&g1.board, "");
-            continue;
-        }
-        
         strcpy(tune_thread[thread_index].position[tune_thread[thread_index].position_count++], line);
         if (tune_thread[thread_index].position_count >= MAX_POS_PER_THREAD) {
             thread_index++;
@@ -637,7 +604,6 @@ void select_positions(char *input_pgn, char *output_pos)
     PGN_GAME    pgn_game;
     PGN_MOVE    pgn_move;
     MOVE        move;
-    int         score = 0;
     char        fen[1024];
     FILE        *out_file;
     int         count = 0;
@@ -709,9 +675,9 @@ void select_positions(char *input_pgn, char *output_pos)
             if (pgn_game.move_number <= 4) continue;
             if (side_on_move(&game->board) != WHITE) continue;
             in_check = is_incheck(&game->board, side_on_move(&game->board));
-            score = quiesce(game, in_check, -MAX_SCORE, MAX_SCORE, 0);
-            if (ABS(score) > VALUE_ROOK) continue;
+            int score = quiesce(game, in_check, -MAX_SCORE, MAX_SCORE, 0);
             if (is_mate_score(score)) continue;
+            if (ABS(score) > VALUE_BISHOP) continue;
             util_get_board_fen(&game->board, fen);
 
             fprintf(out_file, "%c %s\n", tune_result_letter(pgn_game.result), fen);
