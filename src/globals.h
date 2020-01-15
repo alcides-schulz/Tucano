@@ -660,11 +660,13 @@ void    clear_eval_table(GAME *game);
 void    eval_print(GAME *game);
 void    eval_print_values(EVALUATION *eval_values);
 int     eval_pst_pawn(int color, int pcsq);
-int     eval_pst_knight(int pcsq);
-int     eval_pst_bishop(int pcsq);
-int     eval_pst_rook(int pcsq);
+int     eval_pst_knight(int color, int pcsq);
+int     eval_pst_bishop(int color, int pcsq);
+int     eval_pst_rook(int color, int pcsq);
 int     eval_pst_queen(int color, int pcsq);
 int     eval_pst_king(int color, int pcsq);
+void    eval_pst_print(void);
+void    eval_tune(void);
 
 // Evaluation Terms
 // Material
@@ -742,32 +744,18 @@ EXTERN int B_CHECK_THREAT_ROOK;
 EXTERN int B_CHECK_THREAT_QUEEN;
 
 // PST's
-EXTERN int PST_P_FILE_OP;
-EXTERN int PST_P_RANK_EG;
-EXTERN int PST_P_CENTER;
-EXTERN int PST_N_BORDER;
-EXTERN int PST_N_CENTER;
-EXTERN int PST_B_BORDER;
-EXTERN int PST_B_DIAGONAL;
-EXTERN int PST_B_CENTER;
-EXTERN int PST_B_BASIC;
-EXTERN int PST_R_CENTER;
-EXTERN int PST_Q_RANK0_OP;
-EXTERN int PST_Q_RANKS_OP;
-EXTERN int PST_Q_BORDER0_EG;
-EXTERN int PST_Q_BORDER1_EG;
-EXTERN int PST_Q_BORDER2_EG;
-EXTERN int PST_Q_BORDER3_EG;
-EXTERN int PST_K_RANK_OP;
-EXTERN int PST_K_RANK_EG;
-EXTERN int PST_K_FILE0_OP;
-EXTERN int PST_K_FILE1_OP;
-EXTERN int PST_K_FILE2_OP;
-EXTERN int PST_K_FILE3_OP;
-EXTERN int PST_K_FILE0_EG;
-EXTERN int PST_K_FILE1_EG;
-EXTERN int PST_K_FILE2_EG;
-EXTERN int PST_K_FILE3_EG;
+EXTERN int PST_P_RANK;
+EXTERN int PST_P_FILE[4];
+EXTERN int PST_N_RANK[8];
+EXTERN int PST_N_FILE[4];
+EXTERN int PST_B_RANK[8];
+EXTERN int PST_B_FILE[4];
+EXTERN int PST_R_RANK[8];
+EXTERN int PST_R_FILE[4];
+EXTERN int PST_Q_RANK[8];
+EXTERN int PST_Q_FILE[8];
+EXTERN int PST_K_RANK[8];
+EXTERN int PST_K_FILE[8];
 
 // PGN utils
 #define PGN_STRING_SIZE 16384

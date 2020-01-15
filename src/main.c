@@ -15,15 +15,14 @@
   You can find the GNU General Public License at http://www.gnu.org/licenses/
 -------------------------------------------------------------------------------*/
 
-// Signature: 38476616  Elapsed time: 20.75 secs  Nodes/sec: 1855k
-
 #define EXTERN
 #include "globals.h"
 
 #define ENGINE "Tucano"
 #define AUTHOR "Alcides Schulz"
-#define VERSION "8.11"
+#define VERSION "8.12"
 
+// 8.12 - change pst structure and tune.
 // 8.11 - review eval_material method.
 // 8.10 - review eval tuning.
 // 8.09 - builtin bitboard functions.
@@ -420,15 +419,24 @@ int main(int argc, char *argv[])
             eval_test(epd_file);
             continue;
         }
+        if (!strcmp(command, "tune")) {
+            eval_tune();
+            continue;
+        }
+        if (!strcmp(command, "ppst")) {
+            eval_pst_print();
+            continue;
+        }
         if (!strcmp(command, "help")) {
             printf("Tucano supports XBoard/Winboard or UCI protocols.\n\n");
             printf("Other commands that can be used:\n\n");
             printf("             d: display current board\n");
             printf("          eval: print evaluation score for current position\n");
-            printf("         post1: enable formatted search information\n");
-            printf("epd <filename>: locate best move for epd poistions in the file\n");
+            printf("epd <filename>: locate best move for epd positions in the file\n");
             printf("     perft <n>: show perft move count from current position.\n");
             printf("                other perft commands: perftx, perfty, perftz\n");
+            printf("          tune: evaluation tuning menu\n");
+            printf("          ppst: print current pst values\n");
             printf("\n");
             printf("\n");
             printf("Command line options:\n\n");
@@ -590,12 +598,8 @@ int valid_hash_size(int hash_size) {
 //-------------------------------------------------------------------------------------------------
 //  Used for development tests.
 //-------------------------------------------------------------------------------------------------
-
-void eval_tune(void);
-
 void develop_workbench(void)
 {
-    eval_tune();
 }
 
 //END

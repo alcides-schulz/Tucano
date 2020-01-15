@@ -102,7 +102,7 @@ void eval_knights(BOARD *board, EVALUATION *eval_values, int myc, int opp)
         assert(piece_on_square(board, myc, pcsq) == KNIGHT);
 
         // pst
-        eval_values->pieces[myc] += eval_pst_knight(pcsq);
+        eval_values->pieces[myc] += eval_pst_knight(myc, pcsq);
         
         // mobility
         U64 mobility = knight_moves_bb(pcsq) & eval_values->mobility_target[myc] & ~eval_values->pawn_attacks[opp];
@@ -154,7 +154,7 @@ void eval_bishops(BOARD *board, EVALUATION *eval_values, int myc, int opp)
         assert(piece_on_square(board, myc, pcsq) == BISHOP);
 
         // pst
-        eval_values->pieces[myc] += eval_pst_bishop(pcsq);
+        eval_values->pieces[myc] += eval_pst_bishop(myc, pcsq);
 
         // mobility
         U64 moves = bb_bishop_attacks(pcsq, occupied_bb(board));
@@ -210,7 +210,7 @@ void eval_rooks(BOARD *board, EVALUATION *eval_values, int myc, int opp)
         assert(piece_on_square(board, myc, pcsq) == ROOK);
 
         // pst
-        eval_values->pieces[myc] += eval_pst_rook(pcsq);
+        eval_values->pieces[myc] += eval_pst_rook(myc, pcsq);
 
         // mobility
         U64 moves = bb_rook_attacks(pcsq, occupied_bb(board));

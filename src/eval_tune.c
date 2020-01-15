@@ -50,7 +50,7 @@ int TUNE_PST_KING    = TRUE;
 
 enum    {SINGLE_VALUE, OPENING_ENDGAME} LINK_TYPE;
 
-#define MAX_POSITIONS       11200000
+#define MAX_POSITIONS       7000000
 #define MAX_TUNE_THREADS    14
 #define MAX_POS_PER_THREAD  (MAX_POSITIONS / MAX_TUNE_THREADS)
 #define MAX_LINE_SIZE       100
@@ -174,6 +174,9 @@ void exec_tune(char *results_filename, double k)
     printf("TIME=%u seconds\n", (util_get_time() - start) / 1000);
 }
 
+GAME g1;
+SETTINGS s1;
+
 void load_positions(char *positions_file_name)
 {
     FILE *f = fopen(positions_file_name, "r");
@@ -192,10 +195,40 @@ void load_positions(char *positions_file_name)
         tune_thread[i].position_count = 0;
     }
 
+    s1.max_depth = MAX_DEPTH;
+    s1.moves_per_level = 0;
+    s1.post_flag = POST_NONE;
+    s1.single_move_time = MAX_TIME;
+    s1.total_move_time = MAX_TIME;
+    s1.use_book = FALSE;
+
     char line[1000];
     while (fgets(line, 1000, f)) {
         line[strlen(line) - 1] = 0;
         if (strlen(line) > MAX_LINE_SIZE - 1) continue;
+        if (line[0] == '#') continue; // comments
+        
+        new_game(&g1, &line[2]);
+        prepare_search(&g1, &s1);
+
+        g1.search.start_time = util_get_time();
+        g1.search.normal_finish_time = g1.search.start_time + g1.search.normal_move_time;
+        g1.search.extended_finish_time = g1.search.start_time + g1.search.extended_move_time;
+        g1.search.score_drop = FALSE;
+        g1.search.best_move = MOVE_NONE;
+        g1.search.ponder_move = MOVE_NONE;
+        g1.search.abort = FALSE;
+        g1.search.nodes = 0;
+        g1.search.tbhits = 0;
+
+        int in_check = is_incheck(&g1.board, side_on_move(&g1.board));
+        int score = quiesce(&g1, in_check, -MAX_SCORE, MAX_SCORE, 0);
+        if (is_mate_score(score)) {
+            //printf("%s %d\n", &line[2], score);
+            //board_print(&g1.board, "");
+            continue;
+        }
+        
         strcpy(tune_thread[thread_index].position[tune_thread[thread_index].position_count++], line);
         if (tune_thread[thread_index].position_count >= MAX_POS_PER_THREAD) {
             thread_index++;
@@ -437,42 +470,89 @@ void init_param_list(void)
         create_link("THREAT", "B_CHECK_THREAT_QUEEN",  &B_CHECK_THREAT_QUEEN,  OPENING_ENDGAME);
     }
     if (TUNE_PST_PAWN) {
-        create_link("PST", "PST_P_FILE_OP", &PST_P_FILE_OP, SINGLE_VALUE);
-        create_link("PST", "PST_P_RANK_EG", &PST_P_RANK_EG, SINGLE_VALUE);
-        create_link("PST", "PST_P_CENTER",  &PST_P_CENTER,  SINGLE_VALUE);
+        create_link("PST", "PST_P_RANK", &PST_P_RANK, OPENING_ENDGAME);
+        create_link("PST", "PST_P_FILE[0]", &PST_P_FILE[0], OPENING_ENDGAME);
+        create_link("PST", "PST_P_FILE[1]", &PST_P_FILE[1], OPENING_ENDGAME);
+        create_link("PST", "PST_P_FILE[2]", &PST_P_FILE[2], OPENING_ENDGAME);
+        create_link("PST", "PST_P_FILE[3]", &PST_P_FILE[3], OPENING_ENDGAME);
     }
     if (TUNE_PST_KNIGHT) {
-        create_link("PST", "PST_N_BORDER", &PST_N_BORDER, OPENING_ENDGAME);
-        create_link("PST", "PST_N_CENTER", &PST_N_CENTER, OPENING_ENDGAME);
+        create_link("PST", "PST_N_RANK[0]", &PST_N_RANK[0], OPENING_ENDGAME);
+        create_link("PST", "PST_N_RANK[1]", &PST_N_RANK[1], OPENING_ENDGAME);
+        create_link("PST", "PST_N_RANK[2]", &PST_N_RANK[2], OPENING_ENDGAME);
+        create_link("PST", "PST_N_RANK[3]", &PST_N_RANK[3], OPENING_ENDGAME);
+        create_link("PST", "PST_N_RANK[4]", &PST_N_RANK[4], OPENING_ENDGAME);
+        create_link("PST", "PST_N_RANK[5]", &PST_N_RANK[5], OPENING_ENDGAME);
+        create_link("PST", "PST_N_RANK[6]", &PST_N_RANK[6], OPENING_ENDGAME);
+        create_link("PST", "PST_N_RANK[7]", &PST_N_RANK[7], OPENING_ENDGAME);
+        create_link("PST", "PST_N_FILE[0]", &PST_N_FILE[0], OPENING_ENDGAME);
+        create_link("PST", "PST_N_FILE[1]", &PST_N_FILE[1], OPENING_ENDGAME);
+        create_link("PST", "PST_N_FILE[2]", &PST_N_FILE[2], OPENING_ENDGAME);
+        create_link("PST", "PST_N_FILE[3]", &PST_N_FILE[3], OPENING_ENDGAME);
     }
     if (TUNE_PST_BISHOP) {
-        create_link("PST", "PST_B_BORDER",   &PST_B_BORDER,   OPENING_ENDGAME);
-        create_link("PST", "PST_B_DIAGONAL", &PST_B_DIAGONAL, OPENING_ENDGAME);
-        create_link("PST", "PST_B_CENTER",   &PST_B_CENTER,   OPENING_ENDGAME);
-        create_link("PST", "PST_B_BASIC",    &PST_B_BASIC,    OPENING_ENDGAME);
+        create_link("PST", "PST_B_RANK[0]", &PST_B_RANK[0], OPENING_ENDGAME);
+        create_link("PST", "PST_B_RANK[1]", &PST_B_RANK[1], OPENING_ENDGAME);
+        create_link("PST", "PST_B_RANK[2]", &PST_B_RANK[2], OPENING_ENDGAME);
+        create_link("PST", "PST_B_RANK[3]", &PST_B_RANK[3], OPENING_ENDGAME);
+        create_link("PST", "PST_B_RANK[4]", &PST_B_RANK[4], OPENING_ENDGAME);
+        create_link("PST", "PST_B_RANK[5]", &PST_B_RANK[5], OPENING_ENDGAME);
+        create_link("PST", "PST_B_RANK[6]", &PST_B_RANK[6], OPENING_ENDGAME);
+        create_link("PST", "PST_B_RANK[7]", &PST_B_RANK[7], OPENING_ENDGAME);
+        create_link("PST", "PST_B_FILE[0]", &PST_B_FILE[0], OPENING_ENDGAME);
+        create_link("PST", "PST_B_FILE[1]", &PST_B_FILE[1], OPENING_ENDGAME);
+        create_link("PST", "PST_B_FILE[2]", &PST_B_FILE[2], OPENING_ENDGAME);
+        create_link("PST", "PST_B_FILE[3]", &PST_B_FILE[3], OPENING_ENDGAME);
     }
     if (TUNE_PST_ROOK) {
-        create_link("PST", "PST_R_CENTER", &PST_R_CENTER, OPENING_ENDGAME);
+        create_link("PST", "PST_R_RANK[0]", &PST_R_RANK[0], OPENING_ENDGAME);
+        create_link("PST", "PST_R_RANK[1]", &PST_R_RANK[1], OPENING_ENDGAME);
+        create_link("PST", "PST_R_RANK[2]", &PST_R_RANK[2], OPENING_ENDGAME);
+        create_link("PST", "PST_R_RANK[3]", &PST_R_RANK[3], OPENING_ENDGAME);
+        create_link("PST", "PST_R_RANK[4]", &PST_R_RANK[4], OPENING_ENDGAME);
+        create_link("PST", "PST_R_RANK[5]", &PST_R_RANK[5], OPENING_ENDGAME);
+        create_link("PST", "PST_R_RANK[6]", &PST_R_RANK[6], OPENING_ENDGAME);
+        create_link("PST", "PST_R_RANK[7]", &PST_R_RANK[7], OPENING_ENDGAME);
+        create_link("PST", "PST_R_FILE[0]", &PST_R_FILE[0], OPENING_ENDGAME);
+        create_link("PST", "PST_R_FILE[1]", &PST_R_FILE[1], OPENING_ENDGAME);
+        create_link("PST", "PST_R_FILE[2]", &PST_R_FILE[2], OPENING_ENDGAME);
+        create_link("PST", "PST_R_FILE[3]", &PST_R_FILE[3], OPENING_ENDGAME);
     }
     if (TUNE_PST_QUEEN) {
-        create_link("PST", "PST_Q_RANK0_OP",   &PST_Q_RANK0_OP,   SINGLE_VALUE);
-        create_link("PST", "PST_Q_RANKS_OP",   &PST_Q_RANKS_OP,   SINGLE_VALUE);
-        create_link("PST", "PST_Q_BORDER0_EG", &PST_Q_BORDER0_EG, SINGLE_VALUE);
-        create_link("PST", "PST_Q_BORDER1_EG", &PST_Q_BORDER1_EG, SINGLE_VALUE);
-        create_link("PST", "PST_Q_BORDER2_EG", &PST_Q_BORDER2_EG, SINGLE_VALUE);
-        create_link("PST", "PST_Q_BORDER3_EG", &PST_Q_BORDER3_EG, SINGLE_VALUE);
+        create_link("PST", "PST_Q_RANK[0]", &PST_Q_RANK[0], OPENING_ENDGAME);
+        create_link("PST", "PST_Q_RANK[1]", &PST_Q_RANK[1], OPENING_ENDGAME);
+        create_link("PST", "PST_Q_RANK[2]", &PST_Q_RANK[2], OPENING_ENDGAME);
+        create_link("PST", "PST_Q_RANK[3]", &PST_Q_RANK[3], OPENING_ENDGAME);
+        create_link("PST", "PST_Q_RANK[4]", &PST_Q_RANK[4], OPENING_ENDGAME);
+        create_link("PST", "PST_Q_RANK[5]", &PST_Q_RANK[5], OPENING_ENDGAME);
+        create_link("PST", "PST_Q_RANK[6]", &PST_Q_RANK[6], OPENING_ENDGAME);
+        create_link("PST", "PST_Q_RANK[7]", &PST_Q_RANK[7], OPENING_ENDGAME);
+        create_link("PST", "PST_Q_FILE[0]", &PST_Q_FILE[0], OPENING_ENDGAME);
+        create_link("PST", "PST_Q_FILE[1]", &PST_Q_FILE[1], OPENING_ENDGAME);
+        create_link("PST", "PST_Q_FILE[2]", &PST_Q_FILE[2], OPENING_ENDGAME);
+        create_link("PST", "PST_Q_FILE[3]", &PST_Q_FILE[3], OPENING_ENDGAME);
+        create_link("PST", "PST_Q_FILE[4]", &PST_Q_FILE[4], OPENING_ENDGAME);
+        create_link("PST", "PST_Q_FILE[5]", &PST_Q_FILE[5], OPENING_ENDGAME);
+        create_link("PST", "PST_Q_FILE[6]", &PST_Q_FILE[6], OPENING_ENDGAME);
+        create_link("PST", "PST_Q_FILE[7]", &PST_Q_FILE[7], OPENING_ENDGAME);
     }
     if (TUNE_PST_KING) {
-        create_link("PST", "PST_K_RANK_OP",  &PST_K_RANK_OP,  SINGLE_VALUE);
-        create_link("PST", "PST_K_RANK_EG",  &PST_K_RANK_EG,  SINGLE_VALUE);
-        create_link("PST", "PST_K_FILE0_OP", &PST_K_FILE0_OP, SINGLE_VALUE);
-        create_link("PST", "PST_K_FILE1_OP", &PST_K_FILE1_OP, SINGLE_VALUE);
-        create_link("PST", "PST_K_FILE2_OP", &PST_K_FILE2_OP, SINGLE_VALUE);
-        create_link("PST", "PST_K_FILE3_OP", &PST_K_FILE3_OP, SINGLE_VALUE);
-        create_link("PST", "PST_K_FILE0_EG", &PST_K_FILE0_EG, SINGLE_VALUE);
-        create_link("PST", "PST_K_FILE1_EG", &PST_K_FILE1_EG, SINGLE_VALUE);
-        create_link("PST", "PST_K_FILE2_EG", &PST_K_FILE2_EG, SINGLE_VALUE);
-        create_link("PST", "PST_K_FILE3_EG", &PST_K_FILE3_EG, SINGLE_VALUE);
+        create_link("PST", "PST_K_RANK[0]", &PST_K_RANK[0], OPENING_ENDGAME);
+        create_link("PST", "PST_K_RANK[1]", &PST_K_RANK[1], OPENING_ENDGAME);
+        create_link("PST", "PST_K_RANK[2]", &PST_K_RANK[2], OPENING_ENDGAME);
+        create_link("PST", "PST_K_RANK[3]", &PST_K_RANK[3], OPENING_ENDGAME);
+        create_link("PST", "PST_K_RANK[4]", &PST_K_RANK[4], OPENING_ENDGAME);
+        create_link("PST", "PST_K_RANK[5]", &PST_K_RANK[5], OPENING_ENDGAME);
+        create_link("PST", "PST_K_RANK[6]", &PST_K_RANK[6], OPENING_ENDGAME);
+        create_link("PST", "PST_K_RANK[7]", &PST_K_RANK[7], OPENING_ENDGAME);
+        create_link("PST", "PST_K_FILE[0]", &PST_K_FILE[0], OPENING_ENDGAME);
+        create_link("PST", "PST_K_FILE[1]", &PST_K_FILE[1], OPENING_ENDGAME);
+        create_link("PST", "PST_K_FILE[2]", &PST_K_FILE[2], OPENING_ENDGAME);
+        create_link("PST", "PST_K_FILE[3]", &PST_K_FILE[3], OPENING_ENDGAME);
+        create_link("PST", "PST_K_FILE[4]", &PST_K_FILE[4], OPENING_ENDGAME);
+        create_link("PST", "PST_K_FILE[5]", &PST_K_FILE[5], OPENING_ENDGAME);
+        create_link("PST", "PST_K_FILE[6]", &PST_K_FILE[6], OPENING_ENDGAME);
+        create_link("PST", "PST_K_FILE[7]", &PST_K_FILE[7], OPENING_ENDGAME);
     }
 }
 
@@ -604,6 +684,7 @@ void select_positions(char *input_pgn, char *output_pos)
     PGN_GAME    pgn_game;
     PGN_MOVE    pgn_move;
     MOVE        move;
+    int         score = 0;
     char        fen[1024];
     FILE        *out_file;
     int         count = 0;
@@ -672,14 +753,17 @@ void select_positions(char *input_pgn, char *output_pos)
             }
 
             make_move(&game->board, move);
-            if (pgn_game.move_number <= 4) continue;
+            
+            if (pgn_game.move_number <= 8) continue;
             if (side_on_move(&game->board) != WHITE) continue;
+            
             in_check = is_incheck(&game->board, side_on_move(&game->board));
-            int score = quiesce(game, in_check, -MAX_SCORE, MAX_SCORE, 0);
+            score = quiesce(game, in_check, -MAX_SCORE, MAX_SCORE, 0);
+            
+            if (ABS(score) > VALUE_ROOK / 2) continue;
             if (is_mate_score(score)) continue;
-            if (ABS(score) > VALUE_BISHOP) continue;
-            util_get_board_fen(&game->board, fen);
 
+            util_get_board_fen(&game->board, fen);
             fprintf(out_file, "%c %s\n", tune_result_letter(pgn_game.result), fen);
             count++;
             
