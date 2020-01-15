@@ -256,7 +256,7 @@ void bb_print(char *msg, U64 bb)
 {
     int last_index = bb_last_index(bb);
     int first_index = bb_first_index(bb);
-    int bit_count = bb_count_u64(bb);
+    int bit_count = bb_bit_count(bb);
     
     printf("%s: FirstIndex: %d LastIndex: %d BitCount: %d Hex: ((U64)0x%016" PRIX64 ")\n", msg, first_index, last_index, bit_count, bb);
 

@@ -15,13 +15,20 @@
   You can find the GNU General Public License at http://www.gnu.org/licenses/
 -------------------------------------------------------------------------------*/
 
+// TODO: fix copyright notice XBOAD/UCI
+// TODO: move xboard to own file.
+// TODO: fix mate printing.
+// TODO: implement popbit functions.
+// TODO: update linux compile options (from tcec)
+
 #define EXTERN
 #include "globals.h"
 
 #define ENGINE "Tucano"
 #define AUTHOR "Alcides Schulz"
-#define VERSION "8.12"
+#define VERSION "8.13"
 
+// 8.13 - bitboard.c review use of builtins/intrisincs functions.
 // 8.12 - change pst structure and tune.
 // 8.11 - review eval_material method.
 // 8.10 - review eval tuning.
@@ -429,6 +436,13 @@ int main(int argc, char *argv[])
         }
         if (!strcmp(command, "help")) {
             printf("Tucano supports XBoard/Winboard or UCI protocols.\n\n");
+#if defined(__GNUC__)
+            printf("Info: GNUC compile.\n\n");
+#elif defined(_WIN64) && defined(_MSC_VER)
+            printf("Info: MSC compile.\n\n");
+#else
+            printf("Info: Generic compile.\n\n");
+#endif
             printf("Other commands that can be used:\n\n");
             printf("             d: display current board\n");
             printf("          eval: print evaluation score for current position\n");

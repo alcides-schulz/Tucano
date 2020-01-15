@@ -106,7 +106,7 @@ void eval_knights(BOARD *board, EVALUATION *eval_values, int myc, int opp)
         
         // mobility
         U64 mobility = knight_moves_bb(pcsq) & eval_values->mobility_target[myc] & ~eval_values->pawn_attacks[opp];
-        eval_values->mobility[myc] += B_KNIGHT_MOBILITY * bb_count_u64(mobility);
+        eval_values->mobility[myc] += B_KNIGHT_MOBILITY * bb_bit_count(mobility);
 
         // threats to opponent pieces
         U64 attacks = mobility & eval_values->undefended[opp];
@@ -123,14 +123,14 @@ void eval_knights(BOARD *board, EVALUATION *eval_values, int myc, int opp)
                                  & ~eval_values->pawn_attacks[opp];
         U64 checks_on_next_move = knight_moves_bb(pcsq) & opp_checking_squares;
         if (checks_on_next_move) {
-            eval_values->pieces[myc] += B_CHECK_THREAT_KNIGHT * bb_count_u64(checks_on_next_move);
+            eval_values->pieces[myc] += B_CHECK_THREAT_KNIGHT * bb_bit_count(checks_on_next_move);
         }
     
         // king attack
         U64 king_attack = knight_moves_bb(pcsq) & (king_moves_bb(king_square(board, opp)) | king_bb(board, opp));
         if (king_attack) {
             eval_values->king_attack_value[myc] += KING_ATTACK_KNIGHT;
-            eval_values->king_attack_count[myc] += bb_count_u64(king_attack);
+            eval_values->king_attack_count[myc] += bb_bit_count(king_attack);
         }
 
         //  penalty when attacked by pawn
@@ -159,7 +159,7 @@ void eval_bishops(BOARD *board, EVALUATION *eval_values, int myc, int opp)
         // mobility
         U64 moves = bb_bishop_attacks(pcsq, occupied_bb(board));
         U64 mobility = moves & eval_values->mobility_target[myc];
-        eval_values->mobility[myc] += B_BISHOP_MOBILITY * bb_count_u64(mobility);
+        eval_values->mobility[myc] += B_BISHOP_MOBILITY * bb_bit_count(mobility);
 
         // threats to opponent pieces
         U64 attacks = mobility & eval_values->undefended[opp];
@@ -172,7 +172,7 @@ void eval_bishops(BOARD *board, EVALUATION *eval_values, int myc, int opp)
 
         // penalty for pawns on same square of the bishop color
         U64 same_color_pawns = pawn_bb(board, myc) & (square_bb(pcsq) & BB_DARK_SQ ? BB_DARK_SQ : BB_LIGHT_SQ);
-        eval_values->pieces[myc] -= P_PAWN_BISHOP_SQ * bb_count_u64(same_color_pawns);
+        eval_values->pieces[myc] -= P_PAWN_BISHOP_SQ * bb_bit_count(same_color_pawns);
 
         // checks on next move
         U64 opp_checking_squares = bb_bishop_attacks(king_square(board, opp), occupied_bb(board)) 
@@ -180,13 +180,13 @@ void eval_bishops(BOARD *board, EVALUATION *eval_values, int myc, int opp)
                                  & ~eval_values->pawn_attacks[opp];
         U64 checks_on_next_move = moves & opp_checking_squares;
         if (checks_on_next_move) {
-            eval_values->pieces[myc] += B_CHECK_THREAT_BISHOP * bb_count_u64(checks_on_next_move);
+            eval_values->pieces[myc] += B_CHECK_THREAT_BISHOP * bb_bit_count(checks_on_next_move);
         }
     
         // king attack
         if (moves & (king_moves_bb(king_square(board, opp)) | king_bb(board, opp))) {
             eval_values->king_attack_value[myc] += KING_ATTACK_BISHOP;
-            eval_values->king_attack_count[myc] += bb_count_u64(moves & (king_moves_bb(king_square(board, opp)) | king_bb(board, opp)));
+            eval_values->king_attack_count[myc] += bb_bit_count(moves & (king_moves_bb(king_square(board, opp)) | king_bb(board, opp)));
         }
 
         // penalty when attacked by pawn
@@ -215,7 +215,7 @@ void eval_rooks(BOARD *board, EVALUATION *eval_values, int myc, int opp)
         // mobility
         U64 moves = bb_rook_attacks(pcsq, occupied_bb(board));
         U64 mobility = moves & eval_values->mobility_target[myc];
-        eval_values->mobility[myc] += B_ROOK_MOBILITY * bb_count_u64(mobility);
+        eval_values->mobility[myc] += B_ROOK_MOBILITY * bb_bit_count(mobility);
 
         // threats to opponent pieces
         U64 attacks = mobility & eval_values->undefended[opp];
@@ -232,14 +232,14 @@ void eval_rooks(BOARD *board, EVALUATION *eval_values, int myc, int opp)
                                  & ~eval_values->pawn_attacks[opp];
         U64 checks_on_next_move = moves & opp_checking_squares;
         if (checks_on_next_move) {
-            eval_values->pieces[myc] += B_CHECK_THREAT_ROOK * bb_count_u64(checks_on_next_move);
+            eval_values->pieces[myc] += B_CHECK_THREAT_ROOK * bb_bit_count(checks_on_next_move);
         }
 
         // king attack
         U64 king_attack = moves & (king_moves_bb(king_square(board, opp)));
         if (king_attack) {
             eval_values->king_attack_value[myc] += KING_ATTACK_ROOK;
-            eval_values->king_attack_count[myc] += bb_count_u64(king_attack);
+            eval_values->king_attack_count[myc] += bb_bit_count(king_attack);
         }
 
         // penalty when attacked by pawn
@@ -281,7 +281,7 @@ void eval_queens(BOARD *board, EVALUATION *eval_values, int myc, int opp)
 
         // mobility
         U64 mobility = moves & eval_values->mobility_target[myc];
-        eval_values->mobility[myc] += B_QUEEN_MOBILITY * bb_count_u64(mobility);
+        eval_values->mobility[myc] += B_QUEEN_MOBILITY * bb_bit_count(mobility);
 
         // threats to opponent pieces
         U64 attacks = moves & eval_values->undefended[opp];
@@ -299,14 +299,14 @@ void eval_queens(BOARD *board, EVALUATION *eval_values, int myc, int opp)
         opp_checking_squares &= (empty_bb(board) | all_pieces_bb(board, opp)) & ~eval_values->pawn_attacks[opp];
         U64 checks_on_next_move = moves & opp_checking_squares;
         if (checks_on_next_move) {
-            eval_values->pieces[myc] += B_CHECK_THREAT_QUEEN * bb_count_u64(checks_on_next_move);
+            eval_values->pieces[myc] += B_CHECK_THREAT_QUEEN * bb_bit_count(checks_on_next_move);
         }
 
         // king attack
         U64 king_attack = moves & king_moves_bb(king_square(board, opp));
         if (king_attack) {
             eval_values->king_attack_value[myc] += KING_ATTACK_QUEEN;
-            eval_values->king_attack_count[myc] += bb_count_u64(king_attack);
+            eval_values->king_attack_count[myc] += bb_bit_count(king_attack);
         }
 
         // penalty when attacked by pawn

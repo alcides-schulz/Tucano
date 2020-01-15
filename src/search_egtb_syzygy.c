@@ -43,7 +43,7 @@ U32 egtb_probe_wdl(BOARD *board, int depth, int ply)
         return TB_RESULT_FAILED;
     }
 
-    int piece_count = bb_count_u64(all_pieces_bb(board, WHITE) | all_pieces_bb(board, BLACK));
+    int piece_count = bb_bit_count(all_pieces_bb(board, WHITE) | all_pieces_bb(board, BLACK));
 
     if (piece_count > (int)TB_LARGEST || (piece_count == (int)TB_LARGEST && depth < (int)TB_PROBE_DEPTH)) {
         return TB_RESULT_FAILED;

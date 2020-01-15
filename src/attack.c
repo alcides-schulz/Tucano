@@ -119,7 +119,7 @@ U64 find_pins(BOARD *board)
     while (attacks) {
         int from = bb_first_index(attacks);
         U64 pinned = from_to_path_bb(king_square(board, side_on_move(board)), from) & occupied_bb(board);
-        if (bb_count_u64(pinned) == 1 && (pinned & all_pieces_bb(board, side_on_move(board))))
+        if (bb_bit_count(pinned) == 1 && (pinned & all_pieces_bb(board, side_on_move(board))))
             pins |= pinned;
         bb_clear_bit(&attacks, from);
     }

@@ -170,7 +170,7 @@ U64     square_color_bb(int index);
 void    bb_init(void);
 int     bb_first_index(U64 bb);
 int     bb_last_index(U64 bb);
-int     bb_count_u64(U64 bb);
+int     bb_bit_count(U64 bb);
 
 U64     king_moves_bb(int from_square);
 U64     knight_moves_bb(int from_square);

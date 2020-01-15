@@ -115,7 +115,7 @@ int space_bonus(BOARD *board, int myc)
 
     space &= (all_pieces_bb(board, myc) | empty_bb(board)) & ~pawn_bb(board, myc);
 
-    return bb_count_u64(space) * B_PAWN_SPACE;
+    return bb_bit_count(space) * B_PAWN_SPACE;
 }
 
 //------------------------------------------------------------------------------------
@@ -142,7 +142,7 @@ int is_candidate(BOARD *board, int myc, int pcsq)
         bb_op_pawn |= (forward_path_bb(myc, pcsq + 1) & pawn_bb(board, opp));
     }
 
-    return (bb_count_u64(bb_op_pawn) <= bb_count_u64(bb_my_pawn)) ? TRUE : FALSE;
+    return (bb_bit_count(bb_op_pawn) <= bb_bit_count(bb_my_pawn)) ? TRUE : FALSE;
 }
 
 // END
