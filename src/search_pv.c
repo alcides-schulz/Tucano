@@ -105,7 +105,7 @@ int search_pv(GAME *game, UINT incheck, int alpha, int beta, int depth)
             if (tt_score(&game->board, depth - 3, &trans_score)) {
                 if (!is_mate_score(trans_score)) {
                     reduced_beta = trans_score - 4 * depth;
-                    score = search_zw(game, incheck, reduced_beta, depth / 2, FALSE, move, move_count);
+                    score = search_zw(game, incheck, reduced_beta, depth / 2, FALSE, move);
                     if (score < reduced_beta) {
                         extensions = 1;
                     }
@@ -152,9 +152,9 @@ int search_pv(GAME *game, UINT incheck, int alpha, int beta, int depth)
             score = -search_pv(game, gives_check, -beta, -alpha, depth - 1 + extensions - reductions);
         }
         else  {
-            score = -search_zw(game, gives_check, -alpha, depth - 1 + extensions - reductions, 1, MOVE_NONE, move_count);
+            score = -search_zw(game, gives_check, -alpha, depth - 1 + extensions - reductions, 1, MOVE_NONE);
             if (!game->search.abort && score > alpha && reductions) {
-                score = -search_zw(game, gives_check, -alpha, depth - 1 + extensions, 1, MOVE_NONE, move_count);
+                score = -search_zw(game, gives_check, -alpha, depth - 1 + extensions, 1, MOVE_NONE);
             }
             if (!game->search.abort && score > alpha) {
                 score = -search_pv(game, gives_check, -beta, -alpha, depth - 1 + extensions);

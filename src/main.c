@@ -26,8 +26,9 @@
 
 #define ENGINE "Tucano"
 #define AUTHOR "Alcides Schulz"
-#define VERSION "8.13"
+#define VERSION "8.14"
 
+// 8.14 - remove additional move pruning.
 // 8.13 - bitboard.c review use of builtins/intrisincs functions.
 // 8.12 - change pst structure and tune.
 // 8.11 - review eval_material method.
