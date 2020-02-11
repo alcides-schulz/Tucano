@@ -1,5 +1,5 @@
 /*-------------------------------------------------------------------------------
-  tucano is a XBoard chess playing engine developed by Alcides Schulz.
+  tucano is a chess playing engine developed by Alcides Schulz.
   Copyright (C) 2011-present - Alcides Schulz
 
   tucano is free software: you can redistribute it and/or modify
@@ -15,18 +15,17 @@
   You can find the GNU General Public License at http://www.gnu.org/licenses/
 -------------------------------------------------------------------------------*/
 
-// TODO: fix copyright notice XBOAD/UCI
 // TODO: move xboard to own file.
 // TODO: fix mate printing.
 // TODO: implement popbit functions.
-// TODO: update linux compile options (from tcec)
+// TODO: fix max-depth -1 when storing syzygy hash
 
 #define EXTERN
 #include "globals.h"
 
 #define ENGINE "Tucano"
 #define AUTHOR "Alcides Schulz"
-#define VERSION "8.14"
+#define VERSION "8.15"
 
 // 8.14 - remove additional move pruning.
 // 8.13 - bitboard.c review use of builtins/intrisincs functions.

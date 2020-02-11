@@ -1,5 +1,5 @@
 /*-------------------------------------------------------------------------------
-tucano is a XBoard chess playing engine developed by Alcides Schulz.
+tucano is a chess playing engine developed by Alcides Schulz.
 Copyright (C) 2011-present - Alcides Schulz
 
 tucano is free software: you can redistribute it and/or modify

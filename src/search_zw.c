@@ -1,5 +1,5 @@
 /*-------------------------------------------------------------------------------
-  tucano is a XBoard chess playing engine developed by Alcides Schulz.
+  tucano is a chess playing engine developed by Alcides Schulz.
   Copyright (C) 2011-present - Alcides Schulz
 
   tucano is free software: you can redistribute it and/or modify
@@ -25,7 +25,7 @@
 int STAT_NULL_MARGIN[STAT_NULL_DEPTH] = { 0, 100, 200, 400 };
 
 #define RAZOR_DEPTH 4
-int RAZOR_MARGIN[RAZOR_DEPTH] = {0, 300, 600, 1200};
+int RAZOR_MARGIN[RAZOR_DEPTH] = { 0, 300, 600, 1200 };
 
 //-------------------------------------------------------------------------------------------------
 //  Search
@@ -192,10 +192,6 @@ int search_zw(GAME *game, UINT incheck, int beta, int depth, UINT can_null, MOVE
                     // Move count pruning: prune late moves based on move count.
                     if (!incheck && move_has_bad_history) {
                         int pruning_threshold = 4 + depth * 2;
-                        // additional pruning for later moves of previous moves
-                        //if (depth < 16 && prev_move_count / 8 < pruning_threshold / 2) {
-                        //    pruning_threshold -= prev_move_count / 8;
-                        //}
                         if (move_count > pruning_threshold) {
                             continue;
                         }
