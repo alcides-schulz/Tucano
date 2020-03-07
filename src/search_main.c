@@ -75,6 +75,7 @@ void search_run(GAME *game, SETTINGS *settings)
     game->search.extended_finish_time = game->search.start_time + game->search.extended_move_time;
     game->search.score_drop = FALSE;
     game->search.best_move = MOVE_NONE;
+    game->search.best_score = 0;
     game->search.ponder_move = MOVE_NONE;
     game->search.abort = FALSE;
     game->search.nodes = 0;
@@ -182,6 +183,8 @@ void iterative_deepening(GAME *game)
 
         int score = search_asp(game, incheck, depth, prev_score);
         if (game->search.abort) break;
+
+        game->search.best_score = score;
 
         // Verify if score dropped from last iteration.
         if (depth > 4) {

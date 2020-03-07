@@ -1,5 +1,5 @@
 /*-------------------------------------------------------------------------------
-  tucano is a chess playing engine developed by Alcides Schulz.
+  tucano is a XBoard chess playing engine developed by Alcides Schulz.
   Copyright (C) 2011-present - Alcides Schulz
 
   tucano is free software: you can redistribute it and/or modify
@@ -122,6 +122,68 @@ void epd(char *file, SETTINGS *settings)
 
     fclose(f);
     fclose(failed);
+    free(game);
+}
+
+//-------------------------------------------------------------------------------------------------
+//  Search positions from an epd file and print a report for found scores
+//-------------------------------------------------------------------------------------------------
+void epd_search(char *file, SETTINGS *settings)
+{
+    FILE    *f;
+    char    line[1000];
+
+
+    f = fopen(file, "r");
+    if (f == NULL) {
+        printf("epd_search: cannot open epd file: '%s'.\n", file);
+        return;
+    }
+
+    GAME *game = (GAME *)malloc(sizeof(GAME));
+    if (game == NULL) {
+        fprintf(stderr, "epd_search.malloc: not enough memory for %d bytes.\n", (int)sizeof(GAME));
+        return;
+    }
+
+    int count = 0;
+    double wscore = 0;
+    double lscore = 0;
+    double dscore = 0;
+
+    while (fgets(line, 1000, f) != NULL) {
+
+        char *nl = strchr(line, '\n');
+        if (nl != NULL) *nl = '\0';
+        nl = strchr(line, '\r');
+        if (nl != NULL) *nl = '\0';
+
+        count++;
+
+        new_game(game, line);
+
+        search_run(game, settings);
+
+        int score = game->search.best_score / 2;
+
+        if (score > 10) wscore++;
+        if (score < -10) lscore++;
+        if (score >= -10 && score <= 10) dscore++;
+        
+        if (strlen(line) > 100) {
+            line[97] = 0;
+            strcat(line, "...");
+        }
+
+        double wpercent = wscore / (double)count * 100.0;
+        double lpercent = lscore / (double)count * 100.0;
+        double dpercent = dscore / (double)count * 100.0;
+
+        printf("%d) %s score: %d win: %3.2f loss: %3.2f draw: %3.2f\n", count, line, score, wpercent, lpercent, dpercent);
+
+    }
+
+    fclose(f);
     free(game);
 }
 

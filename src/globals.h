@@ -335,6 +335,7 @@ typedef struct s_search
     UINT    end_time;               // recorded end time
     UINT    elapsed_time;           // search duration
     MOVE    best_move;              // best move found
+    int     best_score;             // best move score
     MOVE    ponder_move;            // pondering move
     int     cur_depth;              // current depth
     int     score_drop;             // controls when score drops
@@ -798,6 +799,7 @@ void    perftz(void);
 
 // Tests
 void    epd(char *file_name, SETTINGS *settings);
+void    epd_search(char *file, SETTINGS *settings);
 void    eval_test(char *file_name);
 
 // Feature configuration: used for tests/tuning.

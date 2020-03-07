@@ -18,7 +18,7 @@
 // TODO: move xboard to own file.
 // TODO: fix mate printing.
 // TODO: implement popbit functions.
-// TODO: fix max-depth -1 when storing syzygy hash
+// TODO: update linux compile options (from tcec)
 
 #define EXTERN
 #include "globals.h"
@@ -27,6 +27,7 @@
 #define AUTHOR "Alcides Schulz"
 #define VERSION "8.15"
 
+// 8.15 - fixed syzygy issue storing depth in transposition table. added test_epd for end games.
 // 8.14 - remove additional move pruning.
 // 8.13 - bitboard.c review use of builtins/intrisincs functions.
 // 8.12 - change pst structure and tune.
@@ -414,6 +415,18 @@ int main(int argc, char *argv[])
             }
             sscanf(line, "epd %s", epd_file);
             epd(epd_file, &game_settings);
+            continue;
+        }
+        if (!strcmp(command, "egt")) {
+            //  end game test
+            //  fen should contains "bm" for best move.
+            //  e.g. "8/2Q5/2p5/p7/Pk6/2q5/4K3/8 w - - 0 53 bm Qe7;"
+            if (strlen(line) < 5) {
+                printf("syntax: egt <epd file name>\n");
+                continue;
+            }
+            sscanf(line, "egt %s", epd_file);
+            epd_search(epd_file, &game_settings);
             continue;
         }
         if (!strcmp(command, "evtest")) {

@@ -50,8 +50,8 @@ int TUNE_PST_KING    = TRUE;
 
 enum    {SINGLE_VALUE, OPENING_ENDGAME} LINK_TYPE;
 
-#define MAX_POSITIONS       7000000
-#define MAX_TUNE_THREADS    14
+#define MAX_POSITIONS       6000000
+#define MAX_TUNE_THREADS    12
 #define MAX_POS_PER_THREAD  (MAX_POSITIONS / MAX_TUNE_THREADS)
 #define MAX_LINE_SIZE       100
 
@@ -718,7 +718,10 @@ void select_positions(char *input_pgn, char *output_pos)
             continue;
         }
 
-        printf("game %3d: %s vs %s: %s %c\n", pgn_file.game_number, pgn_game.white, pgn_game.black, pgn_game.result, tune_result_letter(pgn_game.result));
+
+        if (pgn_file.game_number % 100 == 0) {
+            printf("game %3d: %s vs %s: %s %c         \r", pgn_file.game_number, pgn_game.white, pgn_game.black, pgn_game.result, tune_result_letter(pgn_game.result));
+        }
         
         new_game(game, FEN_NEW_GAME);
 
@@ -748,7 +751,7 @@ void select_positions(char *input_pgn, char *output_pos)
             move = pgn_engine_move(game, &pgn_move);
 
             if (move == MOVE_NONE) {
-                fprintf(stderr, "move not valid: %s\n", pgn_move.string);
+                fprintf(stderr, "\nmove not valid: %s\n", pgn_move.string);
                 break; // TODO: review not valid moves. e.g. Qe1e3
             }
 
@@ -756,6 +759,10 @@ void select_positions(char *input_pgn, char *output_pos)
             
             if (pgn_game.move_number <= 8) continue;
             if (side_on_move(&game->board) != WHITE) continue;
+
+            int pc = bb_bit_count(all_pieces_bb(&game->board, WHITE)) + bb_bit_count(all_pieces_bb(&game->board, BLACK));
+            //if (pc <= 12) continue; no elo
+            if (pc <= 6) continue; 
             
             in_check = is_incheck(&game->board, side_on_move(&game->board));
             score = quiesce(game, in_check, -MAX_SCORE, MAX_SCORE, 0);
@@ -777,7 +784,7 @@ void select_positions(char *input_pgn, char *output_pos)
     fclose(out_file);
     free(game);
 
-    printf("select_positions saved: [%s] -> [%s]  %d positions (%d loss on time)\n", input_pgn, output_pos, count, loss_on_time_count);
+    printf("\n\nselect_positions saved: [%s] -> [%s]  %d positions (%d loss on time)\n", input_pgn, output_pos, count, loss_on_time_count);
 }
 
 //END
