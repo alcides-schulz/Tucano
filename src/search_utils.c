@@ -232,7 +232,7 @@ void post_info(GAME *game, int score, int depth)
                 uci_score = (MATE_VALUE - score + 1) / 2;
             }
             else { // mated in
-                uci_score = (score + MATE_VALUE) / 2;
+                uci_score = -(score + MATE_VALUE) / 2;
             }
         }
         printf("info ");
