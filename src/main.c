@@ -419,8 +419,7 @@ int main(int argc, char *argv[])
         }
         if (!strcmp(command, "egt")) {
             //  end game test
-            //  fen should contains "bm" for best move.
-            //  e.g. "8/2Q5/2p5/p7/Pk6/2q5/4K3/8 w - - 0 53 bm Qe7;"
+            //  e.g. "8/2Q5/2p5/p7/Pk6/2q5/4K3/8 w - - 0 53"
             if (strlen(line) < 5) {
                 printf("syntax: egt <epd file name>\n");
                 continue;

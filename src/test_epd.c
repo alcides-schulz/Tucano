@@ -126,7 +126,7 @@ void epd(char *file, SETTINGS *settings)
 }
 
 //-------------------------------------------------------------------------------------------------
-//  Search positions from an epd file and print a report for found scores
+//  Search positions from an epd file and print a report for found scores, testing end game tb's
 //-------------------------------------------------------------------------------------------------
 void epd_search(char *file, SETTINGS *settings)
 {
