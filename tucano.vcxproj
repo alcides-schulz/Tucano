@@ -167,6 +167,7 @@
     <ClCompile Include="src\search_main.c" />
     <ClCompile Include="src\search_pv.c" />
     <ClCompile Include="src\search_quiesce.c" />
+    <ClCompile Include="src\search_singular.c" />
     <ClCompile Include="src\search_utils.c" />
     <ClCompile Include="src\search_zw.c" />
     <ClCompile Include="src\see.c" />

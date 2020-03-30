@@ -16,9 +16,7 @@
 -------------------------------------------------------------------------------*/
 
 // TODO: move xboard to own file.
-// TODO: fix mate printing.
 // TODO: implement popbit functions.
-// TODO: update linux compile options (from tcec)
 
 #define EXTERN
 #include "globals.h"

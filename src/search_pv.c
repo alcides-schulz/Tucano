@@ -36,7 +36,6 @@ int search_pv(GAME *game, UINT incheck, int alpha, int beta, int depth)
     int     reductions;
     int     trans_score;
     int     reduced_beta;
-    int     try_singular_extension;
 
     assert(incheck == 0 || incheck == 1);
     assert(alpha >= -MAX_SCORE && alpha <= MAX_SCORE);
@@ -74,12 +73,6 @@ int search_pv(GAME *game, UINT incheck, int alpha, int beta, int depth)
         trans_move = tt_move(&game->board);
     }
 
-    // Singular extension when there's a move from transposition table.
-    if (trans_move != MOVE_NONE)
-        try_singular_extension = TRUE;
-    else
-        try_singular_extension = FALSE;
-
     //  Loop through move list
     select_init(&ml, game, incheck, trans_move, FALSE);
     while ((move = next_move(&ml)) != MOVE_NONE) {
@@ -101,11 +94,11 @@ int search_pv(GAME *game, UINT incheck, int alpha, int beta, int depth)
         }
 
         // singular move extension
-        if (try_singular_extension && move == trans_move && depth >= 8 && !extensions) {
+        if (move == trans_move && depth >= 8 && !extensions) {
             if (tt_score(&game->board, depth - 3, &trans_score)) {
                 if (!is_mate_score(trans_score)) {
                     reduced_beta = trans_score - 4 * depth;
-                    score = search_zw(game, incheck, reduced_beta, depth / 2, FALSE, move);
+                    score = search_singular(game, incheck, reduced_beta, depth / 2, move);
                     if (score < reduced_beta) {
                         extensions = 1;
                     }
@@ -152,9 +145,9 @@ int search_pv(GAME *game, UINT incheck, int alpha, int beta, int depth)
             score = -search_pv(game, gives_check, -beta, -alpha, depth - 1 + extensions - reductions);
         }
         else  {
-            score = -search_zw(game, gives_check, -alpha, depth - 1 + extensions - reductions, 1, MOVE_NONE);
+            score = -search_zw(game, gives_check, -alpha, depth - 1 + extensions - reductions, TRUE);
             if (!game->search.abort && score > alpha && reductions) {
-                score = -search_zw(game, gives_check, -alpha, depth - 1 + extensions, 1, MOVE_NONE);
+                score = -search_zw(game, gives_check, -alpha, depth - 1 + extensions, TRUE);
             }
             if (!game->search.abort && score > alpha) {
                 score = -search_pv(game, gives_check, -beta, -alpha, depth - 1 + extensions);

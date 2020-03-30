@@ -177,6 +177,9 @@
     <ClCompile Include="src\protocol_uci.c">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="src\search_singular.c">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Image Include="image\tucano.bmp">
