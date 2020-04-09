@@ -89,19 +89,19 @@ int search_singular(GAME *game, UINT incheck, int beta, int depth, MOVE exclude_
             assert(move != trans_move);
 
             // Quiet moves pruning/reductions
-            if (move_is_quiet(move) && !is_killer(&game->move_order, turn, ply, move)) {
+            if (move_is_quiet(move) && !is_free_pawn(&game->board, turn, move) && !is_killer(&game->move_order, turn, ply, move)) {
 
                 if (!is_counter_move(&game->move_order, flip_color(turn), get_last_move_made(&game->board), move)) {
 
                     int move_has_bad_history = get_has_bad_history(&game->move_order, turn, move);
 
-                    // Move count pruning: prune late moves based on move count.
-                    if (!incheck && move_has_bad_history) {
-                        int pruning_threshold = 4 + depth * 2;
-                        if (move_count > pruning_threshold) {
-                            continue;
-                        }
-                    }
+                    //// Move count pruning: prune late moves based on move count.
+                    //if (!incheck && move_has_bad_history) {
+                    //    int pruning_threshold = 4 + depth * 2;
+                    //    if (move_count > pruning_threshold) {
+                    //        continue;
+                    //    }
+                    //}
 
                     if (eval_score == -MAX_SCORE) eval_score = evaluate(game, beta - 1, beta);
 
@@ -119,7 +119,7 @@ int search_singular(GAME *game, UINT incheck, int beta, int depth, MOVE exclude_
                         if (!incheck && depth > 5 && move_has_bad_history) {
                             reductions += depth / 6 + move_count / 6;
                         }
-                        reductions = MIN(reductions, 10);
+                        reductions = MIN(reductions, 5);
                     }
                 }
             }

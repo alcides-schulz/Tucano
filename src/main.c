@@ -17,6 +17,7 @@
 
 // TODO: move xboard to own file.
 // TODO: implement popbit functions.
+// TODO: fix time control for moves/time
 
 #define EXTERN
 #include "globals.h"
@@ -25,7 +26,7 @@
 #define AUTHOR "Alcides Schulz"
 #define VERSION "8.15"
 
-// 8.15 - fixed syzygy issue storing depth in transposition table. added test_epd for end games.
+// 8.15 - fixed syzygy issue storing depth in transposition table. added test_epd for end games. add search_singular
 // 8.14 - remove additional move pruning.
 // 8.13 - bitboard.c review use of builtins/intrisincs functions.
 // 8.12 - change pst structure and tune.
