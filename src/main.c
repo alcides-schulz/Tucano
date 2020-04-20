@@ -17,24 +17,13 @@
 
 // TODO: move xboard to own file.
 // TODO: implement popbit functions.
-// TODO: fix time control for moves/time
 
 #define EXTERN
 #include "globals.h"
 
 #define ENGINE "Tucano"
 #define AUTHOR "Alcides Schulz"
-#define VERSION "8.15"
-
-// 8.15 - fixed syzygy issue storing depth in transposition table. added test_epd for end games. add search_singular
-// 8.14 - remove additional move pruning.
-// 8.13 - bitboard.c review use of builtins/intrisincs functions.
-// 8.12 - change pst structure and tune.
-// 8.11 - review eval_material method.
-// 8.10 - review eval tuning.
-// 8.09 - builtin bitboard functions.
-// 8.08 - parameter tuning
-// 8.07 - TCEC Winter 2019
+#define VERSION "8.16"
 
 void        develop_workbench(void);
 double      bench(int depth, int print);

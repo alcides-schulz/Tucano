@@ -53,7 +53,7 @@ void prepare_search(GAME *game, SETTINGS *settings)
         return;
     }
 
-    //  Calculate moves/time period
+    //  Calculate moves/time period or time+increment
     int played_moves = get_played_moves_count(&game->board, side_on_move(&game->board));
     int moves_to_go = 0;
     if (settings->moves_per_level > 0) { // In XBoard we can receive move_per_level.
@@ -69,21 +69,30 @@ void prepare_search(GAME *game, SETTINGS *settings)
             moves_to_go = 40 - played_moves / 2;
             if (moves_to_go < 1) moves_to_go = 1;
         }
-        else {
-            if (moves_to_go > 20) moves_to_go = 20; // allocate more time for initial moves.
-        }
     }
 
-    // allocate time for this move
+    // Allocate time for this move
     game->search.normal_move_time = settings->total_move_time / moves_to_go;
 
-    //  Calculate extended move time and allocate time buffer to avoid timeout
-    game->search.extended_move_time = game->search.normal_move_time * 4;
+    // Reduce up to 50% of the time for initial moves.
+    if (moves_to_go > 1) {
+        double reduction_percent = (double)(MIN(moves_to_go, 30) / 30.0 / 2.0);
+        game->search.normal_move_time -= (UINT)(game->search.normal_move_time * reduction_percent);
+    }
+
+    // Allocate time buffer to avoid timeout
     int time_buffer = (int)(settings->total_move_time * 0.10);
     if (time_buffer > 1000) time_buffer = 1000;
     if (time_buffer < 200) time_buffer = settings->total_move_time / 2;
-    if (game->search.extended_move_time > settings->total_move_time - time_buffer) {
-        game->search.extended_move_time = settings->total_move_time - time_buffer;
+    UINT max_time = settings->total_move_time - time_buffer;
+    
+    // Additional reduction for moves/time to leave time for very last moves.
+    if (settings->moves_to_go != 0 && moves_to_go < 10 && moves_to_go > 1) max_time /= 2;
+
+    //  Calculate extended move time, used on when score drops.
+    game->search.extended_move_time = game->search.normal_move_time * 4;
+    if (game->search.extended_move_time > max_time) {
+        game->search.extended_move_time = max_time;
     }
     if (game->search.normal_move_time > game->search.extended_move_time) {
         game->search.normal_move_time = game->search.extended_move_time;
