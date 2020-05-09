@@ -1,2 +1,0 @@
-T00: count= 19     win=  8 draw=  5 loss=  6
-T01: count= 19     win=  0 draw= 19 loss=  0

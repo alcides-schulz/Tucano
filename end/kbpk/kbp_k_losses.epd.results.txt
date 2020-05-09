@@ -1,2 +1,0 @@
-ORG: count=501     win=  0 draw=  0 loss=501
-NEW: count=501     win=  0 draw=  0 loss=501

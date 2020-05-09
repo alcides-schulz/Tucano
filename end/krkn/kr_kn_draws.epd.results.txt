@@ -1,4 +1,0 @@
-ORG: count=468     win=169 draw=  0 loss=299
-NEW: count=468     win=169 draw= 61 loss=238
-NEW: count=468     win=169 draw= 61 loss=238
-NEW: count=468     win=158 draw= 86 loss=224

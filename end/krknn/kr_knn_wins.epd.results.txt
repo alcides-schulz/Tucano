@@ -1,4 +1,0 @@
-ORG: count=  8     win=  0 draw=  0 loss=  8
-NEW: count=  8     win=  0 draw=  0 loss=  8
-NEW: count=  8     win=  0 draw=  8 loss=  0
-NEW: count=  8     win=  0 draw=  8 loss=  0

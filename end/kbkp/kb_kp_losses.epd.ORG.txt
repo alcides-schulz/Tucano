@@ -1,1 +1,0 @@
-end/kbkp/kb_kp_losses.epd: count= 35 win= 21 draw=  7 loss=  7
