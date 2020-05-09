@@ -23,7 +23,7 @@
 
 #define ENGINE "Tucano"
 #define AUTHOR "Alcides Schulz"
-#define VERSION "8.17"
+#define VERSION "8.18"
 
 void        develop_workbench(void);
 double      bench(int depth, int print);
@@ -612,8 +612,60 @@ int valid_hash_size(int hash_size) {
 //-------------------------------------------------------------------------------------------------
 //  Used for development tests.
 //-------------------------------------------------------------------------------------------------
+UINT testcheck();
+UINT testcheckmoves();
+
 void develop_workbench(void)
 {
+
+     //printf("time: %u\n", testcheck());
+}
+
+UINT testcheck()
+{
+    UINT sum = 0;
+
+    for (int i = 0; i < 500; i++) {
+        sum += testcheckmoves();
+    }
+
+    return sum;
+}
+
+UINT testcheckmoves()
+{
+    GAME *game = (GAME *)malloc(sizeof(GAME));
+    if (game == NULL) {
+        fprintf(stderr, "calc_time.malloc: not enough memory for %d bytes.\n", (int)sizeof(GAME));
+        return 0;
+    }
+
+    FILE *f = fopen("tune-positions.txt", "r");
+    char line1[1024];
+    MOVE_LIST move_list;
+    MOVE move;
+    UINT start = util_get_time();
+    while (TRUE) {
+        if (fgets(line1, 1024, f) == NULL) break;
+        //printf("%s", line1);
+        set_fen(&game->board, &line1[2]);
+        select_init(&move_list, game, is_incheck(&game->board, side_on_move(&game->board)), MOVE_NONE, FALSE);
+        while ((move = next_move(&move_list)) != MOVE_NONE) {
+            if (!is_pseudo_legal(&game->board, move_list.pins, move)) continue;
+            make_move(&game->board, move);
+            undo_move(&game->board);
+            //util_print_move(move, FALSE);
+            //printf(", ");
+        }
+        //printf("\n");
+    }
+
+    UINT elapsed = util_get_time() - start;
+
+    free(game);
+    fclose(f);
+
+    return elapsed;
 }
 
 //END

@@ -95,7 +95,7 @@ void    print_current_values(char *results_filename, int iteration, UINT time_sp
 double  calc_min_k(void);
 void    select_positions(char *input_pgn, char *output_pos);
 double  calc_e_main(double k, int tune_param[], int thread_count, TUNE_THREAD thread_list[]);
-void    calc_e_sub(TUNE_THREAD *thread_data);
+void    *calc_e_sub(void *pv_thread_data);
 
 void eval_tune(void)
 {
@@ -601,8 +601,10 @@ double calc_e_main(double k, int tune_param[], int thread_count, TUNE_THREAD thr
     return error / count;
 }
 
-void calc_e_sub(TUNE_THREAD *thread_data)
+void *calc_e_sub(void *pv_thread_data)
 {
+    TUNE_THREAD *thread_data = (TUNE_THREAD *)pv_thread_data;
+
     double  result;
     double  x;
 
@@ -640,6 +642,8 @@ void calc_e_sub(TUNE_THREAD *thread_data)
 
         thread_data->error += x;
     }
+
+    return NULL;
 }
 
 void copy_values(int param_size, int from_param[], int to_param[]) 

@@ -25,7 +25,7 @@ static GAME        analysis_game;
 static THREAD_ID   analysis_thread;
 static char        analysis_command[MAX_READ];
 
-static void analysis_start(GAME *game);
+void *analysis_start(void *game);
 
 void analyze_mode(GAME *game)
 {
@@ -108,7 +108,7 @@ void analyze_mode(GAME *game)
 //-------------------------------------------------------------------------------------------------
 //  Start analysis search thread
 //-------------------------------------------------------------------------------------------------
-void analysis_start(GAME *game)
+void *analysis_start(void *game)
 {
     SETTINGS    settings;
 
@@ -119,7 +119,9 @@ void analysis_start(GAME *game)
     settings.total_move_time = MAX_TIME;
     settings.use_book = FALSE;
 
-    search_run(game, &settings);
+    search_run((GAME *)game, &settings);
+
+    return NULL;
 }
 
 // EOF//

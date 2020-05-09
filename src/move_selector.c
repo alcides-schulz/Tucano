@@ -39,9 +39,9 @@ int     is_badcap(BOARD *board, MOVE move);
 void    assign_tactical_score(MOVE_LIST *ml);
 void    assign_quiet_score(MOVE_LIST *ml);
 
-const static int PIECE_VALUE[NUM_PIECES] = {100, 300, 300, 500, 900, 10000};
-const static int VICTIM_VALUE[NUM_PIECES]   = {6, 12, 13, 18, 24, 0};
-const static int ATTACKER_VALUE[NUM_PIECES] = {4,  3,  3,  2,  1, 9};
+static const int PIECE_VALUE[NUM_PIECES] = {100, 300, 300, 500, 900, 10000};
+static const int VICTIM_VALUE[NUM_PIECES]   = {6, 12, 13, 18, 24, 0};
+static const int ATTACKER_VALUE[NUM_PIECES] = {4,  3,  3,  2,  1, 9};
 
 //-------------------------------------------------------------------------------------------------
 //  Preparation for move generation and selection.

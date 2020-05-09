@@ -25,7 +25,7 @@ U64     cnt = 0;
 U64     hit = 0;
 
 int     search_asp(GAME *game_data, int incheck, int depth, int prev_score);
-void    iterative_deepening(GAME *game_data);
+void    *iterative_deepening(void *pv_game);
 
 GAME    *thread_data = NULL;
 int     additional_threads = 0;
@@ -48,7 +48,7 @@ void threads_init(int threads_count)
     memset(thread_data, 0, (size_t)(sizeof(GAME) * additional_threads));
 }
 
-void ponder_search(GAME *game)
+void *ponder_search(void *game)
 {
     SETTINGS    ponder_settings;
 
@@ -59,7 +59,9 @@ void ponder_search(GAME *game)
     ponder_settings.post_flag = POST_XBOARD;
     ponder_settings.use_book = FALSE;
 
-    search_run(game, &ponder_settings);
+    search_run((GAME *)game, &ponder_settings);
+
+    return NULL;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -149,9 +151,11 @@ U64 get_additional_threads_tbhits(void)
 //-------------------------------------------------------------------------------------------------
 //  Main search loop (iterative deepening)
 //-------------------------------------------------------------------------------------------------
-void iterative_deepening(GAME *game)
+void *iterative_deepening(void *pv_game)
 {
     test_cnt = test_hit = 0;
+
+    GAME *game = (GAME *)pv_game;
 
     if (game->search.post_flag == POST_DEFAULT) {
         printf("Ply      Nodes  Score Time Principal Variation\n");
@@ -231,6 +235,8 @@ void iterative_deepening(GAME *game)
         printf("-------->  TEST  CNT=%" PRIu64 " HIT=%" PRIu64 " PCT=%3.4f\n", test_cnt, test_hit, (double)(test_cnt == 0 ? 0 : test_hit * 100.0 / test_cnt));
         printf("-------->  TOTAL CNT=%" PRIu64 " HIT=%" PRIu64 " PCT=%3.4f\n", cnt, hit, (double)(cnt == 0 ? 0 : hit * 100.0 / cnt));
     }
+
+    return NULL;
 }
 
 //-------------------------------------------------------------------------------------------------

@@ -26,7 +26,7 @@ char    go_line[MAX_READ];
 int     uci_is_pondering = FALSE;
 int     uci_is_infinite = FALSE;
 
-void execute_uci_go(char *line);
+void *execute_uci_go(void *line);
 void parse_uci_position(char *line);
 void remove_line_feed_chars(char *line);
 
@@ -39,7 +39,7 @@ void remove_line_feed_chars(char *line);
 //-------------------------------------------------------------------------------------------------
 void uci_loop(char *engine_name, char *engine_version, char *engine_author) {
 
-    THREAD_ID   go_thread = NULL;
+    THREAD_ID go_thread = 0;
 
     // UCI initialization
     printf("id name %s %s\n", engine_name, engine_version);
@@ -141,7 +141,7 @@ void uci_loop(char *engine_name, char *engine_version, char *engine_author) {
 //    * movetime <x>
 //    * infinite
 //-------------------------------------------------------------------------------------------------
-void execute_uci_go(char *line)
+void *execute_uci_go(void *pv_line)
 {
     int infinite = FALSE;
     int ponder = FALSE;
@@ -151,7 +151,7 @@ void execute_uci_go(char *line)
     int btime = -1;
     int move_time = -1;
 
-    char *token = strtok(line, " "); // skip "go "
+    char *token = strtok((char *)pv_line, " "); // skip "go "
 
     for (token = strtok(NULL, " "); token != NULL; token = strtok(NULL, " ")) {
         if (!strcmp(token, "wtime")) {
@@ -223,6 +223,8 @@ void execute_uci_go(char *line)
 
     printf("\n"); 
     fflush(stdout);
+
+    return NULL;
 }
 
 //-------------------------------------------------------------------------------------------------

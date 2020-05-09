@@ -276,7 +276,7 @@ typedef struct s_pv_line {
 // Didn't measure if there's any advantage, it is just a matter
 // of preference to avoid handling two variables for each eval term.
 // Stockfish and Gull are two engines that uses the same mechanism.
-#define MAKE_SCORE(op, eg)  (((op) << 16) + (eg))
+#define MAKE_SCORE(op, eg)  ((int)((unsigned int)(op) << 16) + (eg))
 #define OPENING(s) ((((s) + 32768) & ~0xffff) / 0x10000)
 #define ENDGAME(s) (((unsigned)(s) & 0x7fffu) - (int)((unsigned)(s) & 0x8000u))
 
@@ -439,7 +439,7 @@ typedef struct s_game {
     PAWN_TABLE  pawn_table[PAWN_TABLE_SIZE];
     EVAL_TABLE  eval_table[EVAL_TABLE_SIZE];
     int         is_main_thread;
-    THREAD_ID   *thread_handle;
+    THREAD_ID   thread_handle;
     int         thread_number;
 }   GAME;
 
@@ -551,7 +551,7 @@ void    threads_init(int threads_count);
 void    search_run(GAME *game, SETTINGS *settings);
 U64     get_additional_threads_nodes(void);
 U64     get_additional_threads_tbhits(void);
-void    ponder_search(GAME *game);
+void    *ponder_search(void *game);
 void    update_pv(PV_LINE *pv_line, int ply, MOVE move);
 int     null_depth(int depth);
 int     piece_value(int piece);
