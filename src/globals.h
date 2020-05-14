@@ -130,6 +130,7 @@ typedef unsigned int    UINT;
 #define EGTB_WIN     25000
 #define MATE_VALUE   32000
 #define MAX_SCORE    32767
+#define PLY_SCORE    (EGTB_WIN - MAX_PLY) // for MATE and EGTBWIN score
 
 #define POST_NONE       0
 #define POST_DEFAULT    1

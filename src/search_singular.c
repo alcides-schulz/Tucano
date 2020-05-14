@@ -41,7 +41,6 @@ int search_singular(GAME *game, UINT incheck, int beta, int depth, MOVE exclude_
     assert(incheck == 0 || incheck == 1);
     assert(beta >= -MAX_SCORE && beta <= MAX_SCORE);
     assert(depth <= MAX_DEPTH);
-    assert(can_null == 0 || can_null == 1);
 
     check_time(game);
     if (game->search.abort) return 0;
@@ -85,8 +84,6 @@ int search_singular(GAME *game, UINT incheck, int beta, int depth, MOVE exclude_
 
         // pruning or depth reductions
         if (!extensions && move_count > 1) {
-
-            assert(move != trans_move);
 
             // Quiet moves pruning/reductions
             if (move_is_quiet(move) && !is_free_pawn(&game->board, turn, move) && !is_killer(&game->move_order, turn, ply, move)) {

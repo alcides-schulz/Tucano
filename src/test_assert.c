@@ -293,18 +293,18 @@ int board_state_is_ok(BOARD *board)
     //}                player_state[2];    // 0-white, 1-black
 
     int     i;
-    BBIX    temp;
+    U64     temp;
     int     c;
     int     t;
     int     m, p;
 
     for (c = 0; c < 2; c++) {
-        temp.u64 = m = p = 0;
+        temp = m = p = 0;
         for (i = PAWN; i <= KING; i++) {
-            temp.u64 |= piece_bb(board, c, i);
+            temp |= piece_bb(board, c, i);
         }
-        if (temp.u64 != all_pieces_bb(board, c)) {
-            bb_print("temp.u64", temp.u64);
+        if (temp != all_pieces_bb(board, c)) {
+            bb_print("temp.u64", temp);
             bb_print("all_pieces_bb", all_pieces_bb(board, c));
             board_print(board, NULL);
             printf("piece_bb != all_pieces for player: %d\n", c);
@@ -325,14 +325,14 @@ int board_state_is_ok(BOARD *board)
 
         // pieces
         for (t = PAWN; t < NUM_PIECES; t++) {
-            temp.u64 = piece_bb(board, c, t);
-            while (temp.u64) {
-                if (piece_on_square(board, c, bb_first(temp)) != t) {
+            temp = piece_bb(board, c, t);
+            while (temp) {
+                if (piece_on_square(board, c, bb_first_index(temp)) != t) {
                     board_print(board, NULL);
-                    printf("player %c piece %d not on square: %d\n", c, t, bb_first(temp));
+                    printf("player %c piece %d not on square: %d\n", c, t, bb_first_index(temp));
                     return FALSE;
                 }
-                bb_clear_bit(&temp.u64, bb_first(temp));
+                bb_clear_bit(&temp, bb_first_index(temp));
                 if (t == PAWN)
                     p += piece_value(t);
                 else
