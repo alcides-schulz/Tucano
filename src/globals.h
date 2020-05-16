@@ -554,7 +554,6 @@ U64     get_additional_threads_nodes(void);
 U64     get_additional_threads_tbhits(void);
 void    *ponder_search(void *game);
 void    update_pv(PV_LINE *pv_line, int ply, MOVE move);
-int     null_depth(int depth);
 int     piece_value(int piece);
 int     is_free_pawn(BOARD *board, int color, MOVE move);
 int     has_pawn_on_rank7(BOARD *board, int color);

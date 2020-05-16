@@ -127,10 +127,12 @@ int search_zw(GAME *game, UINT incheck, int beta, int depth, UINT can_null)
         }
         
         // null move search
-        if (depth >= 2 && (depth <= 4 || eval_score >= beta)) {
+        if (depth >= 2 && eval_score >= beta) {
+
+            int null_depth = depth - 4 - ((depth - 2) / 4) - MIN(3, (eval_score - beta) / 200);
 
             make_move(&game->board, pack_null_move());
-            score = -search_zw(game, incheck, 1 - beta, null_depth(depth), FALSE);
+            score = -search_zw(game, incheck, 1 - beta, null_depth, FALSE);
             undo_move(&game->board);
             if (game->search.abort) return 0;
 

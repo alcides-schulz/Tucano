@@ -23,7 +23,7 @@
 
 #define ENGINE "Tucano"
 #define AUTHOR "Alcides Schulz"
-#define VERSION "8.20"
+#define VERSION "8.21"
 
 void        develop_workbench(void);
 double      bench(int depth, int print);
@@ -617,8 +617,6 @@ UINT testcheckmoves();
 
 void develop_workbench(void)
 {
-
-     //printf("time: %u\n", testcheck());
 }
 
 UINT testcheck()
