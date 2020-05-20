@@ -257,15 +257,15 @@ int search_asp(GAME *game, int incheck, int depth, int prev_score)
 
     if (depth > 6) {
         for (window = 50; window <= 800; window *= 4) {
+
             alpha = prev_score - window;
-            beta  = prev_score + window;
+            beta = prev_score + window;
+
             score = search_pv(game, incheck, alpha, beta, depth);
-            if (game->search.abort)
-                return 0;
-            if (score > alpha && score < beta)
-                return score;
-            if (is_mate_score(score))
-                break;
+            if (game->search.abort) return 0;
+
+            if (score > alpha && score < beta) return score;
+
         }
     }
 

@@ -200,7 +200,7 @@ int search_zw(GAME *game, UINT incheck, int beta, int depth, UINT can_null)
                     int move_has_bad_history = get_has_bad_history(&game->move_order, turn, move);
                     
                     // Move count pruning: prune late moves based on move count.
-                    if (!incheck && move_has_bad_history) {
+                    if (!incheck && move_has_bad_history && depth < 10) {
                         int pruning_threshold = 4 + depth * 2;
                         if (move_count > pruning_threshold) continue;
                     }
