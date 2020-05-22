@@ -23,7 +23,7 @@
 
 #define ENGINE "Tucano"
 #define AUTHOR "Alcides Schulz"
-#define VERSION "8.22"
+#define VERSION "8.23"
 
 void        develop_workbench(void);
 double      bench(int depth, int print);
