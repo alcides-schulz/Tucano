@@ -17,13 +17,15 @@
 
 // TODO: move xboard to own file.
 // TODO: implement popbit functions.
+// TODO: review symetry for king/queen file piece square table.
+// TODO: fix zkeys board key generation to include all castle rights keys.
 
 #define EXTERN
 #include "globals.h"
 
 #define ENGINE "Tucano"
 #define AUTHOR "Alcides Schulz"
-#define VERSION "8.23"
+#define VERSION "8.24"
 
 void        develop_workbench(void);
 double      bench(int depth, int print);

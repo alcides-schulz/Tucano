@@ -162,6 +162,7 @@ void *iterative_deepening(void *pv_game)
     }
 
     int incheck = is_incheck(&game->board, side_on_move(&game->board));
+    set_ply(&game->board, 0);
 
     // Count moves at root node (for analyse info)
     game->search.root_move_count = 0;

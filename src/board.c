@@ -394,11 +394,10 @@ int is_threefold_repetition(BOARD *board)
 {
     int repetitions = 0;
 
-    for (int i = board->histply - board->fifty_move_rule; i < board->histply; i++)  {
-        if (board->history[i].board_key == board->key) repetitions++;
+    for (int i = 2; i < board->histply && i <= board->fifty_move_rule; i += 2) {
+        if (board->history[board->histply - i].board_key == board->key) repetitions++;
     }
 
-    // Uses repetition count as 2 instead of 3. Forces avoiding 3-fold at all.
     if (repetitions >= 1)
         return TRUE;
     else
