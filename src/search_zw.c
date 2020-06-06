@@ -97,7 +97,7 @@ int search_zw(GAME *game, UINT incheck, int beta, int depth, UINT can_null)
         }
 
         if (tt_flag == TT_EXACT || (tt_flag == TT_LOWER && score >= beta) || (tt_flag == TT_UPPER && score < beta)) {
-            tt_save(&game->board, MAX_DEPTH - 1, score, tt_flag, MOVE_NONE);
+            tt_save(&game->board, depth, score, tt_flag, MOVE_NONE);
             return score;
         }
     }

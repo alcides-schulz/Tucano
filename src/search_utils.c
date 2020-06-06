@@ -89,7 +89,7 @@ void prepare_search(GAME *game, SETTINGS *settings)
     // Additional reduction for moves/time to leave time for very last moves.
     if (settings->moves_to_go != 0 && moves_to_go < 10 && moves_to_go > 1) max_time /= 2;
 
-    //  Calculate extended move time, used on when score drops.
+    //  Calculate extended move time, used when score drops.
     game->search.extended_move_time = game->search.normal_move_time * 4;
     if (game->search.extended_move_time > max_time) {
         game->search.extended_move_time = max_time;

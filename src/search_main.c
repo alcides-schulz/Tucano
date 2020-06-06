@@ -153,8 +153,6 @@ U64 get_additional_threads_tbhits(void)
 //-------------------------------------------------------------------------------------------------
 void *iterative_deepening(void *pv_game)
 {
-    test_cnt = test_hit = 0;
-
     GAME *game = (GAME *)pv_game;
 
     if (game->search.post_flag == POST_DEFAULT) {
@@ -235,14 +233,6 @@ void *iterative_deepening(void *pv_game)
         game->search.ponder_move = game->pv_line.pv_line[0][1];
     }
 
-    // print counters, used for testing.
-    if (game->is_main_thread && test_cnt) {
-        cnt += test_cnt;
-        hit += test_hit;
-        printf("-------->  TEST  CNT=%" PRIu64 " HIT=%" PRIu64 " PCT=%3.4f\n", test_cnt, test_hit, (double)(test_cnt == 0 ? 0 : test_hit * 100.0 / test_cnt));
-        printf("-------->  TOTAL CNT=%" PRIu64 " HIT=%" PRIu64 " PCT=%3.4f\n", cnt, hit, (double)(cnt == 0 ? 0 : hit * 100.0 / cnt));
-    }
-
     return NULL;
 }
 
@@ -251,24 +241,23 @@ void *iterative_deepening(void *pv_game)
 //-------------------------------------------------------------------------------------------------
 int search_asp(GAME *game, int incheck, int depth, int prev_score)
 {
-    int    alpha;
-    int    beta;
-    int    window;
-    int    score;
+    if (depth > 4 && !is_mate_score(prev_score)) {
 
-    if (depth > 6) {
-        for (window = 25; window <= 800; window *= 4) {
+        for (int window = 25; window <= 400; window *= 4) {
 
-            alpha = prev_score - window;
-            beta = prev_score + window;
+            int alpha = prev_score - window;
+            int beta = prev_score + window;
 
-            score = search_pv(game, incheck, alpha, beta, depth);
+            int score = search_pv(game, incheck, alpha, beta, depth);
             if (game->search.abort) return 0;
 
             if (score > alpha && score < beta) return score;
 
+            if (is_mate_score(score)) break; // do a full window search
+
             prev_score = score;
         }
+
     }
 
     return search_pv(game, incheck, -MAX_SCORE, MAX_SCORE, depth);

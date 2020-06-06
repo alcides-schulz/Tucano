@@ -827,10 +827,6 @@ int     pawn_is_isolated(BOARD *board, int pcsq, int color);
 int     pawn_is_candidate(BOARD *board, int pcsq, int color);
 #endif
 
-// For tests.
-EXTERN U64 test_cnt;
-EXTERN U64 test_hit;
-
 #ifdef EGTB_SYZYGY
 
 #define TB_NO_STDBOOL
