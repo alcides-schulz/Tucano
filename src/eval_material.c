@@ -41,8 +41,6 @@
 
 // Material recognizers (white side vs black side)
 // Minor pieces and no pawn and no majors
-#define MINOR_OR_2KNIGHTS_vs_MINORS         ((WMIN == 1 || (WN == 2 && WB == 0)) && BMIN <= 2)
-#define MINORS_vs_MINOR_OR_2KNIGHTS         ((BMIN == 1 || (BN == 2 && BB == 0)) && WMIN <= 2)
 #define MINORSvsMINOR                       (WN == 1 && WB == 1 && BMIN == 1)
 #define MINORvsMINORS                       (BN == 1 && BB == 1 && WMIN == 1)
 #define BISHOPSvsBISHOP                     (WB == 2 && WN == 0 && BB == 1 && BN == 0)
@@ -144,7 +142,6 @@ int eval_draw_adjust(BOARD *board, EVALUATION *eval_values)
     if (WP == 0 && BP == 0) {
         //  Bishop/knight and no queen/rook.
         if (WMAJ == 0 && BMAJ == 0) {
-            if (MINOR_OR_2KNIGHTS_vs_MINORS || MINORS_vs_MINOR_OR_2KNIGHTS) return 0;
             if (MINORSvsMINOR || MINORvsMINORS) return 8;
             if (BISHOPSvsBISHOP || BISHOPvsBISHOPS) return 8;
             return NO_DRAW_ADJUST;

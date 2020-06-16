@@ -265,9 +265,8 @@ void make_move(BOARD *board, MOVE move)
 
     board->side_on_move = flip_color(board->side_on_move);
 
-    //assert(zk_board_key(board) == board->key);
+    assert(zk_board_key(board) == board->key);
     assert(board_state_is_ok(board));
-    assert(board->ply <= MAX_PLY);
     assert(board->histply <= MAX_HIST);
 }
 

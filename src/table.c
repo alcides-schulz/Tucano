@@ -64,7 +64,7 @@ void tt_init(size_t size_mb)
     }
     trans_entries = (int)(trans_size / sizeof(TT_ENTRY));
     
-    assert(trans_entries * (int)sizeof(TT_ENTRY) == trans_size);
+    assert(trans_entries * sizeof(TT_ENTRY) == trans_size);
 
     tt_clear();
 }
@@ -167,9 +167,6 @@ int tt_probe(BOARD *board, int depth, int alpha, int beta, int *search_score, MO
         tt_depth = trans_table[idx].record[rec].depth;
         tt_flag = trans_table[idx].record[rec].flag;
 
-        assert(tt_depth >= -1 && tt_depth <= MAX_DEPTH);
-        assert(tt_flag == TT_EXACT || tt_flag == TT_LOWER || tt_flag == TT_UPPER);
-
         *best_move = trans_table[idx].record[rec].best_move;
         *search_score = trans_table[idx].record[rec].search_score;
 
@@ -200,7 +197,7 @@ MOVE tt_move(BOARD *board)
     int        idx = board_key(board) % trans_entries;
     int        rec;
 
-    assert(idx >= 0 && idx < trans_size);
+    assert(idx >= 0 && (size_t)idx < trans_size);
 
     for (rec = 0; rec < TT_BUCKETS; rec++) {
         if (trans_table[idx].record[rec].key == LOW32(board_key(board)))
@@ -218,7 +215,7 @@ int tt_score(BOARD *board, int min_depth, int *tt_score) {
     int     tt_depth;
     S8      tt_flag;
 
-    assert(idx >= 0 && idx < trans_size);
+    assert(idx >= 0 && (size_t)idx < trans_size);
 
     for (rec = 0; rec < TT_BUCKETS; rec++) {
         if (trans_table[idx].record[rec].key == LOW32(board_key(board)))  {

@@ -287,22 +287,25 @@ static const U64        queen_side_castle_keys[2][2] =
 //-------------------------------------------------------------------------------------------------
 U64 zk_board_key(BOARD *board)
 {
-    int i;
-
     U64 key = 0;
 
-    for (i = 0; i < 64; i++) {
-        if (piece_on_square(board, BLACK, i) != NO_PIECE)
+    for (int i = 0; i < 64; i++) {
+        if (piece_on_square(board, BLACK, i) != NO_PIECE) {
             key ^= square_keys[BLACK][piece_on_square(board, BLACK, i)][i];
-        if (piece_on_square(board, WHITE, i) != NO_PIECE)
+        }
+        if (piece_on_square(board, WHITE, i) != NO_PIECE) {
             key ^= square_keys[WHITE][piece_on_square(board, WHITE, i)][i];
+        }
     }
-    if (side_on_move(board) == BLACK)
-        key ^= color_key;
-    if (ep_square_bb(board))
-        key ^= en_passant_keys[ep_square(board)];
-    key ^= king_side_castle_keys[side_on_move(board)][can_castle_ks_flag(board, side_on_move(board))];
-    key ^= queen_side_castle_keys[side_on_move(board)][can_castle_qs_flag(board, side_on_move(board))];
+
+    if (side_on_move(board) == BLACK) key ^= color_key;
+
+    key ^= king_side_castle_keys[WHITE][can_castle_ks_flag(board, WHITE)];
+    key ^= queen_side_castle_keys[WHITE][can_castle_qs_flag(board, WHITE)];
+    key ^= king_side_castle_keys[BLACK][can_castle_ks_flag(board, BLACK)];
+    key ^= queen_side_castle_keys[BLACK][can_castle_qs_flag(board, BLACK)];
+
+    if (ep_square_bb(board)) key ^= en_passant_keys[ep_square(board)];
 
     return key;
 }
