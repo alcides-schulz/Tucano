@@ -138,7 +138,6 @@ int search_zw(GAME *game, UINT incheck, int beta, int depth, UINT can_null)
 
             if (score >= beta) {
                 if (is_mate_score(score)) score = beta;
-                tt_save(&game->board, depth, score, TT_LOWER, MOVE_NONE);
                 return score;
             }
         }
