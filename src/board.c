@@ -738,10 +738,18 @@ U64 piece_bb(BOARD *board, int color, int piece)
 int has_pieces(BOARD *board, int color)
 {
     assert(valid_color(color));
-    if (board->state[color].piece[QUEEN] || board->state[color].piece[ROOK])
-        return TRUE;
-    if (board->state[color].piece[BISHOP] || board->state[color].piece[KNIGHT])
-        return TRUE;
+    if (board->state[color].piece[QUEEN] || board->state[color].piece[ROOK]) return TRUE;
+    if (board->state[color].piece[BISHOP] || board->state[color].piece[KNIGHT]) return TRUE;
+    return FALSE;
+}
+
+//-------------------------------------------------------------------------------------------------
+//  Indicates if previous moves were null moves
+//-------------------------------------------------------------------------------------------------
+int has_recent_null_move(BOARD *board)
+{
+    if (board->history[board->histply - 1].move == NULL_MOVE) return TRUE;
+    if (board->history[board->histply - 2].move == NULL_MOVE) return TRUE;
     return FALSE;
 }
 

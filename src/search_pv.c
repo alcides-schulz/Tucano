@@ -145,9 +145,9 @@ int search_pv(GAME *game, UINT incheck, int alpha, int beta, int depth)
             score = -search_pv(game, gives_check, -beta, -alpha, depth - 1 + extensions - reductions);
         }
         else  {
-            score = -search_zw(game, gives_check, -alpha, depth - 1 + extensions - reductions, TRUE);
+            score = -search_zw(game, gives_check, -alpha, depth - 1 + extensions - reductions);
             if (!game->search.abort && score > alpha && reductions) {
-                score = -search_zw(game, gives_check, -alpha, depth - 1 + extensions, TRUE);
+                score = -search_zw(game, gives_check, -alpha, depth - 1 + extensions);
             }
             if (!game->search.abort && score > alpha) {
                 score = -search_pv(game, gives_check, -beta, -alpha, depth - 1 + extensions);

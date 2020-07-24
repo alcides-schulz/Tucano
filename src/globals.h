@@ -216,6 +216,7 @@ void    bb_print(char *msg, U64 bb);
 typedef U32         MOVE;
 
 #define MOVE_NONE   ((MOVE)0)
+#define NULL_MOVE   ((MOVE)(MT_NULL << 12))
 
 MOVE    pack_quiet(int moving_piece, int from_square, int to_square);
 MOVE    pack_pawn_2square(int from_square, int to_square, int ep_square);
@@ -560,7 +561,7 @@ int     has_pawn_on_rank7(BOARD *board, int color);
 int     is_pawn_to_rank78(int turn, MOVE move);
 void    check_time(GAME *game);
 int     search_pv(GAME *game, UINT incheck, int alpha, int beta, int depth);
-int     search_zw(GAME *game, UINT incheck, int beta, int depth, UINT can_null);
+int     search_zw(GAME *game, UINT incheck, int beta, int depth);
 int     quiesce(GAME *game, UINT incheck, int alpha, int beta, int depth);
 int     search_singular(GAME *game, UINT incheck, int beta, int depth, MOVE exclude_move);
 void    post_info(GAME *game, int score, int depth);
@@ -624,6 +625,7 @@ U64     all_pieces_bb(BOARD *board, int color);
 U64     qrnb_bb(BOARD *board, int color);
 U64     piece_bb(BOARD *board, int color, int piece);
 int     has_pieces(BOARD *board, int color);
+int     has_recent_null_move(BOARD *board);
 U64     ep_square_bb(BOARD *board);
 int     ep_square(BOARD *board);
 int     can_castle_ks_flag(BOARD *board, int color);

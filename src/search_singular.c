@@ -118,9 +118,9 @@ int search_singular(GAME *game, UINT incheck, int beta, int depth, MOVE exclude_
 
         assert(valid_is_legal(&game->board, move));
 
-        score = -search_zw(game, gives_check, 1 - beta, depth - 1 + extensions - reductions, TRUE);
+        score = -search_zw(game, gives_check, 1 - beta, depth - 1 + extensions - reductions);
         if (!game->search.abort && score >= beta && reductions > 0) {
-            score = -search_zw(game, gives_check, 1 - beta, depth - 1, TRUE);
+            score = -search_zw(game, gives_check, 1 - beta, depth - 1);
         }
 
         undo_move(&game->board);

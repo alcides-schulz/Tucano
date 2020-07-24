@@ -30,7 +30,7 @@ int RAZOR_MARGIN[RAZOR_DEPTH] = { 0, 300, 600, 1200 };
 //-------------------------------------------------------------------------------------------------
 //  Search
 //-------------------------------------------------------------------------------------------------
-int search_zw(GAME *game, UINT incheck, int beta, int depth, UINT can_null)
+int search_zw(GAME *game, UINT incheck, int beta, int depth)
 {
     MOVE_LIST   ml;
     MOVE    trans_move  = MOVE_NONE; 
@@ -117,7 +117,7 @@ int search_zw(GAME *game, UINT incheck, int beta, int depth, UINT can_null)
     }
 
     // Null move heuristic: side to move has advantage that even allowing an extra move to opponent, still keeps advantage.
-    if (!incheck && can_null && !is_mate_score(beta) && has_pieces(&game->board, turn)) {
+    if (!incheck && !is_mate_score(beta) && has_pieces(&game->board, turn) && !has_recent_null_move(&game->board)) {
         
         if (eval_score == -MAX_SCORE) eval_score = evaluate(game, beta - 1, beta);
 
@@ -131,8 +131,8 @@ int search_zw(GAME *game, UINT incheck, int beta, int depth, UINT can_null)
 
             int null_depth = depth - 4 - ((depth - 2) / 4) - MIN(3, (eval_score - beta) / 200);
 
-            make_move(&game->board, pack_null_move());
-            score = -search_zw(game, incheck, 1 - beta, null_depth, FALSE);
+            make_move(&game->board, NULL_MOVE);
+            score = -search_zw(game, incheck, 1 - beta, null_depth);
             undo_move(&game->board);
             if (game->search.abort) return 0;
 
@@ -144,25 +144,25 @@ int search_zw(GAME *game, UINT incheck, int beta, int depth, UINT can_null)
     }
 
     //  Prob-Cut: after a capture a low depth with reduced beta indicates it is safe to ignore this node
-    if (depth >= 5 && can_null && !incheck && !is_mate_score(beta) && move_is_capture(get_last_move_made(&game->board))) {
-        
+    if (depth >= 5 && !incheck && !is_mate_score(beta) && move_is_capture(get_last_move_made(&game->board))) {
+
         int beta_cut = beta + 100;
-        
+
         MOVE_LIST mlpc;
         select_init(&mlpc, game, incheck, trans_move, TRUE);
-        
+
         while ((move = next_move(&mlpc)) != MOVE_NONE) {
-            
+
             if (eval_score == -MAX_SCORE) eval_score = evaluate(game, beta - 1, beta);
 
             if (move_is_quiet(move) || eval_score + see_move(&game->board, move) < beta_cut) continue;
             if (!is_pseudo_legal(&game->board, mlpc.pins, move)) continue;
-            
+
             make_move(&game->board, move);
-            score = -search_zw(game, is_incheck(&game->board, side_on_move(&game->board)), 1 - beta_cut, depth - 4, FALSE);
+            score = -search_zw(game, is_incheck(&game->board, side_on_move(&game->board)), 1 - beta_cut, depth - 4);
             undo_move(&game->board);
             if (game->search.abort) return 0;
-        
+
             if (score >= beta_cut) return score;
         }
     }
@@ -228,9 +228,9 @@ int search_zw(GAME *game, UINT incheck, int beta, int depth, UINT can_null)
 
         assert(valid_is_legal(&game->board, move));
 
-        score = -search_zw(game, gives_check, 1 - beta, depth - 1 + extensions - reductions, TRUE);
+        score = -search_zw(game, gives_check, 1 - beta, depth - 1 + extensions - reductions);
         if (!game->search.abort && score >= beta && reductions > 0) {
-            score = -search_zw(game, gives_check, 1 - beta, depth - 1, TRUE);
+            score = -search_zw(game, gives_check, 1 - beta, depth - 1);
         }
         
         undo_move(&game->board);
