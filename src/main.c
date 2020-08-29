@@ -25,7 +25,7 @@
 
 #define ENGINE "Tucano"
 #define AUTHOR "Alcides Schulz"
-#define VERSION "8.28"
+#define VERSION "8.29"
 
 void        develop_workbench(void);
 double      bench(int depth, int print);
@@ -614,8 +614,38 @@ int valid_hash_size(int hash_size) {
 //-------------------------------------------------------------------------------------------------
 //  Used for development tests.
 //-------------------------------------------------------------------------------------------------
+typedef struct strans_record
+{
+    U32     key;
+    MOVE    best_move;
+    S32     search_score;
+    S16     age;
+    S8      depth;
+    S8      flag;
+}   TT_REC;
+
+typedef struct trans_entry
+{
+    TT_REC  record[4];
+}   TT_ENTRY;
+void tt_initxx(size_t size_mb)
+{
+    assert(sizeof(TT_REC) == 16);
+
+    size_t trans_size = 2;
+    while (trans_size * 2 <= size_mb) {
+        trans_size *= 2;
+    }
+    trans_size = trans_size * 1024 * 1024;
+    int trans_entries = (int)(trans_size / sizeof(TT_ENTRY));
+
+    printf("%d\n%d\n", trans_entries, INT_MAX);
+
+}
+
 void develop_workbench(void)
 {
+
 }
 
 //END

@@ -50,6 +50,7 @@ int evaluate(GAME *game, int alpha, int beta)
     eval_values.draw_adjust = 0;
     eval_values.flag_king_safety[WHITE] = eval_values.flag_king_safety[BLACK] = 0;
     eval_values.bb_passers[WHITE] = eval_values.bb_passers[BLACK] = 0;
+    eval_values.non_mating_material[WHITE] = eval_values.non_mating_material[BLACK] = FALSE;
 
     //  Material.
     eval_material(&game->board, &eval_values);
@@ -110,6 +111,10 @@ int evaluate(GAME *game, int alpha, int beta)
         score += B_TEMPO;
     else
         score -= B_TEMPO;
+
+    // Score reduction in non-mating material positions.
+    if (score > 0 && eval_values.non_mating_material[WHITE]) score /= 10;
+    if (score < 0 && eval_values.non_mating_material[BLACK]) score /= 10;
 
     // Draw adjustment from material on the board.
     score = score * eval_values.draw_adjust / 64;

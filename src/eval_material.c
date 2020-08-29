@@ -109,6 +109,13 @@ void eval_material(BOARD *board, EVALUATION *eval_values)
     eval_values->phase -= (WB + WN + BB + BN) * 2;
 
     eval_values->draw_adjust = eval_draw_adjust(board, eval_values);
+
+    // Calculate non-mating material flags. Used to adjust score.
+    int wm = WN * 2 + WB * 3 + WR * 5 + WQ * 9;
+    int bm = BN * 2 + BB * 3 + BR * 5 + BQ * 9;
+
+    if (WP == 0 && (wm <= 4 || (wm <= 8 && wm <= bm + 3))) eval_values->non_mating_material[WHITE] = TRUE;
+    if (BP == 0 && (bm <= 4 || (bm <= 8 && bm <= wm + 3))) eval_values->non_mating_material[BLACK] = TRUE;
 }
 
 //-------------------------------------------------------------------------------------------------

@@ -381,6 +381,7 @@ typedef struct s_eval_values
     U64     pawn_attacks[COLORS];
     U64     undefended[COLORS];
     U64     mobility_target[COLORS];
+    int     non_mating_material[COLORS];
 }   EVALUATION;
 
 // To verify game results
@@ -545,7 +546,6 @@ int     get_pruning_margin(MOVE_ORDER *move_order, int color, MOVE move);
 int     get_has_bad_history(MOVE_ORDER *move_order, int color, MOVE move);
 int     is_killer(MOVE_ORDER *move_order, int color, int ply, MOVE move);
 int     is_counter_move(MOVE_ORDER *move_order, int prev_color, MOVE previous_move, MOVE current_move);
-
 
 // Search
 void    prepare_search(GAME *game, SETTINGS *settings);
