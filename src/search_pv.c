@@ -112,7 +112,7 @@ int search_pv(GAME *game, UINT incheck, int alpha, int beta, int depth)
             assert(move != trans_move);
 
             // Quiet moves pruning/reductions
-            if (move_is_quiet(move) && !is_free_pawn(&game->board, turn, move) && !is_killer(&game->move_order, turn, ply, move))  {
+            if (move_is_quiet(move) && !is_killer(&game->move_order, turn, ply, move))  {
 
                 if (!is_counter_move(&game->move_order, flip_color(turn), get_last_move_made(&game->board), move)) {
 
