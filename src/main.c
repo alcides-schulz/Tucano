@@ -25,7 +25,7 @@
 
 #define ENGINE "Tucano"
 #define AUTHOR "Alcides Schulz"
-#define VERSION "8.30"
+#define VERSION "8.31"
 
 void        develop_workbench(void);
 double      bench(int depth, int print);
@@ -645,7 +645,6 @@ void tt_initxx(size_t size_mb)
 
 void develop_workbench(void)
 {
-
 }
 
 //END

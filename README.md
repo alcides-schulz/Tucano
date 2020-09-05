@@ -85,4 +85,4 @@ Windows:
 gcc -o tucano.exe -DEGTB_SYZYGY -std=c99 -O3 -Isrc -flto -m64 -mtune=generic -s -static -Wall -Wfatal-errors src\*.c src\fathom\tbprobe.c
 
 Linux:
-gcc -o tucano.exe -DEGTB_SYZYGY -std=c99 -O3 -Isrc -flto -m64 -mtune=generic -s -pthread -Wall -Wfatal-errors src\*.c src\fathom\tbprobe.c
+gcc -std=c99 -Wall -Wextra -march=native -g -DEGTB_SYZYGY -O3 -flto -o tucano src/*.c src/fathom/tbprobe.c -lpthread -lm
