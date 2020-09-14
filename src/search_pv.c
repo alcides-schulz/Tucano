@@ -23,8 +23,7 @@
 int search_pv(GAME *game, UINT incheck, int alpha, int beta, int depth)
 {
     MOVE_LIST   ml;
-    MOVE    best_move  = MOVE_NONE;
-    MOVE    trans_move  = MOVE_NONE;
+    MOVE    best_move = MOVE_NONE;
     int     best_score = -MAX_SCORE;
     int     score = 0;
     UINT    gives_check;
@@ -34,8 +33,6 @@ int search_pv(GAME *game, UINT incheck, int alpha, int beta, int depth)
     int     turn = side_on_move(&game->board);
     MOVE    move;
     int     reductions;
-    int     trans_score;
-    int     reduced_beta;
 
     assert(incheck == 0 || incheck == 1);
     assert(alpha >= -MAX_SCORE && alpha <= MAX_SCORE);
@@ -43,15 +40,15 @@ int search_pv(GAME *game, UINT incheck, int alpha, int beta, int depth)
     assert(beta > alpha);
     assert(depth <= MAX_DEPTH);
 
-	if (depth <= 0) return quiesce(game, incheck, alpha, beta, 0);
+    if (depth <= 0) return quiesce(game, incheck, alpha, beta, 0);
 
-	game->pv_line.pv_size[ply] = ply;
-	game->search.nodes++;
+    game->pv_line.pv_size[ply] = ply;
+    game->search.nodes++;
 
     if (ply > 0 && is_draw(&game->board)) return 0;
 
     check_time(game);
-        
+
     if (game->search.abort) return 0;
 
     assert(ply >= 0 && ply <= MAX_PLY);
@@ -63,14 +60,20 @@ int search_pv(GAME *game, UINT incheck, int alpha, int beta, int depth)
     if (alpha >= beta) return alpha;
 
     //  Get move hint from transposition table
-    trans_move = tt_move(&game->board);
+    TT_RECORD tt_record;
+    tt_read(game->board.key, &tt_record);
+    MOVE trans_move = tt_record.info.move;
 
     // Internal Iterative Deepening.
     if (depth > 3 && trans_move == MOVE_NONE) {
         score = search_pv(game, incheck, alpha, beta, depth - 3);
-        if (score <= alpha) score = search_pv(game, incheck, -MAX_SCORE, beta, depth - 3);
         if (game->search.abort) return 0;
-        trans_move = tt_move(&game->board);
+        if (score <= alpha) {
+            score = search_pv(game, incheck, -MAX_SCORE, beta, depth - 3);
+            if (game->search.abort) return 0;
+        }
+        tt_read(game->board.key, &tt_record);
+        trans_move = tt_record.info.move;
     }
 
     //  Loop through move list
@@ -80,28 +83,27 @@ int search_pv(GAME *game, UINT incheck, int alpha, int beta, int depth)
         assert(is_valid(&game->board, move));
 
         if (!is_pseudo_legal(&game->board, ml.pins, move)) continue;
-        
+
         move_count++;
 
         reductions = 0;
         extensions = 0;
 
         gives_check = is_check(&game->board, move);
-        
+
         // extension if move puts opponent in check
         if (gives_check && (depth < 4 || see_move(&game->board, move) >= 0)) {
             extensions = 1;
         }
 
         // singular move extension
-        if (move == trans_move && depth >= 8 && !extensions) {
-            if (tt_score(&game->board, depth - 3, &trans_score)) {
-                if (!is_mate_score(trans_score)) {
-                    reduced_beta = trans_score - 4 * depth;
-                    score = search_singular(game, incheck, reduced_beta, depth / 2, move);
-                    if (score < reduced_beta) {
-                        extensions = 1;
-                    }
+        if (ply > 0 && tt_record.data && move == trans_move && tt_record.info.flag >= TT_LOWER && depth >= 8 && !extensions) {
+            score = score_from_tt(tt_record.info.score, game->board.ply);
+            if (tt_record.info.depth >= depth - 3 && !is_mate_score(score)) {
+                int reduced_beta = score - 4 * depth;
+                score = search_singular(game, incheck, reduced_beta, depth / 2, move);
+                if (score < reduced_beta) {
+                    extensions = 1;
                 }
             }
         }
@@ -112,7 +114,7 @@ int search_pv(GAME *game, UINT incheck, int alpha, int beta, int depth)
             assert(move != trans_move);
 
             // Quiet moves pruning/reductions
-            if (move_is_quiet(move) && !is_killer(&game->move_order, turn, ply, move))  {
+            if (move_is_quiet(move) && !is_killer(&game->move_order, turn, ply, move)) {
 
                 if (!is_counter_move(&game->move_order, flip_color(turn), get_last_move_made(&game->board), move)) {
 
@@ -144,7 +146,7 @@ int search_pv(GAME *game, UINT incheck, int alpha, int beta, int depth)
         if (best_score == -MAX_SCORE) {
             score = -search_pv(game, gives_check, -beta, -alpha, depth - 1 + extensions - reductions);
         }
-        else  {
+        else {
             score = -search_zw(game, gives_check, -alpha, depth - 1 + extensions - reductions);
             if (!game->search.abort && score > alpha && reductions) {
                 score = -search_zw(game, gives_check, -alpha, depth - 1 + extensions);
@@ -168,7 +170,11 @@ int search_pv(GAME *game, UINT incheck, int alpha, int beta, int depth)
                     if (move_is_quiet(move)) {
                         save_beta_cutoff_data(&game->move_order, turn, ply, move, &ml, get_last_move_made(&game->board));
                     }
-                    tt_save(&game->board, depth, score, TT_LOWER, move);
+                    tt_record.info.move = move;
+                    tt_record.info.depth = (S8)depth;
+                    tt_record.info.flag = TT_LOWER;
+                    tt_record.info.score = score_to_tt(score, ply);
+                    tt_save(game->board.key, &tt_record);
                     return score;
                 }
             }
@@ -181,10 +187,19 @@ int search_pv(GAME *game, UINT incheck, int alpha, int beta, int depth)
         return (incheck ? -MATE_VALUE + ply : 0);
     }
 
-    if (best_move != MOVE_NONE) 
-        tt_save(&game->board, depth, best_score, TT_EXACT, best_move);
-    else
-        tt_save(&game->board, depth, best_score, TT_UPPER, MOVE_NONE);
+    if (best_move != MOVE_NONE) {
+        tt_record.info.move = best_move;
+        tt_record.info.depth = (S8)depth;
+        tt_record.info.flag = TT_EXACT;
+        tt_record.info.score = score_to_tt(best_score, ply);
+    }
+    else {
+        tt_record.info.move = MOVE_NONE;
+        tt_record.info.depth = (S8)depth;
+        tt_record.info.flag = TT_UPPER;
+        tt_record.info.score = score_to_tt(best_score, ply);
+    }
+    tt_save(game->board.key, &tt_record);
 
     return best_score;
 }

@@ -171,7 +171,6 @@
     <ClCompile Include="src\search_utils.c" />
     <ClCompile Include="src\search_zw.c" />
     <ClCompile Include="src\see.c" />
-    <ClCompile Include="src\table.c" />
     <ClCompile Include="src\test_assert.c" />
     <ClCompile Include="src\test_auto_play.c" />
     <ClCompile Include="src\test_epd.c" />
@@ -185,6 +184,7 @@
     <ClCompile Include="src\test_trans_table.c" />
     <ClCompile Include="src\eval_tune.c" />
     <ClCompile Include="src\system_utils.c" />
+    <ClCompile Include="src\transposition.c" />
     <ClCompile Include="src\utils_pgn.c" />
     <ClCompile Include="src\zkeys.c" />
   </ItemGroup>

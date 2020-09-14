@@ -84,9 +84,6 @@
     <ClCompile Include="src\see.c">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\table.c">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="src\test_assert.c">
       <Filter>src</Filter>
     </ClCompile>
@@ -178,6 +175,9 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\search_singular.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\transposition.c">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>

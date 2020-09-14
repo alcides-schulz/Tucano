@@ -32,7 +32,6 @@ int quiesce(GAME *game, UINT incheck, int alpha, int beta, int depth)
     int     best_score = -MAX_SCORE;
     int     ply = get_ply(&game->board);
     int     gives_check;
-    MOVE    trans_move = MOVE_NONE;
     MOVE    best_move = MOVE_NONE;
 
     assert(alpha <= beta);
@@ -54,9 +53,15 @@ int quiesce(GAME *game, UINT incheck, int alpha, int beta, int depth)
     if (alpha >= beta) return alpha;
 
     // transposition table score or move hint
-    if (!EVAL_TUNING && tt_probe(&game->board, depth == 0 ? 0 : -1, alpha, beta, &score, &trans_move)) {
-        return score;
+    TT_RECORD tt_record;
+    tt_read(game->board.key, &tt_record);
+    if (tt_record.data) {
+        score = score_from_tt(tt_record.info.score, game->board.ply);
+        if (tt_record.info.flag == TT_EXACT) return score;
+        if (score >= beta && tt_record.info.flag == TT_LOWER) return score;
+        if (score <= alpha && tt_record.info.flag == TT_UPPER) return score;
     }
+    MOVE trans_move = tt_record.info.move;
 
     if (!incheck) {
         best_score = evaluate(game, alpha, beta);
@@ -105,7 +110,13 @@ int quiesce(GAME *game, UINT incheck, int alpha, int beta, int depth)
         if (score > best_score) {
             if (score > alpha)  {
                 if (score >= beta) {
-                    if (!EVAL_TUNING) tt_save(&game->board, depth == 0 ? 0 : -1, score, TT_LOWER, move);
+                    if (!EVAL_TUNING) {
+                        tt_record.info.move = move;
+                        tt_record.info.depth = 0;
+                        tt_record.info.flag = TT_LOWER;
+                        tt_record.info.score = score_to_tt(score, ply);
+                        tt_save(game->board.key, &tt_record);
+                    }
                     return score;
                 }
                 update_pv(&game->pv_line, ply, move);
@@ -122,10 +133,19 @@ int quiesce(GAME *game, UINT incheck, int alpha, int beta, int depth)
     }
 
     if (!EVAL_TUNING) {
-        if (best_move != MOVE_NONE)
-            tt_save(&game->board, depth == 0 ? 0 : -1, best_score, TT_EXACT, best_move);
-        else
-            tt_save(&game->board, depth == 0 ? 0 : -1, best_score, TT_UPPER, MOVE_NONE);
+        if (best_move != MOVE_NONE) {
+            tt_record.info.move = best_move;
+            tt_record.info.depth = 0;
+            tt_record.info.flag = TT_EXACT;
+            tt_record.info.score = score_to_tt(best_score, ply);
+        }
+        else {
+            tt_record.info.move = MOVE_NONE;
+            tt_record.info.depth = 0;
+            tt_record.info.flag = TT_UPPER;
+            tt_record.info.score = score_to_tt(best_score, ply);
+        }
+        tt_save(game->board.key, &tt_record);
     }
 
     return best_score;

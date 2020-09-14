@@ -33,7 +33,6 @@ int RAZOR_MARGIN[RAZOR_DEPTH] = { 0, 300, 600, 1200 };
 int search_zw(GAME *game, UINT incheck, int beta, int depth)
 {
     MOVE_LIST   ml;
-    MOVE    trans_move  = MOVE_NONE; 
     int     best_score = -MAX_SCORE;
     int     move_count = 0;
     int     score = 0;
@@ -69,10 +68,15 @@ int search_zw(GAME *game, UINT incheck, int beta, int depth)
     if (alpha >= beta) return alpha;
 
     // transposition table score or move hint
-    if (tt_probe(&game->board, depth, beta - 1, beta, &score, &trans_move)) {
-        assert(score >= -MAX_SCORE && score <= MAX_SCORE);
-        return score;
+    TT_RECORD tt_record;
+    tt_read(game->board.key, &tt_record);
+    if (tt_record.data && tt_record.info.depth >= depth) {
+        score = score_from_tt(tt_record.info.score, ply);
+        if (tt_record.info.flag == TT_EXACT) return score;
+        if (score >= beta && tt_record.info.flag == TT_LOWER) return score;
+        if (score <= beta - 1 && tt_record.info.flag == TT_UPPER) return score;
     }
+    MOVE trans_move = tt_record.info.move;
 
 #ifdef EGTB_SYZYGY
     // endgame tablebase probe
@@ -97,7 +101,11 @@ int search_zw(GAME *game, UINT incheck, int beta, int depth)
         }
 
         if (tt_flag == TT_EXACT || (tt_flag == TT_LOWER && score >= beta) || (tt_flag == TT_UPPER && score < beta)) {
-            tt_save(&game->board, depth, score, tt_flag, MOVE_NONE);
+            tt_record.info.move = MOVE_NONE;
+            tt_record.info.depth = (S8)depth;
+            tt_record.info.flag = tt_flag;
+            tt_record.info.score = score_to_tt(score, ply);
+            tt_save(game->board.key, &tt_record);
             return score;
         }
     }
@@ -243,7 +251,11 @@ int search_zw(GAME *game, UINT incheck, int beta, int depth)
                 if (move_is_quiet(move)) {
                     save_beta_cutoff_data(&game->move_order, turn, ply, move, &ml, get_last_move_made(&game->board));
                 }
-                tt_save(&game->board, depth, score, TT_LOWER, move);
+                tt_record.info.move = move;
+                tt_record.info.depth = (S8)depth;
+                tt_record.info.flag = TT_LOWER;
+                tt_record.info.score = score_to_tt(score, ply);
+                tt_save(game->board.key, &tt_record);
                 return score;
             }
             best_score = score;
@@ -255,7 +267,11 @@ int search_zw(GAME *game, UINT incheck, int beta, int depth)
         return (incheck ? -MATE_VALUE + ply : 0);
     }
 
-    tt_save(&game->board, depth, best_score, TT_UPPER, MOVE_NONE);
+    tt_record.info.move = MOVE_NONE;
+    tt_record.info.depth = (S8)depth;
+    tt_record.info.flag = TT_UPPER;
+    tt_record.info.score = score_to_tt(best_score, ply);
+    tt_save(game->board.key, &tt_record);
 
     return best_score;
 }

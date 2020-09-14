@@ -46,6 +46,7 @@ typedef unsigned __int64 uint64_t;
 #pragma warning (disable : 4005)
 #pragma warning (disable : 4710)
 #pragma warning (disable : 4668)
+#pragma warning (disable : 4214)
 
 #else
 
@@ -474,6 +475,16 @@ typedef struct s_move_list
 #define TT_LOWER    0x02
 #define TT_EXACT    0x03
 
+typedef union s_trans_record {
+    struct {
+        MOVE    move;
+        S16     score;
+        S8      depth;
+        U8      age : 6, flag : 2;
+    }   info;
+    U64 data;
+}   TT_RECORD;
+
 #define TIME_CHECK  4095
 
 //  Settings: default time, max depth, etc
@@ -566,6 +577,8 @@ int     quiesce(GAME *game, UINT incheck, int alpha, int beta, int depth);
 int     search_singular(GAME *game, UINT incheck, int beta, int depth, MOVE exclude_move);
 void    post_info(GAME *game, int score, int depth);
 int     is_check(BOARD *board, MOVE move);
+S16     score_to_tt(int score, int ply);
+int     score_from_tt(int score, int ply);
 
 // see
 int     see_move(BOARD *board, MOVE move);
@@ -577,10 +590,8 @@ int     get_game_result(GAME *game);
 void    tt_age(void);
 void    tt_init(size_t size_mb);
 void    tt_clear(void);
-void    tt_save(BOARD *board, int depth, int search_score, S8 flag, MOVE best);
-int     tt_probe(BOARD *board, int depth, int alpha, int beta, int *search_score, MOVE *best_move);
-MOVE    tt_move(BOARD *board);
-int     tt_score(BOARD *board, int min_depth, int *tt_score);
+void    tt_save(U64 key, TT_RECORD *record);
+void    tt_read(U64 key, TT_RECORD *record);
 
 // Analyze Mode
 void    analyze_mode(GAME *game);

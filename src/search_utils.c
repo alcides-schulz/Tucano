@@ -186,6 +186,26 @@ int is_eval_score(int score)
 }
 
 //-------------------------------------------------------------------------------------------------
+//  Remove ply count from MATE and EGTB scores in order to store in the transposition table.
+//-------------------------------------------------------------------------------------------------
+S16 score_to_tt(int score, int ply)
+{
+    if (score >= PLY_SCORE) score += ply;
+    if (score <= -PLY_SCORE) score -= ply;
+    return (S16)score;
+}
+
+//-------------------------------------------------------------------------------------------------
+//  Add ply count to MATE and EGTB scores when loading from transposition table.
+//-------------------------------------------------------------------------------------------------
+int score_from_tt(int score, int ply)
+{
+    if (score >= PLY_SCORE) score -= ply;
+    if (score <= -PLY_SCORE) score += ply;
+    return score;
+}
+
+//-------------------------------------------------------------------------------------------------
 //  Display search information on screen.
 //-------------------------------------------------------------------------------------------------
 void post_info(GAME *game, int score, int depth)
