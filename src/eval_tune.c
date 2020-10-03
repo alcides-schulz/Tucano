@@ -50,8 +50,8 @@ int TUNE_PST_KING    = TRUE;
 
 enum    {SINGLE_VALUE, OPENING_ENDGAME} LINK_TYPE;
 
-#define MAX_POSITIONS       6000000
-#define MAX_TUNE_THREADS    12
+#define MAX_POSITIONS       6600000
+#define MAX_TUNE_THREADS    15
 #define MAX_POS_PER_THREAD  (MAX_POSITIONS / MAX_TUNE_THREADS)
 #define MAX_LINE_SIZE       100
 
@@ -67,7 +67,7 @@ typedef struct {
 
 TUNE_THREAD     tune_thread[MAX_TUNE_THREADS];
 
-#define MAX_PARAM_SIZE      512
+#define MAX_PARAM_SIZE      1024
 
 typedef struct {
     char    *group_name;
@@ -174,9 +174,6 @@ void exec_tune(char *results_filename, double k)
     printf("TIME=%u seconds\n", (util_get_time() - start) / 1000);
 }
 
-GAME g1;
-SETTINGS s1;
-
 void load_positions(char *positions_file_name)
 {
     FILE *f = fopen(positions_file_name, "r");
@@ -194,41 +191,10 @@ void load_positions(char *positions_file_name)
     for (int i = 0; i < MAX_TUNE_THREADS; i++) {
         tune_thread[i].position_count = 0;
     }
-
-    s1.max_depth = MAX_DEPTH;
-    s1.moves_per_level = 0;
-    s1.post_flag = POST_NONE;
-    s1.single_move_time = MAX_TIME;
-    s1.total_move_time = MAX_TIME;
-    s1.use_book = FALSE;
-
     char line[1000];
     while (fgets(line, 1000, f)) {
-        line[strlen(line) - 1] = 0;
         if (strlen(line) > MAX_LINE_SIZE - 1) continue;
         if (line[0] == '#') continue; // comments
-        
-        new_game(&g1, &line[2]);
-        prepare_search(&g1, &s1);
-
-        g1.search.start_time = util_get_time();
-        g1.search.normal_finish_time = g1.search.start_time + g1.search.normal_move_time;
-        g1.search.extended_finish_time = g1.search.start_time + g1.search.extended_move_time;
-        g1.search.score_drop = FALSE;
-        g1.search.best_move = MOVE_NONE;
-        g1.search.ponder_move = MOVE_NONE;
-        g1.search.abort = FALSE;
-        g1.search.nodes = 0;
-        g1.search.tbhits = 0;
-
-        int in_check = is_incheck(&g1.board, side_on_move(&g1.board));
-        int score = quiesce(&g1, in_check, -MAX_SCORE, MAX_SCORE, 0);
-        if (is_mate_score(score)) {
-            //printf("%s %d\n", &line[2], score);
-            //board_print(&g1.board, "");
-            continue;
-        }
-        
         strcpy(tune_thread[thread_index].position[tune_thread[thread_index].position_count++], line);
         if (tune_thread[thread_index].position_count >= MAX_POS_PER_THREAD) {
             thread_index++;
@@ -282,6 +248,9 @@ void local_tune(char *results_filename, double k, int param_size, int original[]
             }
             else {
                 new_param[i] -= (TUNE_INC * 2);
+                if (new_param[i] < 1 && !strncmp(param_name[i], "KING_ATTACK", 11)) {
+                    new_param[i] = 1;
+                }
                 new_e = calc_e_main(k, new_param, MAX_TUNE_THREADS, tune_thread);
                 if (new_e < best_e) {
                     best_e = new_e;
@@ -413,7 +382,18 @@ void init_param_list(void)
     }
     if (TUNE_PAWN) {
         create_link("PAWN", "B_CANDIDATE",     &B_CANDIDATE,     OPENING_ENDGAME);
-        create_link("PAWN", "B_CONNECTED",     &B_CONNECTED,     OPENING_ENDGAME);
+        create_link("PAWN", "B_CONNECTED[0]",  &B_CONNECTED[0],  OPENING_ENDGAME);
+        create_link("PAWN", "B_CONNECTED[1]",  &B_CONNECTED[1],  OPENING_ENDGAME);
+        create_link("PAWN", "B_CONNECTED[2]",  &B_CONNECTED[2],  OPENING_ENDGAME);
+        create_link("PAWN", "B_CONNECTED[3]",  &B_CONNECTED[3],  OPENING_ENDGAME);
+        create_link("PAWN", "B_CONNECTED[4]",  &B_CONNECTED[4],  OPENING_ENDGAME);
+        create_link("PAWN", "B_CONNECTED[5]",  &B_CONNECTED[5],  OPENING_ENDGAME);
+        create_link("PAWN", "B_CONNECTED_PASSER[0]", &B_CONNECTED_PASSER[0], OPENING_ENDGAME);
+        create_link("PAWN", "B_CONNECTED_PASSER[1]", &B_CONNECTED_PASSER[1], OPENING_ENDGAME);
+        create_link("PAWN", "B_CONNECTED_PASSER[2]", &B_CONNECTED_PASSER[2], OPENING_ENDGAME);
+        create_link("PAWN", "B_CONNECTED_PASSER[3]", &B_CONNECTED_PASSER[3], OPENING_ENDGAME);
+        create_link("PAWN", "B_CONNECTED_PASSER[4]", &B_CONNECTED_PASSER[4], OPENING_ENDGAME);
+        create_link("PAWN", "B_CONNECTED_PASSER[5]", &B_CONNECTED_PASSER[5], OPENING_ENDGAME);
         create_link("PAWN", "P_DOUBLED",       &P_DOUBLED,       OPENING_ENDGAME);
         create_link("PAWN", "P_ISOLATED",      &P_ISOLATED,      OPENING_ENDGAME);
         create_link("PAWN", "P_ISOLATED_OPEN", &P_ISOLATED_OPEN, OPENING_ENDGAME);
@@ -613,13 +593,6 @@ void *calc_e_sub(void *pv_thread_data)
 
         thread_data->position_count++;
 
-        switch (line[0]) {
-        case 'w': result = 1.0; break;
-        case 'l': result = 0.0; break;
-        case 'd': result = 0.5; break;
-        default: printf("wrong result character at line: %s\n", line); continue;
-        }
-
         new_game(&thread_data->game, &line[2]);
         prepare_search(&thread_data->game, &thread_data->settings);
 
@@ -635,8 +608,16 @@ void *calc_e_sub(void *pv_thread_data)
         
         int in_check = is_incheck(&thread_data->game.board, side_on_move(&thread_data->game.board));
         double eval = (double)quiesce(&thread_data->game, in_check, -MAX_SCORE, MAX_SCORE, 0);
-        
-        x = -(thread_data->k * eval / 400.0);
+        if (side_on_move(&thread_data->game.board) == BLACK) eval = -eval;
+     
+        switch (line[0]) {
+        case 'w': result = 1.0; break;
+        case 'l': result = 0.0; break;
+        case 'd': result = 0.5; break;
+        default: printf("wrong result character at line: %s\n", line); continue;
+        }
+
+        x = -thread_data->k * eval / 400.0;
         x = 1.0 / (1.0 + pow(10, x));
         x = pow(result - x, 2);
 
@@ -676,12 +657,6 @@ double calc_min_k(void)
     return k;
 }
 
-char tune_result_letter(char *result) {
-    if (strstr(result, "1-0")) return 'w';
-    if (strstr(result, "0-1")) return 'l';
-    return 'd';
-}
-
 void select_positions(char *input_pgn, char *output_pos)
 {
     PGN_FILE    pgn_file;
@@ -692,7 +667,6 @@ void select_positions(char *input_pgn, char *output_pos)
     char        fen[1024];
     FILE        *out_file;
     int         count = 0;
-    int         in_check;
     SETTINGS    settings;
 
     GAME *game = (GAME *)malloc(sizeof(GAME));
@@ -722,9 +696,8 @@ void select_positions(char *input_pgn, char *output_pos)
             continue;
         }
 
-
         if (pgn_file.game_number % 100 == 0) {
-            printf("game %3d: %s vs %s: %s %c         \r", pgn_file.game_number, pgn_game.white, pgn_game.black, pgn_game.result, tune_result_letter(pgn_game.result));
+            printf("game %3d: %s vs %s: %s                  \r", pgn_file.game_number, pgn_game.white, pgn_game.black, pgn_game.result);
         }
         
         new_game(game, FEN_NEW_GAME);
@@ -750,7 +723,7 @@ void select_positions(char *input_pgn, char *output_pos)
 
         game->is_main_thread = TRUE;
 
-        while (pgn_next_move(&pgn_game, &pgn_move))  {
+        while (pgn_next_move(&pgn_game, &pgn_move)) {
 
             move = pgn_engine_move(game, &pgn_move);
 
@@ -760,27 +733,27 @@ void select_positions(char *input_pgn, char *output_pos)
             }
 
             make_move(&game->board, move);
-            
-            if (pgn_game.move_number <= 8) continue;
-            if (side_on_move(&game->board) != WHITE) continue;
+
+            if (pgn_game.move_number <= 4) continue;
 
             int pc = bb_bit_count(all_pieces_bb(&game->board, WHITE)) + bb_bit_count(all_pieces_bb(&game->board, BLACK));
-            //if (pc <= 12) continue; no elo
-            if (pc <= 6) continue; 
-            
-            in_check = is_incheck(&game->board, side_on_move(&game->board));
+            if (pc <= 6) continue;
+
+            int in_check = is_incheck(&game->board, side_on_move(&game->board));
+            if (in_check) continue;
             score = quiesce(game, in_check, -MAX_SCORE, MAX_SCORE, 0);
-            
-            if (ABS(score) > VALUE_ROOK / 2) continue;
+
             if (is_mate_score(score)) continue;
 
             util_get_board_fen(&game->board, fen);
-            fprintf(out_file, "%c %s\n", tune_result_letter(pgn_game.result), fen);
+
+            char wdl = 'd';
+            if (strstr(pgn_game.result, "1-0")) wdl = 'w';
+            if (strstr(pgn_game.result, "0-1")) wdl = 'l';
+
+            fprintf(out_file, "%c %s\n", wdl, fen);
             count++;
-            
-            //board_print("pgn");
         }
-        //printf("\n");
     }
 
     pgn_close(&pgn_file);

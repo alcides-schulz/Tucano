@@ -55,7 +55,7 @@ int quiesce(GAME *game, UINT incheck, int alpha, int beta, int depth)
     // transposition table score or move hint
     TT_RECORD tt_record;
     tt_read(game->board.key, &tt_record);
-    if (tt_record.data) {
+    if (tt_record.data && !EVAL_TUNING) {
         score = score_from_tt(tt_record.info.score, game->board.ply);
         if (tt_record.info.flag == TT_EXACT) return score;
         if (score >= beta && tt_record.info.flag == TT_LOWER) return score;

@@ -61,7 +61,7 @@ void eval_pawns(BOARD *board, PAWN_TABLE *pawn_table, EVALUATION *eval_values)
             int candidate = (!passed && !isolated && !weak && !opposing && is_candidate(board, myc, pcsq)) ? TRUE : FALSE;
 
             eval_values->pawn[myc] -= doubled ? P_DOUBLED : 0;
-            eval_values->pawn[myc] += connected ? B_CONNECTED : 0;
+            eval_values->pawn[myc] += connected ? B_CONNECTED[relative_rank - 1] : 0;
             eval_values->pawn[myc] -= isolated ? (opposing ? P_ISOLATED : P_ISOLATED_OPEN) : 0;
             eval_values->pawn[myc] += candidate ? B_CANDIDATE * relative_rank : 0;
             eval_values->pawn[myc] += space_bonus(board, myc);
@@ -69,7 +69,7 @@ void eval_pawns(BOARD *board, PAWN_TABLE *pawn_table, EVALUATION *eval_values)
 
             if (passed) {
                 bb_set_bit(&eval_values->bb_passers[myc], pcsq);
-                eval_values->pawn[myc] += connected ? B_CONNECTED : 0;
+                eval_values->pawn[myc] += connected ? B_CONNECTED_PASSER[relative_rank - 1] : 0;
             }
             
             assert(pawn_is_doubled(board, pcsq, myc) == doubled);
