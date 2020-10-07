@@ -304,7 +304,7 @@ static const uint64_t anti2board_table[15] =
     0x0001020408102040ull,
 };
 
-static inline size_t diag2index(uint64_t b, unsigned d)
+static inline size_t diag2index(uint64_t b, __attribute__((unused))unsigned d)
 {
     b *= 0x0101010101010101ull;
     b >>= 56;

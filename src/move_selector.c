@@ -157,6 +157,7 @@ MOVE next_move(MOVE_LIST *ml)
             }
             ml->ttm = MOVE_NONE;
         }
+        /* FALLTHROUGH */
     case GEN_CAP:
         if (ml->incheck) {
             ml->phase = GEN_EVASION;
@@ -167,6 +168,7 @@ MOVE next_move(MOVE_LIST *ml)
         gen_caps(ml->board, ml);
         assign_tactical_score(ml);
         ml->phase = NEXT_CAP;
+        /* FALLTHROUGH */
     case NEXT_CAP:
         while (ml->next < ml->count) {
             select_next(ml);
@@ -176,6 +178,7 @@ MOVE next_move(MOVE_LIST *ml)
             return ml->moves[ml->next++];
         }
         ml->phase = GEN_QUIET;
+        /* FALLTHROUGH */
     case GEN_QUIET:
         if (ml->caps) {
             ml->phase = NEXT_LATE_MOVE;
@@ -196,6 +199,7 @@ MOVE next_move(MOVE_LIST *ml)
             return ml->moves[ml->next++];
         }
         ml->phase = NEXT_LATE_MOVE;
+        /* FALLTHROUGH */
     case NEXT_LATE_MOVE:
         if (ml->late_moves_next < ml->late_moves_count) {
             return ml->late_moves[ml->late_moves_next++];
