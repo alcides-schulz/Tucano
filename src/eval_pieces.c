@@ -184,9 +184,10 @@ void eval_bishops(BOARD *board, EVALUATION *eval_values, int myc, int opp)
         }
     
         // king attack
-        if (moves & (king_moves_bb(king_square(board, opp)) | king_bb(board, opp))) {
+        U64 king_attack = moves & (king_moves_bb(king_square(board, opp)) | king_bb(board, opp));
+        if (king_attack) {
             eval_values->king_attack_value[myc] += KING_ATTACK_BISHOP;
-            eval_values->king_attack_count[myc] += bb_bit_count(moves & (king_moves_bb(king_square(board, opp)) | king_bb(board, opp)));
+            eval_values->king_attack_count[myc] += bb_bit_count(king_attack);
         }
 
         // penalty when attacked by pawn
