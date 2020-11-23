@@ -82,8 +82,12 @@ Note: for syzygy tablebases it is necessary to compile with c99 standard. If you
 Here are the commands used for compilation:
 
 Windows (compile using mingW version 7.2.0)
+
     gcc -std=c99 -O3 -DEGTB_SYZYGY -Wall -Wfatal-errors -m64 -mtune=generic -s -static -Isrc -flto -o tucano.exe src\*.c src\fathom\tbprobe.c
 
 Linux and ARM V8 (using src/makefile):
+
     cd src
+
     make release
+
