@@ -77,17 +77,13 @@ The main platform used for development is Windows.
 I try to use standard functions and make tucano portable, so it can be compiled on other platforms, but there's no warranty it will work on all of them.
 You can report issues with other platforms and I will try to address as possible.
 
-Tucano was compiled for windows using Mingw version 7.2.0.
-
 Note: for syzygy tablebases it is necessary to compile with c99 standard. If you have a compiler that doesn't support c99, you can remove the preprocessor EGTB_SYZYGY, but it will not have the end game tablebase support.
 
 Here are the commands used for compilation:
 
-Windows:
-gcc -std=c99 -O3 -DEGTB_SYZYGY -Wall -Wfatal-errors -m64 -mtune=generic -s -static -Isrc -flto -o tucano.exe src\*.c src\fathom\tbprobe.c
+Windows (compile using mingW version 7.2.0)
+    gcc -std=c99 -O3 -DEGTB_SYZYGY -Wall -Wfatal-errors -m64 -mtune=generic -s -static -Isrc -flto -o tucano.exe src\*.c src\fathom\tbprobe.c
 
-Linux:
-gcc -std=c99 -O3 -DEGTB_SYZYGY -Wall -Wextra -march=native -flto -o tucano src/*.c src/fathom/tbprobe.c -lpthread -lm
-
-ARM V8:
-gcc -std=c99 -O3 -DEGTB_SYZYGY -Wall -Wextra -Wshadow -march=native -flto -o tucano src/*.c src/fathom/tbprobe.c -lpthread -lm 
+Linux and ARM V8 (using src/makefile):
+    cd src
+    make release

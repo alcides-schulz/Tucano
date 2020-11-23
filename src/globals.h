@@ -776,7 +776,7 @@ EXTERN int PST_K_FILE[8];
 // PGN utils
 #define PGN_STRING_SIZE 16384
 #define PGN_TAG_SIZE    128
-#define PGN_MOVE_SIZE   16
+#define PGN_MOVE_SIZE   32
 
 typedef struct s_pgn {
     char    *name;
@@ -797,6 +797,9 @@ typedef struct s_pgn_game {
 
 typedef struct s_pgn_move {
     char    string[PGN_MOVE_SIZE];
+    int     book;
+    int     mate;
+    double  value;
 }   PGN_MOVE;
 
 int     pgn_open(PGN_FILE *game, char *filename);

@@ -175,6 +175,11 @@ int search_zw(GAME *game, UINT incheck, int beta, int depth)
         }
     }
 
+    // Reduction when position is not on transposition table. Idea from Prodeo chess engine (from Ed Schroder).
+    if (depth > 3 && trans_move == MOVE_NONE && !incheck) {
+        depth--;
+    }
+
     select_init(&ml, game, incheck, trans_move, FALSE);
     while ((move = next_move(&ml)) != MOVE_NONE) {
 

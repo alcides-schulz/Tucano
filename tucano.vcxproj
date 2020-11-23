@@ -199,6 +199,7 @@
     <None Include="README.md" />
     <None Include="src\fathom\LICENSE" />
     <None Include="src\fathom\README.md" />
+    <None Include="src\makefile" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

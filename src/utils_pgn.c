@@ -38,6 +38,7 @@ void pgn_close(PGN_FILE *pgn_file) {
 int pgn_is_end_of_game_string(char *g, int p);
 int pgn_no_more_moves(char *pgn_moves);
 int pgn_number_or_space(char c1);
+void pgn_process_move_comments(PGN_GAME *game, PGN_MOVE *pgn_move);
 
 int pgn_next_game(PGN_FILE *pgn, PGN_GAME *game)
 {
@@ -58,7 +59,13 @@ int pgn_next_game(PGN_FILE *pgn, PGN_GAME *game)
         game->string[game_index++] = (char)byte;
 
         if (is_comment) {
+            game->moves[move_index++] = (char)byte;
             if (byte == '}') is_comment = FALSE;
+            continue;
+        }
+        if (byte == '{') {
+            game->moves[move_index++] = (char)byte;
+            is_comment = TRUE;
             continue;
         }
         if (is_tag) {
@@ -72,10 +79,6 @@ int pgn_next_game(PGN_FILE *pgn, PGN_GAME *game)
             }
             if (tag_index + 1 < 100)
                 tag[tag_index++] = (char)byte;
-            continue;
-        }
-        if (byte == '{') {
-            is_comment = TRUE;
             continue;
         }
         if (byte == '[') {
@@ -110,12 +113,13 @@ int pgn_next_move(PGN_GAME *game, PGN_MOVE *move)
 {
     int        msi;
 
-    move->string[0] = '\0';
+    memset(move, 0, sizeof(PGN_MOVE));
 
     if (pgn_no_more_moves(&game->moves[game->moves_index])) return FALSE;
 
-    while (pgn_number_or_space(game->moves[game->moves_index]))
+    while (pgn_number_or_space(game->moves[game->moves_index])) {
         game->moves_index++;
+    }
 
     msi = 0;
     while (game->moves[game->moves_index] && game->moves[game->moves_index] != ' ' && msi + 1 < PGN_MOVE_SIZE) {
@@ -126,9 +130,43 @@ int pgn_next_move(PGN_GAME *game, PGN_MOVE *move)
         move->string[msi++] = game->moves[game->moves_index++];
     }
     move->string[msi] = '\0';
+
+    pgn_process_move_comments(game, move);
+
     game->move_number++;
 
     return TRUE;
+}
+
+void pgn_process_move_comments(PGN_GAME *game, PGN_MOVE *pgn_move)
+{
+    /*
+        2. a3 {book} g4 {book} 
+        3. Bb2 {+0.73/13 0.47s} Nf6 {-0.72/12 0.30s}
+        80. Kh4 {-M10/20 0.034s} Kf4 {+M9/21 0.028s}
+    */
+    if (strchr(&game->moves[game->moves_index], '}') == NULL) return;
+    char comments[100];
+    int i = 0;
+    while (game->moves[game->moves_index] != '}' && i < 100) {
+        comments[i++] = game->moves[game->moves_index++];
+    }
+    game->moves_index++;
+    comments[i] = '\0';
+
+    if (strstr(comments, "book")) {
+        pgn_move->book = TRUE;
+        return;
+    }
+    if (strstr(comments, "{M")) {
+        pgn_move->mate = TRUE;
+        return;
+    }
+    char *start_eval = strchr(comments, '{');
+    char *end_eval = strchr(comments, '/');
+    if (start_eval == NULL || end_eval == NULL) return;
+    *end_eval = '\0';
+    pgn_move->value = atof(start_eval + 1);
 }
 
 MOVE pgn_engine_move(GAME *game, PGN_MOVE *pgn_move)
@@ -139,28 +177,23 @@ MOVE pgn_engine_move(GAME *game, PGN_MOVE *pgn_move)
 
     select_init(&ml, game, is_incheck(&game->board, side_on_move(&game->board)), MOVE_NONE, FALSE);
     while ((move = next_move(&ml)) != MOVE_NONE) {
-        if (!is_pseudo_legal(&game->board, ml.pins, move))
-            continue;
+        if (!is_pseudo_legal(&game->board, ml.pins, move)) continue;
         assert(is_valid(&game->board, move));
         pgn_move_desc(move, desc, TRUE, FALSE);
-        if (strcmp(pgn_move->string, desc))
-            pgn_move_desc(move, desc, FALSE, TRUE);
-        if (strcmp(pgn_move->string, desc))
-            pgn_move_desc(move, desc, FALSE, FALSE);
-        if (!strcmp(pgn_move->string, desc))
-            return move;
+        if (strcmp(pgn_move->string, desc)) pgn_move_desc(move, desc, FALSE, TRUE);
+        if (strcmp(pgn_move->string, desc)) pgn_move_desc(move, desc, FALSE, FALSE);
+        if (!strcmp(pgn_move->string, desc)) return move;
     }
     return MOVE_NONE;
 }
 
 int pgn_no_more_moves(char *pgn_moves)
 {
-    while (*pgn_moves == ' ')
-        pgn_moves++;
-    if (!*pgn_moves)
+    while (*pgn_moves == ' ') pgn_moves++;
+    if (!*pgn_moves) return TRUE;
+    if (!strncmp(pgn_moves, "1-0", 3) || !strncmp(pgn_moves, "0-1", 3) || !strncmp(pgn_moves, "1/2-1/2", 7)) {
         return TRUE;
-    if (!strncmp(pgn_moves, "1-0", 3) || !strncmp(pgn_moves, "0-1", 3) || !strncmp(pgn_moves, "1/2-1/2", 7))
-        return TRUE;
+    }
     return FALSE;
 }
 
