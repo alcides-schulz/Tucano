@@ -213,12 +213,12 @@ void *iterative_deepening(void *pv_game)
         UINT used_time = util_get_time() - game->search.start_time;
 
         // normal termination after completed iteration.
-        if (!game->search.score_drop && depth > 1) {
+        if (!game->search.score_drop && depth > 1 && !game->search.is_single_move_time) {
             if (used_time >= game->search.normal_move_time) {
                 break;
             }
         }
-        if (depth > 1) {
+        if (depth > 1 && !game->search.is_single_move_time) {
             if (used_time >= game->search.extended_move_time * 0.6) {
                 break;
             }

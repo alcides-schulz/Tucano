@@ -40,6 +40,7 @@ void prepare_search(GAME *game, SETTINGS *settings)
     game->search.post_flag = settings->post_flag;
     game->search.use_book = settings->use_book;
     game->search.max_depth = settings->max_depth;
+    game->search.is_single_move_time = FALSE;
 
     //  Specific time per move
     if (settings->single_move_time > 0) {
@@ -50,6 +51,7 @@ void prepare_search(GAME *game, SETTINGS *settings)
         single_move_time -= time_buffer;
         game->search.normal_move_time = single_move_time;
         game->search.extended_move_time = single_move_time;
+        game->search.is_single_move_time = TRUE;
         return;
     }
 

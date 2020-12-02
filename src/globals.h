@@ -330,6 +330,7 @@ typedef struct s_search
     int     post_flag;              // output information
     int     use_book;               // use opening book
     int     max_depth;              // max depth 
+    int     is_single_move_time;    // flag to indicate specific time for a move
     UINT    normal_move_time;       // max time for move
     UINT    extended_move_time;     // max time for long search
     UINT    normal_finish_time;     // calculated time to finish
