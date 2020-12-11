@@ -64,16 +64,9 @@ int search_pv(GAME *game, UINT incheck, int alpha, int beta, int depth)
     tt_read(game->board.key, &tt_record);
     MOVE trans_move = tt_record.info.move;
 
-    // Internal Iterative Deepening.
-    if (depth > 3 && trans_move == MOVE_NONE) {
-        score = search_pv(game, incheck, alpha, beta, depth - 3);
-        if (game->search.abort) return 0;
-        if (score <= alpha) {
-            score = search_pv(game, incheck, -MAX_SCORE, beta, depth - 3);
-            if (game->search.abort) return 0;
-        }
-        tt_read(game->board.key, &tt_record);
-        trans_move = tt_record.info.move;
+    // Reduction when position is not on transposition table. Idea from Prodeo chess engine (from Ed Schroder).
+    if (depth > 3 && trans_move == MOVE_NONE && !incheck) {
+        depth--;
     }
 
     //  Loop through move list
