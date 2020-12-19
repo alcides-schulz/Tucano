@@ -180,6 +180,9 @@ int search_zw(GAME *game, UINT incheck, int beta, int depth)
         depth--;
     }
 
+    game->eval_hist[ply] = evaluate(game, -MAX_SCORE, MAX_SCORE);
+    int improving = ply > 1 && game->eval_hist[ply] > game->eval_hist[ply - 2];
+
     select_init(&ml, game, incheck, trans_move, FALSE);
     while ((move = next_move(&ml)) != MOVE_NONE) {
 
@@ -214,6 +217,7 @@ int search_zw(GAME *game, UINT incheck, int beta, int depth)
                     // Move count pruning: prune late moves based on move count.
                     if (!incheck && move_has_bad_history && depth < 10) {
                         int pruning_threshold = 4 + depth * 2;
+                        if (!improving) pruning_threshold = pruning_threshold - 3;
                         if (move_count > pruning_threshold) continue;
                     }
                     

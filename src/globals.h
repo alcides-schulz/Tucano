@@ -443,6 +443,7 @@ typedef struct s_game {
     MOVE_ORDER  move_order;
     PAWN_TABLE  pawn_table[PAWN_TABLE_SIZE];
     EVAL_TABLE  eval_table[EVAL_TABLE_SIZE];
+    int         eval_hist[MAX_PLY];
     int         is_main_thread;
     THREAD_ID   thread_handle;
     int         thread_number;
