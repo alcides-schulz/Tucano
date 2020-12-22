@@ -20,7 +20,7 @@
 
 #define ENGINE "Tucano"
 #define AUTHOR "Alcides Schulz"
-#define VERSION "9.05"
+#define VERSION "9.06"
 
 void        develop_workbench(void);
 double      bench(int depth, int print);
@@ -93,8 +93,8 @@ int main(int argc, char *argv[])
 
     }
 #endif
-
     settings_init();
+    search_tables_init();
 
     new_game(&main_game, FEN_NEW_GAME);
 

@@ -281,4 +281,17 @@ void post_info(GAME *game, int score, int depth)
     fflush(stdout);
 }
 
+//-------------------------------------------------------------------------------------------------
+//  Init table used during search.
+//-------------------------------------------------------------------------------------------------
+void search_tables_init(void)
+{
+    for (int d = 0; d < MAX_DEPTH; d++) {
+        for (int m = 0; m < MAX_MOVE; m++) {
+            reduction_table[d][m] = (int)(1.0 + log(d) * log(m) * 0.5);
+            if (reduction_table[d][m] < 0) reduction_table[d][m] = 0;
+        }
+    }
+}
+
 //END

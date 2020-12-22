@@ -489,6 +489,11 @@ typedef union s_trans_record {
 
 #define TIME_CHECK  4095
 
+// Search Reduction Table
+EXTERN int reduction_table[MAX_DEPTH][MAX_MOVE];
+
+void    search_tables_init(void);
+
 //  Settings: default time, max depth, etc
 typedef struct s_settings {
     UINT    single_move_time;       // set by st command. default is 10 seconds.

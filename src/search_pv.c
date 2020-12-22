@@ -104,15 +104,9 @@ int search_pv(GAME *game, UINT incheck, int alpha, int beta, int depth)
         }
 
         // Pruning or depth reductions
-        if (!incheck && !extensions && move_count > 1) {
-
-            assert(move != trans_move);
-
-            // Quiet moves pruning/reductions
-            if (move_is_quiet(move) && !is_killer(&game->move_order, turn, ply, move)) {
-
+        if (!incheck && !extensions && move_count > 1 && move_is_quiet(move)) {
+            if (!is_killer(&game->move_order, turn, ply, move)) {
                 if (!is_counter_move(&game->move_order, flip_color(turn), get_last_move_made(&game->board), move)) {
-
                     // Futility pruning: eval + margin below beta.
                     if (depth < 10) {
                         int pruning_margin = depth * (50 + get_pruning_margin(&game->move_order, turn, move));
@@ -120,14 +114,10 @@ int search_pv(GAME *game, UINT incheck, int alpha, int beta, int depth)
                             continue;
                         }
                     }
-
                     // Late move reductions: reduce depth for later moves
                     if (move_count > 3 && depth > 2) {
-                        reductions = 1;
-                        if (depth > 5 && get_has_bad_history(&game->move_order, turn, move)) {
-                            reductions += depth / 6;
-                        }
-                        reductions = MIN(reductions, 5);
+                        reductions = reduction_table[MIN(depth, MAX_DEPTH - 1)][MIN(move_count, MAX_MOVE - 1)];
+                        if (reductions > 0) reductions--;
                     }
                 }
             }

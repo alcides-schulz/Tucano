@@ -203,38 +203,27 @@ int search_zw(GAME *game, UINT incheck, int beta, int depth)
         }
 
         // pruning or depth reductions
-        if (!extensions && move_count > 1) {
-
-            assert(move != trans_move);
-
-            // Quiet moves pruning/reductions
-            if (move_is_quiet(move) && !is_killer(&game->move_order, turn, ply, move))  {
-
+        if (!extensions && !incheck && move_count > 1 && move_is_quiet(move)) {
+            if (!is_killer(&game->move_order, turn, ply, move)) {
                 if (!is_counter_move(&game->move_order, flip_color(turn), get_last_move_made(&game->board), move)) {
-                    
                     int move_has_bad_history = get_has_bad_history(&game->move_order, turn, move);
-                    
                     // Move count pruning: prune late moves based on move count.
-                    if (!incheck && move_has_bad_history && depth < 10) {
+                    if (move_has_bad_history && depth < 10) {
                         int pruning_threshold = 4 + depth * 2;
                         if (!improving) pruning_threshold = pruning_threshold - 3;
                         if (move_count > pruning_threshold) continue;
                     }
-                    
                     // Futility pruning: eval + margin below beta. Uses beta cutoff history.
-                    if (!incheck && depth < 10) {
+                    if (depth < 10) {
                         if (eval_score == -MAX_SCORE) eval_score = evaluate(game, beta - 1, beta);
                         int pruning_margin = depth * (50 + get_pruning_margin(&game->move_order, turn, move));
                         if (eval_score + pruning_margin < beta) continue;
                     }
-
                     // Late move reductions: reduce depth for later moves
                     if (move_count > 3 && depth > 2) {
-                        reductions = 1;
-                        if (!incheck && depth > 5 && move_has_bad_history) {
-                            reductions += depth / 6 + move_count / 6;
-                        }
-                        reductions = MIN(reductions, 10);
+                        reductions = reduction_table[MIN(depth, MAX_DEPTH - 1)][MIN(move_count, MAX_MOVE - 1)];
+                        if (move_has_bad_history) reductions++;
+                        if (!improving) reductions++;
                     }
                 }
             }
