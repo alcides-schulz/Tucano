@@ -117,7 +117,7 @@ int search_pv(GAME *game, UINT incheck, int alpha, int beta, int depth)
                     // Late move reductions: reduce depth for later moves
                     if (move_count > 3 && depth > 2) {
                         reductions = reduction_table[MIN(depth, MAX_DEPTH - 1)][MIN(move_count, MAX_MOVE - 1)];
-                        if (reductions > 0) reductions--;
+                        if (reductions > 0 && !get_has_bad_history(&game->move_order, turn, move)) reductions--;
                     }
                 }
             }
