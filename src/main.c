@@ -20,7 +20,7 @@
 
 #define ENGINE "Tucano"
 #define AUTHOR "Alcides Schulz"
-#define VERSION "9.07"
+#define VERSION "9.08"
 
 void        develop_workbench(void);
 double      bench(int depth, int print);
@@ -611,6 +611,7 @@ int valid_hash_size(int hash_size) {
 //-------------------------------------------------------------------------------------------------
 void develop_workbench(void)
 {
+
 }
 
 //END

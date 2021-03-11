@@ -203,12 +203,12 @@ int search_zw(GAME *game, UINT incheck, int beta, int depth)
         }
 
         // pruning or depth reductions
-        if (!extensions && !incheck && move_count > 1 && move_is_quiet(move)) {
+        if (!extensions && move_count > 1 && move_is_quiet(move)) {
             if (!is_killer(&game->move_order, turn, ply, move)) {
                 if (!is_counter_move(&game->move_order, flip_color(turn), get_last_move_made(&game->board), move)) {
                     int move_has_bad_history = get_has_bad_history(&game->move_order, turn, move);
                     // Move count pruning: prune late moves based on move count.
-                    if (move_has_bad_history && depth < 10) {
+                    if (move_has_bad_history && depth < 10 && !incheck) {
                         int pruning_threshold = 4 + depth * 2;
                         if (!improving) pruning_threshold = pruning_threshold - 3;
                         if (move_count > pruning_threshold) continue;
