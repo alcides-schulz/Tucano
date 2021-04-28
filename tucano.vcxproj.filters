@@ -180,9 +180,6 @@
     <ClCompile Include="src\transposition.c">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\eval_pawn_nn.c">
-      <Filter>src</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Image Include="image\tucano.bmp">

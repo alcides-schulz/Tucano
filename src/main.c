@@ -610,15 +610,9 @@ int valid_hash_size(int hash_size) {
 //  Used for development tests.
 //-------------------------------------------------------------------------------------------------
 
-void pnn_train(char *file_name, int epoch_size, int train_size);
-
 void develop_workbench(void)
 {
-#if defined(_MSC_VER)
-    pnn_train("tune-positions.txt", 100, 1000000);
-#else
-    pnn_train("pawn.txt", 100, 10000000);
-#endif
+
 }
 
 //END
