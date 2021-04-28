@@ -149,6 +149,7 @@
     <ClCompile Include="src\eval_param.c" />
     <ClCompile Include="src\eval_passed.c" />
     <ClCompile Include="src\eval_pawn.c" />
+    <ClCompile Include="src\eval_pawn_nn.c" />
     <ClCompile Include="src\eval_pieces.c" />
     <ClCompile Include="src\eval_pst.c" />
     <ClCompile Include="src\eval_utils.c" />

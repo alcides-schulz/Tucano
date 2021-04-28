@@ -111,11 +111,12 @@ int search_zw(GAME *game, UINT incheck, int beta, int depth)
     }
 #endif 
 
-    int eval_score = -MAX_SCORE;
+    int eval_score = evaluate(game, beta - 1, beta);
+    game->eval_hist[ply] = eval_score;
+    int improving = ply > 1 && game->eval_hist[ply] > game->eval_hist[ply - 2];
     
     // Razoring
     if (!incheck && depth < RAZOR_DEPTH && !is_mate_score(beta)) {
-        eval_score = evaluate(game, beta - 1, beta);
         if (eval_score + RAZOR_MARGIN[depth] < beta && !has_pawn_on_rank7(&game->board, turn)) {
             razor_beta = beta - RAZOR_MARGIN[depth];
             score = quiesce(game, FALSE, razor_beta - 1, razor_beta, 0);
@@ -126,24 +127,17 @@ int search_zw(GAME *game, UINT incheck, int beta, int depth)
 
     // Null move heuristic: side to move has advantage that even allowing an extra move to opponent, still keeps advantage.
     if (!incheck && !is_mate_score(beta) && has_pieces(&game->board, turn) && !has_recent_null_move(&game->board)) {
-        
-        if (eval_score == -MAX_SCORE) eval_score = evaluate(game, beta - 1, beta);
-
         // static null move
         if (depth < STAT_NULL_DEPTH && eval_score - STAT_NULL_MARGIN[depth] >= beta) {
             return eval_score - STAT_NULL_MARGIN[depth];
         }
-        
         // null move search
         if (depth >= 2 && eval_score >= beta) {
-
             int null_depth = depth - 4 - ((depth - 2) / 4) - MIN(3, (eval_score - beta) / 200);
-
             make_move(&game->board, NULL_MOVE);
             score = -search_zw(game, incheck, 1 - beta, null_depth);
             undo_move(&game->board);
             if (game->search.abort) return 0;
-
             if (score >= beta) {
                 if (is_mate_score(score)) score = beta;
                 return score;
@@ -153,24 +147,16 @@ int search_zw(GAME *game, UINT incheck, int beta, int depth)
 
     //  Prob-Cut: after a capture a low depth with reduced beta indicates it is safe to ignore this node
     if (depth >= 5 && !incheck && !is_mate_score(beta) && move_is_capture(get_last_move_made(&game->board))) {
-
         int beta_cut = beta + 100;
-
         MOVE_LIST mlpc;
         select_init(&mlpc, game, incheck, trans_move, TRUE);
-
         while ((move = next_move(&mlpc)) != MOVE_NONE) {
-
-            if (eval_score == -MAX_SCORE) eval_score = evaluate(game, beta - 1, beta);
-
             if (move_is_quiet(move) || eval_score + see_move(&game->board, move) < beta_cut) continue;
             if (!is_pseudo_legal(&game->board, mlpc.pins, move)) continue;
-
             make_move(&game->board, move);
             score = -search_zw(game, is_incheck(&game->board, side_on_move(&game->board)), 1 - beta_cut, depth - 4);
             undo_move(&game->board);
             if (game->search.abort) return 0;
-
             if (score >= beta_cut) return score;
         }
     }
@@ -179,9 +165,6 @@ int search_zw(GAME *game, UINT incheck, int beta, int depth)
     if (depth > 3 && trans_move == MOVE_NONE && !incheck) {
         depth--;
     }
-
-    game->eval_hist[ply] = evaluate(game, -MAX_SCORE, MAX_SCORE);
-    int improving = ply > 1 && game->eval_hist[ply] > game->eval_hist[ply - 2];
 
     select_init(&ml, game, incheck, trans_move, FALSE);
     while ((move = next_move(&ml)) != MOVE_NONE) {
@@ -215,7 +198,6 @@ int search_zw(GAME *game, UINT incheck, int beta, int depth)
                     }
                     // Futility pruning: eval + margin below beta. Uses beta cutoff history.
                     if (depth < 10) {
-                        if (eval_score == -MAX_SCORE) eval_score = evaluate(game, beta - 1, beta);
                         int pruning_margin = depth * (50 + get_pruning_margin(&game->move_order, turn, move));
                         if (eval_score + pruning_margin < beta) continue;
                     }

@@ -69,7 +69,7 @@ int search_pv(GAME *game, UINT incheck, int alpha, int beta, int depth)
         depth--;
     }
 
-    game->eval_hist[ply] = evaluate(game, -MAX_SCORE, MAX_SCORE);
+    game->eval_hist[ply] = evaluate(game, alpha, beta);
 
     //  Loop through move list
     select_init(&ml, game, incheck, trans_move, FALSE);
