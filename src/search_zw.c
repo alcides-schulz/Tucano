@@ -128,7 +128,7 @@ int search_zw(GAME *game, UINT incheck, int beta, int depth)
     // Null move heuristic: side to move has advantage that even allowing an extra move to opponent, still keeps advantage.
     if (!incheck && !is_mate_score(beta) && has_pieces(&game->board, turn) && !has_recent_null_move(&game->board)) {
         // static null move
-        if (depth < STAT_NULL_DEPTH && eval_score - STAT_NULL_MARGIN[depth] >= beta) {
+        if (depth < STAT_NULL_DEPTH && eval_score - STAT_NULL_MARGIN[depth] >= beta && improving) {
             return eval_score - STAT_NULL_MARGIN[depth];
         }
         // null move search
