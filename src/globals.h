@@ -380,10 +380,12 @@ typedef struct s_eval_values
     U64     bb_passers[COLORS];
     int     king_attack_count[COLORS];
     int     king_attack_value[COLORS];
+    U64     king_attack_area[COLORS];
+    U64     king_attacked_squares[COLORS];
+    int     non_mating_material[COLORS];
     U64     pawn_attacks[COLORS];
     U64     undefended[COLORS];
     U64     mobility_target[COLORS];
-    int     non_mating_material[COLORS];
 }   EVALUATION;
 
 // To verify game results

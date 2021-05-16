@@ -50,8 +50,8 @@ int TUNE_PST_KING    = TRUE;
 
 enum    {SINGLE_VALUE, OPENING_ENDGAME} LINK_TYPE;
 
-#define MAX_POSITIONS       6600000
-#define MAX_TUNE_THREADS    15
+#define MAX_POSITIONS       10000000
+#define MAX_TUNE_THREADS    10
 #define MAX_POS_PER_THREAD  (MAX_POSITIONS / MAX_TUNE_THREADS)
 #define MAX_LINE_SIZE       100
 
@@ -223,7 +223,6 @@ void local_tune(char *results_filename, double k, int param_size, int original[]
     new_param = (int *)malloc(param_size * sizeof(int));
     best_param = (int *)malloc(param_size * sizeof(int));
 
-    //best_e = calc_e(k, initial_guess);
     best_e = calc_e_main(k, initial_guess, MAX_TUNE_THREADS, tune_thread);
 
     printf("initial e: %1.20f  calc_e time: %u seconds  param count: %d\n\n", best_e, (util_get_time() - start) / 1000, param_size);
@@ -366,88 +365,88 @@ void create_link(char *group, char *name, S32 *eval_param, int link_type)
 
 void init_param_list(void)
 {
-    if (TUNE_MATERIAL)  {
-        create_link("MATERIAL", "SCORE_PAWN",    &SCORE_PAWN,    OPENING_ENDGAME);
-        create_link("MATERIAL", "SCORE_KNIGHT",  &SCORE_KNIGHT,  OPENING_ENDGAME);
-        create_link("MATERIAL", "SCORE_BISHOP",  &SCORE_BISHOP,  OPENING_ENDGAME);
-        create_link("MATERIAL", "SCORE_ROOK",    &SCORE_ROOK,    OPENING_ENDGAME);
-        create_link("MATERIAL", "SCORE_QUEEN",   &SCORE_QUEEN,   OPENING_ENDGAME);
+    if (TUNE_MATERIAL) {
+        create_link("MATERIAL", "SCORE_PAWN", &SCORE_PAWN, OPENING_ENDGAME);
+        create_link("MATERIAL", "SCORE_KNIGHT", &SCORE_KNIGHT, OPENING_ENDGAME);
+        create_link("MATERIAL", "SCORE_BISHOP", &SCORE_BISHOP, OPENING_ENDGAME);
+        create_link("MATERIAL", "SCORE_ROOK", &SCORE_ROOK, OPENING_ENDGAME);
+        create_link("MATERIAL", "SCORE_QUEEN", &SCORE_QUEEN, OPENING_ENDGAME);
         create_link("MATERIAL", "B_BISHOP_PAIR", &B_BISHOP_PAIR, OPENING_ENDGAME);
-        create_link("MATERIAL", "B_TEMPO",       &B_TEMPO,       SINGLE_VALUE);
+        create_link("MATERIAL", "B_TEMPO", &B_TEMPO, SINGLE_VALUE);
     }
     if (TUNE_KING) {
-        create_link("KING", "B_PAWN_PROXIMITY",  &B_PAWN_PROXIMITY, OPENING_ENDGAME);
-        create_link("KING", "P_PAWN_SHIELD",     &P_PAWN_SHIELD,    OPENING_ENDGAME);
-        create_link("KING", "P_PAWN_STORM",      &P_PAWN_STORM,     OPENING_ENDGAME);
+        create_link("KING", "B_PAWN_PROXIMITY", &B_PAWN_PROXIMITY, OPENING_ENDGAME);
+        create_link("KING", "P_PAWN_SHIELD", &P_PAWN_SHIELD, OPENING_ENDGAME);
+        create_link("KING", "P_PAWN_STORM", &P_PAWN_STORM, OPENING_ENDGAME);
     }
     if (TUNE_PAWN) {
-        create_link("PAWN", "B_CANDIDATE",     &B_CANDIDATE,     OPENING_ENDGAME);
-        create_link("PAWN", "B_CONNECTED[0]",  &B_CONNECTED[0],  OPENING_ENDGAME);
-        create_link("PAWN", "B_CONNECTED[1]",  &B_CONNECTED[1],  OPENING_ENDGAME);
-        create_link("PAWN", "B_CONNECTED[2]",  &B_CONNECTED[2],  OPENING_ENDGAME);
-        create_link("PAWN", "B_CONNECTED[3]",  &B_CONNECTED[3],  OPENING_ENDGAME);
-        create_link("PAWN", "B_CONNECTED[4]",  &B_CONNECTED[4],  OPENING_ENDGAME);
-        create_link("PAWN", "B_CONNECTED[5]",  &B_CONNECTED[5],  OPENING_ENDGAME);
+        create_link("PAWN", "B_CANDIDATE", &B_CANDIDATE, OPENING_ENDGAME);
+        create_link("PAWN", "B_CONNECTED[0]", &B_CONNECTED[0], OPENING_ENDGAME);
+        create_link("PAWN", "B_CONNECTED[1]", &B_CONNECTED[1], OPENING_ENDGAME);
+        create_link("PAWN", "B_CONNECTED[2]", &B_CONNECTED[2], OPENING_ENDGAME);
+        create_link("PAWN", "B_CONNECTED[3]", &B_CONNECTED[3], OPENING_ENDGAME);
+        create_link("PAWN", "B_CONNECTED[4]", &B_CONNECTED[4], OPENING_ENDGAME);
+        create_link("PAWN", "B_CONNECTED[5]", &B_CONNECTED[5], OPENING_ENDGAME);
         create_link("PAWN", "B_CONNECTED_PASSER[0]", &B_CONNECTED_PASSER[0], OPENING_ENDGAME);
         create_link("PAWN", "B_CONNECTED_PASSER[1]", &B_CONNECTED_PASSER[1], OPENING_ENDGAME);
         create_link("PAWN", "B_CONNECTED_PASSER[2]", &B_CONNECTED_PASSER[2], OPENING_ENDGAME);
         create_link("PAWN", "B_CONNECTED_PASSER[3]", &B_CONNECTED_PASSER[3], OPENING_ENDGAME);
         create_link("PAWN", "B_CONNECTED_PASSER[4]", &B_CONNECTED_PASSER[4], OPENING_ENDGAME);
         create_link("PAWN", "B_CONNECTED_PASSER[5]", &B_CONNECTED_PASSER[5], OPENING_ENDGAME);
-        create_link("PAWN", "P_DOUBLED",       &P_DOUBLED,       OPENING_ENDGAME);
-        create_link("PAWN", "P_ISOLATED",      &P_ISOLATED,      OPENING_ENDGAME);
+        create_link("PAWN", "P_DOUBLED", &P_DOUBLED, OPENING_ENDGAME);
+        create_link("PAWN", "P_ISOLATED", &P_ISOLATED, OPENING_ENDGAME);
         create_link("PAWN", "P_ISOLATED_OPEN", &P_ISOLATED_OPEN, OPENING_ENDGAME);
-        create_link("PAWN", "P_WEAK",          &P_WEAK,          OPENING_ENDGAME);
-        create_link("PAWN", "B_PAWN_SPACE",    &B_PAWN_SPACE,    OPENING_ENDGAME);
+        create_link("PAWN", "P_WEAK", &P_WEAK, OPENING_ENDGAME);
+        create_link("PAWN", "B_PAWN_SPACE", &B_PAWN_SPACE, OPENING_ENDGAME);
     }
     if (TUNE_PASSED) {
-        create_link("PASSED", "B_PASSED_RANK3",     &B_PASSED_RANK3,     OPENING_ENDGAME);
-        create_link("PASSED", "B_PASSED_RANK4",     &B_PASSED_RANK4,     OPENING_ENDGAME);
-        create_link("PASSED", "B_PASSED_RANK5",     &B_PASSED_RANK5,     OPENING_ENDGAME);
-        create_link("PASSED", "B_PASSED_RANK6",     &B_PASSED_RANK6,     OPENING_ENDGAME);
-        create_link("PASSED", "B_PASSED_RANK7",     &B_PASSED_RANK7,     OPENING_ENDGAME);
-        create_link("PASSED", "B_UNBLOCKED_RANK3",  &B_UNBLOCKED_RANK3,  OPENING_ENDGAME);
-        create_link("PASSED", "B_UNBLOCKED_RANK4",  &B_UNBLOCKED_RANK4,  OPENING_ENDGAME);
-        create_link("PASSED", "B_UNBLOCKED_RANK5",  &B_UNBLOCKED_RANK5,  OPENING_ENDGAME);
-        create_link("PASSED", "B_UNBLOCKED_RANK6",  &B_UNBLOCKED_RANK6,  OPENING_ENDGAME);
-        create_link("PASSED", "B_UNBLOCKED_RANK7",  &B_UNBLOCKED_RANK7,  OPENING_ENDGAME);
-        create_link("PASSED", "P_KING_FAR_MYC",     &P_KING_FAR_MYC,     OPENING_ENDGAME);
-        create_link("PASSED", "B_KING_FAR_OPP",     &B_KING_FAR_OPP,     OPENING_ENDGAME);
+        create_link("PASSED", "B_PASSED_RANK3", &B_PASSED_RANK3, OPENING_ENDGAME);
+        create_link("PASSED", "B_PASSED_RANK4", &B_PASSED_RANK4, OPENING_ENDGAME);
+        create_link("PASSED", "B_PASSED_RANK5", &B_PASSED_RANK5, OPENING_ENDGAME);
+        create_link("PASSED", "B_PASSED_RANK6", &B_PASSED_RANK6, OPENING_ENDGAME);
+        create_link("PASSED", "B_PASSED_RANK7", &B_PASSED_RANK7, OPENING_ENDGAME);
+        create_link("PASSED", "B_UNBLOCKED_RANK3", &B_UNBLOCKED_RANK3, OPENING_ENDGAME);
+        create_link("PASSED", "B_UNBLOCKED_RANK4", &B_UNBLOCKED_RANK4, OPENING_ENDGAME);
+        create_link("PASSED", "B_UNBLOCKED_RANK5", &B_UNBLOCKED_RANK5, OPENING_ENDGAME);
+        create_link("PASSED", "B_UNBLOCKED_RANK6", &B_UNBLOCKED_RANK6, OPENING_ENDGAME);
+        create_link("PASSED", "B_UNBLOCKED_RANK7", &B_UNBLOCKED_RANK7, OPENING_ENDGAME);
+        create_link("PASSED", "P_KING_FAR_MYC", &P_KING_FAR_MYC, OPENING_ENDGAME);
+        create_link("PASSED", "B_KING_FAR_OPP", &B_KING_FAR_OPP, OPENING_ENDGAME);
     }
     if (TUNE_PIECES) {
-        create_link("PIECES", "B_ROOK_SEMI_OPEN",   &B_ROOK_SEMI_OPEN,   OPENING_ENDGAME);
-        create_link("PIECES", "B_ROOK_FULL_OPEN",   &B_ROOK_FULL_OPEN,   OPENING_ENDGAME);
-        create_link("PIECES", "P_PAWN_BISHOP_SQ",   &P_PAWN_BISHOP_SQ,   OPENING_ENDGAME);
+        create_link("PIECES", "B_ROOK_SEMI_OPEN", &B_ROOK_SEMI_OPEN, OPENING_ENDGAME);
+        create_link("PIECES", "B_ROOK_FULL_OPEN", &B_ROOK_FULL_OPEN, OPENING_ENDGAME);
+        create_link("PIECES", "P_PAWN_BISHOP_SQ", &P_PAWN_BISHOP_SQ, OPENING_ENDGAME);
     }
     if (TUNE_MOBILITY) {
-        create_link("MOBILITY", "B_QUEEN_MOBILITY",  &B_QUEEN_MOBILITY,  OPENING_ENDGAME);
-        create_link("MOBILITY", "B_ROOK_MOBILITY",   &B_ROOK_MOBILITY,   OPENING_ENDGAME);
+        create_link("MOBILITY", "B_QUEEN_MOBILITY", &B_QUEEN_MOBILITY, OPENING_ENDGAME);
+        create_link("MOBILITY", "B_ROOK_MOBILITY", &B_ROOK_MOBILITY, OPENING_ENDGAME);
         create_link("MOBILITY", "B_BISHOP_MOBILITY", &B_BISHOP_MOBILITY, OPENING_ENDGAME);
         create_link("MOBILITY", "B_KNIGHT_MOBILITY", &B_KNIGHT_MOBILITY, OPENING_ENDGAME);
     }
     if (TUNE_KING_ATTACK) {
         create_link("KING_ATTACK", "KING_ATTACK_KNIGHT", &KING_ATTACK_KNIGHT, SINGLE_VALUE);
         create_link("KING_ATTACK", "KING_ATTACK_BISHOP", &KING_ATTACK_BISHOP, SINGLE_VALUE);
-        create_link("KING_ATTACK", "KING_ATTACK_ROOK",   &KING_ATTACK_ROOK,   SINGLE_VALUE);
-        create_link("KING_ATTACK", "KING_ATTACK_QUEEN",  &KING_ATTACK_QUEEN,  SINGLE_VALUE);
-        create_link("KING_ATTACK", "KING_ATTACK_MULTI",  &KING_ATTACK_MULTI,  SINGLE_VALUE);
-        create_link("KING_ATTACK", "KING_ATTACK_EGPCT",  &KING_ATTACK_EGPCT,  SINGLE_VALUE);
-        create_link("KING_ATTACK", "B_KING_ATTACK",      &B_KING_ATTACK,      SINGLE_VALUE);
+        create_link("KING_ATTACK", "KING_ATTACK_ROOK", &KING_ATTACK_ROOK, SINGLE_VALUE);
+        create_link("KING_ATTACK", "KING_ATTACK_QUEEN", &KING_ATTACK_QUEEN, SINGLE_VALUE);
+        create_link("KING_ATTACK", "KING_ATTACK_MULTI", &KING_ATTACK_MULTI, SINGLE_VALUE);
+        create_link("KING_ATTACK", "KING_ATTACK_EGPCT", &KING_ATTACK_EGPCT, SINGLE_VALUE);
+        create_link("KING_ATTACK", "B_KING_ATTACK", &B_KING_ATTACK, SINGLE_VALUE);
     }
     if (TUNE_THREAT) {
-        create_link("THREAT", "P_PAWN_ATK_KNIGHT",     &P_PAWN_ATK_KNIGHT, OPENING_ENDGAME);
-        create_link("THREAT", "P_PAWN_ATK_BISHOP",     &P_PAWN_ATK_BISHOP, OPENING_ENDGAME);
-        create_link("THREAT", "P_PAWN_ATK_ROOK",       &P_PAWN_ATK_ROOK,   OPENING_ENDGAME);
-        create_link("THREAT", "P_PAWN_ATK_QUEEN",      &P_PAWN_ATK_QUEEN,  OPENING_ENDGAME);
-        create_link("THREAT", "B_THREAT_PAWN",         &B_THREAT_PAWN,     OPENING_ENDGAME);
-        create_link("THREAT", "B_THREAT_KNIGHT",       &B_THREAT_KNIGHT,   OPENING_ENDGAME);
-        create_link("THREAT", "B_THREAT_BISHOP",       &B_THREAT_BISHOP,   OPENING_ENDGAME);
-        create_link("THREAT", "B_THREAT_ROOK",         &B_THREAT_ROOK,     OPENING_ENDGAME);
-        create_link("THREAT", "B_THREAT_QUEEN",        &B_THREAT_QUEEN,    OPENING_ENDGAME);
-        create_link("THREAT", "B_CHECK_THREAT_KNIGHT", &B_CHECK_THREAT_QUEEN,  OPENING_ENDGAME);
+        create_link("THREAT", "P_PAWN_ATK_KNIGHT", &P_PAWN_ATK_KNIGHT, OPENING_ENDGAME);
+        create_link("THREAT", "P_PAWN_ATK_BISHOP", &P_PAWN_ATK_BISHOP, OPENING_ENDGAME);
+        create_link("THREAT", "P_PAWN_ATK_ROOK", &P_PAWN_ATK_ROOK, OPENING_ENDGAME);
+        create_link("THREAT", "P_PAWN_ATK_QUEEN", &P_PAWN_ATK_QUEEN, OPENING_ENDGAME);
+        create_link("THREAT", "B_THREAT_PAWN", &B_THREAT_PAWN, OPENING_ENDGAME);
+        create_link("THREAT", "B_THREAT_KNIGHT", &B_THREAT_KNIGHT, OPENING_ENDGAME);
+        create_link("THREAT", "B_THREAT_BISHOP", &B_THREAT_BISHOP, OPENING_ENDGAME);
+        create_link("THREAT", "B_THREAT_ROOK", &B_THREAT_ROOK, OPENING_ENDGAME);
+        create_link("THREAT", "B_THREAT_QUEEN", &B_THREAT_QUEEN, OPENING_ENDGAME);
+        create_link("THREAT", "B_CHECK_THREAT_KNIGHT", &B_CHECK_THREAT_KNIGHT, OPENING_ENDGAME);
         create_link("THREAT", "B_CHECK_THREAT_BISHOP", &B_CHECK_THREAT_BISHOP, OPENING_ENDGAME);
-        create_link("THREAT", "B_CHECK_THREAT_ROOK",   &B_CHECK_THREAT_ROOK,   OPENING_ENDGAME);
-        create_link("THREAT", "B_CHECK_THREAT_QUEEN",  &B_CHECK_THREAT_QUEEN,  OPENING_ENDGAME);
+        create_link("THREAT", "B_CHECK_THREAT_ROOK", &B_CHECK_THREAT_ROOK, OPENING_ENDGAME);
+        create_link("THREAT", "B_CHECK_THREAT_QUEEN", &B_CHECK_THREAT_QUEEN, OPENING_ENDGAME);
     }
     if (TUNE_PST_PAWN) {
         create_link("PST", "PST_P_RANK", &PST_P_RANK, OPENING_ENDGAME);
@@ -570,12 +569,15 @@ double calc_e_main(double k, int tune_param[], int thread_count, TUNE_THREAD thr
     for (int i = 0; i < thread_count; i++) {
         THREAD_WAIT(thread_list[i].thread_id);
 
+        if (thread_list[i].position_count != MAX_POS_PER_THREAD) {
+            FILE *fe = fopen("tune_errors.txt", "a");
+            fprintf(fe, "error: thread %d position_count: %d positions_per_thread: %d\n", i, thread_list[i].position_count, MAX_POS_PER_THREAD);
+            fclose(fe);
+            continue;
+        }
+
         error += thread_list[i].error;
         count += thread_list[i].position_count;
-
-        if (thread_list[i].position_count != MAX_POS_PER_THREAD) {
-            printf("error: thread %d position_count: %d positions_per_thread: %d\n", i, thread_list[i].position_count, MAX_POS_PER_THREAD);
-        }
     }
 
     return error / count;
@@ -614,7 +616,7 @@ void *calc_e_sub(void *pv_thread_data)
         case 'w': result = 1.0; break;
         case 'l': result = 0.0; break;
         case 'd': result = 0.5; break;
-        default: printf("wrong result character at line: %s\n", line); continue;
+        default: printf("wrong result character at line: %s\n", line); result = 0.5; break;
         }
 
         x = -thread_data->k * eval / 400.0;
@@ -662,11 +664,7 @@ void select_positions(char *input_pgn, char *output_pos)
     PGN_FILE    pgn_file;
     PGN_GAME    pgn_game;
     PGN_MOVE    pgn_move;
-    MOVE        move;
-    int         score = 0;
     char        fen[1024];
-    FILE        *out_file;
-    int         count = 0;
     SETTINGS    settings;
 
     GAME *game = (GAME *)malloc(sizeof(GAME));
@@ -679,7 +677,7 @@ void select_positions(char *input_pgn, char *output_pos)
         fprintf(stderr, "cannot open file: %s\n", input_pgn);
         return;
     }
-    out_file = fopen(output_pos, "w");
+    FILE *out_file = fopen(output_pos, "w");
     if (!out_file) {
         fprintf(stderr, "cannot create file: %s\n", output_pos);
         pgn_close(&pgn_file);
@@ -688,6 +686,7 @@ void select_positions(char *input_pgn, char *output_pos)
 
     printf("select_positions: [%s] -> [%s]\n", input_pgn, output_pos);
     int loss_on_time_count = 0;
+    int count = 0;
 
     while (pgn_next_game(&pgn_file, &pgn_game))  {
 
@@ -725,7 +724,7 @@ void select_positions(char *input_pgn, char *output_pos)
 
         while (pgn_next_move(&pgn_game, &pgn_move)) {
 
-            move = pgn_engine_move(game, &pgn_move);
+            MOVE move = pgn_engine_move(game, &pgn_move);
 
             if (move == MOVE_NONE) {
                 fprintf(stderr, "\nmove not valid: %s\n", pgn_move.string);
@@ -736,13 +735,8 @@ void select_positions(char *input_pgn, char *output_pos)
 
             if (pgn_game.move_number <= 4) continue;
 
-            int pc = bb_bit_count(all_pieces_bb(&game->board, WHITE)) + bb_bit_count(all_pieces_bb(&game->board, BLACK));
-            if (pc <= 6) continue;
-
             int in_check = is_incheck(&game->board, side_on_move(&game->board));
-            if (in_check) continue;
-            score = quiesce(game, in_check, -MAX_SCORE, MAX_SCORE, 0);
-
+            int score = quiesce(game, in_check, -MAX_SCORE, MAX_SCORE, 0);
             if (is_mate_score(score)) continue;
 
             util_get_board_fen(&game->board, fen);

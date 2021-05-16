@@ -84,7 +84,7 @@ void eval_param_init(void)
     KING_ATTACK_BISHOP = 5;
     KING_ATTACK_ROOK = 4;
     KING_ATTACK_QUEEN = 1;
-    KING_ATTACK_MULTI = 6;
+    KING_ATTACK_MULTI = 10;
     KING_ATTACK_EGPCT = 166;
     B_KING_ATTACK = 51;
     // THREAT

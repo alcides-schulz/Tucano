@@ -75,6 +75,18 @@ void eval_pieces_prepare(BOARD *board, EVALUATION *eval_values)
 
     eval_values->mobility_target[WHITE] = ~all_pieces_bb(board, WHITE) | qrnb_bb(board, WHITE);
     eval_values->mobility_target[BLACK] = ~all_pieces_bb(board, BLACK) | qrnb_bb(board, BLACK);
+
+    eval_values->king_attacked_squares[WHITE] = eval_values->king_attacked_squares[BLACK] = 0;
+
+    eval_values->king_attack_area[WHITE] = king_bb(board, WHITE) | king_moves_bb(king_square(board, WHITE));
+    eval_values->king_attack_area[WHITE] |= eval_values->king_attack_area[WHITE] << 8;
+    if (get_file(king_square(board, WHITE)) == FILEA) eval_values->king_attack_area[WHITE] |= eval_values->king_attack_area[WHITE] >> 1;
+    if (get_file(king_square(board, WHITE)) == FILEH) eval_values->king_attack_area[WHITE] |= eval_values->king_attack_area[WHITE] << 1;
+
+    eval_values->king_attack_area[BLACK] = king_bb(board, BLACK) | king_moves_bb(king_square(board, BLACK));
+    eval_values->king_attack_area[BLACK] |= eval_values->king_attack_area[BLACK] >> 8;
+    if (get_file(king_square(board, BLACK)) == FILEA) eval_values->king_attack_area[BLACK] |= eval_values->king_attack_area[BLACK] >> 1;
+    if (get_file(king_square(board, BLACK)) == FILEH) eval_values->king_attack_area[BLACK] |= eval_values->king_attack_area[BLACK] << 1;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -83,7 +95,11 @@ void eval_pieces_prepare(BOARD *board, EVALUATION *eval_values)
 void eval_pieces_finalize(EVALUATION *eval_values, int myc, int opp)
 {
     // calculate king attack
-    if (eval_values->flag_king_safety[opp] && eval_values->king_attack_count[myc] > 1)  {
+    if (eval_values->flag_king_safety[opp] && eval_values->king_attack_count[myc] > 0)  {
+        double attacked_square_count = (double)bb_bit_count(eval_values->king_attacked_squares[opp]);
+        double king_area_count = (double)bb_bit_count(eval_values->king_attack_area[opp]);
+        double attack_percent = attacked_square_count / king_area_count;
+        eval_values->king_attack_count[myc] = (int)(attack_percent * eval_values->king_attack_count[myc]);
         int king_attack = (int)(eval_values->king_attack_value[myc] * B_KING_ATTACK *
                                 KING_ATTACK_MULTI * eval_values->king_attack_count[myc] / 100);
         eval_values->king[opp] -= MAKE_SCORE(king_attack, king_attack * KING_ATTACK_EGPCT / 100);
@@ -127,10 +143,11 @@ void eval_knights(BOARD *board, EVALUATION *eval_values, int myc, int opp)
         }
     
         // king attack
-        U64 king_attack = knight_moves_bb(pcsq) & (king_moves_bb(king_square(board, opp)) | king_bb(board, opp));
+        U64 king_attack = knight_moves_bb(pcsq) & eval_values->king_attack_area[opp];
         if (king_attack) {
             eval_values->king_attack_value[myc] += KING_ATTACK_KNIGHT;
             eval_values->king_attack_count[myc] += bb_bit_count(king_attack);
+            eval_values->king_attacked_squares[opp] |= king_attack;
         }
 
         //  penalty when attacked by pawn
@@ -184,10 +201,11 @@ void eval_bishops(BOARD *board, EVALUATION *eval_values, int myc, int opp)
         }
     
         // king attack
-        U64 king_attack = moves & (king_moves_bb(king_square(board, opp)) | king_bb(board, opp));
+        U64 king_attack = moves & eval_values->king_attack_area[opp];
         if (king_attack) {
             eval_values->king_attack_value[myc] += KING_ATTACK_BISHOP;
             eval_values->king_attack_count[myc] += bb_bit_count(king_attack);
+            eval_values->king_attacked_squares[opp] |= king_attack;
         }
 
         // penalty when attacked by pawn
@@ -237,10 +255,11 @@ void eval_rooks(BOARD *board, EVALUATION *eval_values, int myc, int opp)
         }
 
         // king attack
-        U64 king_attack = moves & (king_moves_bb(king_square(board, opp)));
+        U64 king_attack = moves & eval_values->king_attack_area[opp];
         if (king_attack) {
             eval_values->king_attack_value[myc] += KING_ATTACK_ROOK;
             eval_values->king_attack_count[myc] += bb_bit_count(king_attack);
+            eval_values->king_attacked_squares[opp] |= king_attack;
         }
 
         // penalty when attacked by pawn
@@ -304,10 +323,11 @@ void eval_queens(BOARD *board, EVALUATION *eval_values, int myc, int opp)
         }
 
         // king attack
-        U64 king_attack = moves & king_moves_bb(king_square(board, opp));
+        U64 king_attack = moves & eval_values->king_attack_area[opp];
         if (king_attack) {
             eval_values->king_attack_value[myc] += KING_ATTACK_QUEEN;
             eval_values->king_attack_count[myc] += bb_bit_count(king_attack);
+            eval_values->king_attacked_squares[opp] |= king_attack;
         }
 
         // penalty when attacked by pawn
