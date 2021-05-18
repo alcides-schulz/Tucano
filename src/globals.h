@@ -382,6 +382,7 @@ typedef struct s_eval_values
     int     king_attack_value[COLORS];
     U64     king_attack_area[COLORS];
     U64     king_attacked_squares[COLORS];
+    int     king_defend_count[COLORS];
     int     non_mating_material[COLORS];
     U64     pawn_attacks[COLORS];
     U64     undefended[COLORS];
@@ -749,6 +750,7 @@ EXTERN int KING_ATTACK_ROOK;
 EXTERN int KING_ATTACK_QUEEN;
 EXTERN int KING_ATTACK_MULTI;
 EXTERN int KING_ATTACK_EGPCT;
+EXTERN int KING_DEFENDER;
 EXTERN int B_KING_ATTACK;
 
 // Threats

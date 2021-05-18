@@ -18,7 +18,7 @@
 #include "globals.h"
 
 //-------------------------------------------------------------------------------------------------
-//  Queen, rook, bishop and knight evaluation
+//  Queen, rook, bishop, knight and king attack evaluation
 //-------------------------------------------------------------------------------------------------
 
 int EVAL_ZERO = MAKE_SCORE(0, 0);
@@ -87,6 +87,8 @@ void eval_pieces_prepare(BOARD *board, EVALUATION *eval_values)
     eval_values->king_attack_area[BLACK] |= eval_values->king_attack_area[BLACK] >> 8;
     if (get_file(king_square(board, BLACK)) == FILEA) eval_values->king_attack_area[BLACK] |= eval_values->king_attack_area[BLACK] >> 1;
     if (get_file(king_square(board, BLACK)) == FILEH) eval_values->king_attack_area[BLACK] |= eval_values->king_attack_area[BLACK] << 1;
+
+    eval_values->king_defend_count[WHITE] = eval_values->king_defend_count[BLACK] = 0;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -102,6 +104,7 @@ void eval_pieces_finalize(EVALUATION *eval_values, int myc, int opp)
         eval_values->king_attack_count[myc] = (int)(attack_percent * eval_values->king_attack_count[myc]);
         int king_attack = (int)(eval_values->king_attack_value[myc] * B_KING_ATTACK *
                                 KING_ATTACK_MULTI * eval_values->king_attack_count[myc] / 100);
+        king_attack -= eval_values->king_defend_count[opp] * KING_DEFENDER;
         eval_values->king[opp] -= MAKE_SCORE(king_attack, king_attack * KING_ATTACK_EGPCT / 100);
     }
 }
@@ -148,6 +151,11 @@ void eval_knights(BOARD *board, EVALUATION *eval_values, int myc, int opp)
             eval_values->king_attack_value[myc] += KING_ATTACK_KNIGHT;
             eval_values->king_attack_count[myc] += bb_bit_count(king_attack);
             eval_values->king_attacked_squares[opp] |= king_attack;
+        }
+
+        // defending own king
+        if (square_bb(pcsq) & eval_values->king_attack_area[myc]) {
+            eval_values->king_defend_count[myc]++;
         }
 
         //  penalty when attacked by pawn
@@ -206,6 +214,11 @@ void eval_bishops(BOARD *board, EVALUATION *eval_values, int myc, int opp)
             eval_values->king_attack_value[myc] += KING_ATTACK_BISHOP;
             eval_values->king_attack_count[myc] += bb_bit_count(king_attack);
             eval_values->king_attacked_squares[opp] |= king_attack;
+        }
+
+        // defending own king
+        if (square_bb(pcsq) & eval_values->king_attack_area[myc]) {
+            eval_values->king_defend_count[myc]++;
         }
 
         // penalty when attacked by pawn

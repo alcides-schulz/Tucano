@@ -86,6 +86,7 @@ void eval_param_init(void)
     KING_ATTACK_QUEEN = 1;
     KING_ATTACK_MULTI = 10;
     KING_ATTACK_EGPCT = 166;
+    KING_DEFENDER = 10;
     B_KING_ATTACK = 51;
     // THREAT
     P_PAWN_ATK_KNIGHT = MAKE_SCORE(123, 66);
