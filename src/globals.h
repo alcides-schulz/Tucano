@@ -750,7 +750,7 @@ EXTERN int KING_ATTACK_ROOK;
 EXTERN int KING_ATTACK_QUEEN;
 EXTERN int KING_ATTACK_MULTI;
 EXTERN int KING_ATTACK_EGPCT;
-EXTERN int KING_DEFENDER;
+EXTERN int B_KING_DEFENDER;
 EXTERN int B_KING_ATTACK;
 
 // Threats
@@ -780,14 +780,15 @@ EXTERN int PST_B_FILE[4];
 EXTERN int PST_R_RANK[8];
 EXTERN int PST_R_FILE[4];
 EXTERN int PST_Q_RANK[8];
-EXTERN int PST_Q_FILE[8];
+EXTERN int PST_Q_FILE[4];
 EXTERN int PST_K_RANK[8];
-EXTERN int PST_K_FILE[8];
+EXTERN int PST_K_FILE[4];
 
 // PGN utils
 #define PGN_STRING_SIZE 16384
 #define PGN_TAG_SIZE    128
 #define PGN_MOVE_SIZE   32
+#define PGN_FEN_SIZE    512
 
 typedef struct s_pgn {
     char    *name;
@@ -801,6 +802,7 @@ typedef struct s_pgn_game {
     char    white[PGN_TAG_SIZE];
     char    black[PGN_TAG_SIZE];
     char    result[PGN_TAG_SIZE];
+    char    initial_fen[PGN_FEN_SIZE];
     int     moves_index;
     int     move_number;
     int     loses_on_time;

@@ -47,10 +47,11 @@ int pgn_next_game(PGN_FILE *pgn, PGN_GAME *game)
     int     game_index = 0;
     int     is_comment = FALSE;
     int     is_tag = FALSE;
-    char    tag[100];
+    char    tag[512];
     int     tag_index = 0;
 
     memset(game, 0, sizeof(PGN_GAME));
+    strcpy(game->initial_fen, FEN_NEW_GAME);
 
     while ((byte = fgetc(pgn->file)) != EOF) {
         if (game_index + 1 >= PGN_STRING_SIZE) break;
@@ -69,15 +70,32 @@ int pgn_next_game(PGN_FILE *pgn, PGN_GAME *game)
             continue;
         }
         if (is_tag) {
+            /*
+                [Event "?"]
+                [Site "?"]
+                [Date "2021.05.04"]
+                [Round "1"]
+                [White "tucano912"]
+                [Black "tucano911"]
+                [Result "0-1"]
+                [FEN "r1bqkb1r/1ppp1ppp/p1n2n2/4p3/B3P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 0 1"]
+                [PlyCount "136"]
+                [SetUp "1"]
+                [TimeControl "12+0.12"]
+            */
             if (byte == ']') {
                 is_tag = 0;
                 tag[tag_index] = 0;
                 if (!strncmp("White ", tag, 6))  strcpy(game->white, tag);
                 if (!strncmp("Black ", tag, 6))  strcpy(game->black, tag);
                 if (!strncmp("Result ", tag, 6)) strcpy(game->result, tag);
+                if (!strncmp("FEN", tag, 3)) {
+                    strcpy(game->initial_fen, &tag[5]); 
+                    game->initial_fen[strlen(game->initial_fen)] = '\0';
+                }
                 continue;
             }
-            if (tag_index + 1 < 100)
+            if (tag_index + 1 < 512)
                 tag[tag_index++] = (char)byte;
             continue;
         }
@@ -145,6 +163,11 @@ void pgn_process_move_comments(PGN_GAME *game, PGN_MOVE *pgn_move)
         3. Bb2 {+0.73/13 0.47s} Nf6 {-0.72/12 0.30s}
         80. Kh4 {-M10/20 0.034s} Kf4 {+M9/21 0.028s}
     */
+    while (pgn_number_or_space(game->moves[game->moves_index])) {
+        game->moves_index++;
+    }
+    if (game->moves[game->moves_index] != '{') return;
+
     if (strchr(&game->moves[game->moves_index], '}') == NULL) return;
     char comments[100];
     int i = 0;
@@ -280,6 +303,92 @@ void pgn_move_desc(MOVE move, char *string, int inc_file, int inc_rank)
         else
             sprintf(string, "%s%s%c%c", moving_piece, (unpack_type(move) == MT_CAPPC ? "x" : ""), file_letter(unpack_to(move)), rank_number(unpack_to(move)));
     }
+}
+
+void extract_games(char *input_pgn)
+{
+    PGN_FILE    pgn_file;
+    PGN_GAME    pgn_game;
+    PGN_MOVE    pgn_move;
+
+    GAME *game = (GAME *)malloc(sizeof(GAME));
+    if (game == NULL) {
+        fprintf(stderr, "select_positions.malloc: not enough memory for %d bytes.\n", (int)sizeof(GAME));
+        return;
+    }
+
+    if (!pgn_open(&pgn_file, input_pgn)) {
+        fprintf(stderr, "cannot open file: %s\n", input_pgn);
+        return;
+    }
+
+    int game_count = 0;
+
+    while (pgn_next_game(&pgn_file, &pgn_game)) {
+
+        game_count++;
+
+        if (strstr(pgn_game.string, "loses on time") != NULL) {
+            continue;
+        }
+
+        if (pgn_file.game_number % 100 == 0) {
+            printf("game %3d: %s vs %s: %s                  \r", pgn_file.game_number, pgn_game.white, pgn_game.black, pgn_game.result);
+        }
+
+        if (strstr(pgn_game.result, "1-0") == NULL) continue;
+        //if (strstr(pgn_game.white, "913") == NULL) continue;
+
+        new_game(game, pgn_game.initial_fen);
+
+        int valid_game = TRUE;
+        int max_difference = 0;
+        //int king_rank = 0;
+        int move_count = 0;
+
+        while (pgn_next_move(&pgn_game, &pgn_move)) {
+
+            MOVE move = pgn_engine_move(game, &pgn_move);
+
+            if (move == MOVE_NONE) {
+                valid_game = FALSE;
+                printf("%s\n", pgn_game.string);
+                printf("PGN_MOVE: [%s]\n", pgn_move.string);
+                board_print(&game->board, "err");
+                break;
+            }
+
+            make_move(&game->board, move);
+            move_count++;
+
+            int diff = material_value(&game->board, BLACK) - material_value(&game->board, WHITE);
+            if (diff > VALUE_PAWN * 3) max_difference += diff / 2;
+
+            //if (move_count <= 40) king_rank += get_relative_rank(WHITE, get_rank(king_square(&game->board, WHITE)));
+        }
+        if (!valid_game) continue;
+        
+        if (max_difference <= 0) continue;
+        //int average_king_rank = king_rank / 40;
+        //if (average_king_rank <= 0) continue;
+
+        char output_name[1024];
+        sprintf(output_name, "d:/temp/games/%05d.%05d.pgn", max_difference, game_count);
+        FILE *out_file = fopen(output_name, "w");
+        if (!out_file) {
+            fprintf(stderr, "cannot create file: %s\n", output_name);
+            pgn_close(&pgn_file);
+            return;
+        }
+        fprintf(out_file, "%s", pgn_game.string);
+        fclose(out_file);
+    }
+
+    pgn_close(&pgn_file);
+
+    free(game);
+
+    printf("\ndone.\n");
 }
 
 //END

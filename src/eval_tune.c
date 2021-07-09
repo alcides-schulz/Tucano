@@ -50,8 +50,8 @@ int TUNE_PST_KING    = TRUE;
 
 enum    {SINGLE_VALUE, OPENING_ENDGAME} LINK_TYPE;
 
-#define MAX_POSITIONS       10000000
-#define MAX_TUNE_THREADS    10
+#define MAX_POSITIONS       9000000
+#define MAX_TUNE_THREADS    9
 #define MAX_POS_PER_THREAD  (MAX_POSITIONS / MAX_TUNE_THREADS)
 #define MAX_LINE_SIZE       100
 
@@ -102,7 +102,7 @@ void eval_tune(void)
     char    *TUNE_GAMES_FILE = "a.pgn";
     char    *TUNE_POSITIONS_FILE = "tune-positions.txt";
     char    *TUNE_RESULTS_FILE = "tune-results.txt";
-    double  k = 0.4;
+    double  k = 2.3;
     char    option[1024];
 
     EVAL_TUNING = TRUE;
@@ -247,9 +247,6 @@ void local_tune(char *results_filename, double k, int param_size, int original[]
             }
             else {
                 new_param[i] -= (TUNE_INC * 2);
-                if (new_param[i] < 1 && !strncmp(param_name[i], "KING_ATTACK", 11)) {
-                    new_param[i] = 1;
-                }
                 new_e = calc_e_main(k, new_param, MAX_TUNE_THREADS, tune_thread);
                 if (new_e < best_e) {
                     best_e = new_e;
@@ -432,6 +429,7 @@ void init_param_list(void)
         create_link("KING_ATTACK", "KING_ATTACK_MULTI", &KING_ATTACK_MULTI, SINGLE_VALUE);
         create_link("KING_ATTACK", "KING_ATTACK_EGPCT", &KING_ATTACK_EGPCT, SINGLE_VALUE);
         create_link("KING_ATTACK", "B_KING_ATTACK", &B_KING_ATTACK, SINGLE_VALUE);
+        create_link("KING_ATTACK", "B_KING_DEFENDER", &B_KING_DEFENDER, SINGLE_VALUE);
     }
     if (TUNE_THREAT) {
         create_link("THREAT", "P_PAWN_ATK_KNIGHT", &P_PAWN_ATK_KNIGHT, OPENING_ENDGAME);
@@ -510,10 +508,6 @@ void init_param_list(void)
         create_link("PST", "PST_Q_FILE[1]", &PST_Q_FILE[1], OPENING_ENDGAME);
         create_link("PST", "PST_Q_FILE[2]", &PST_Q_FILE[2], OPENING_ENDGAME);
         create_link("PST", "PST_Q_FILE[3]", &PST_Q_FILE[3], OPENING_ENDGAME);
-        create_link("PST", "PST_Q_FILE[4]", &PST_Q_FILE[4], OPENING_ENDGAME);
-        create_link("PST", "PST_Q_FILE[5]", &PST_Q_FILE[5], OPENING_ENDGAME);
-        create_link("PST", "PST_Q_FILE[6]", &PST_Q_FILE[6], OPENING_ENDGAME);
-        create_link("PST", "PST_Q_FILE[7]", &PST_Q_FILE[7], OPENING_ENDGAME);
     }
     if (TUNE_PST_KING) {
         create_link("PST", "PST_K_RANK[0]", &PST_K_RANK[0], OPENING_ENDGAME);
@@ -528,10 +522,6 @@ void init_param_list(void)
         create_link("PST", "PST_K_FILE[1]", &PST_K_FILE[1], OPENING_ENDGAME);
         create_link("PST", "PST_K_FILE[2]", &PST_K_FILE[2], OPENING_ENDGAME);
         create_link("PST", "PST_K_FILE[3]", &PST_K_FILE[3], OPENING_ENDGAME);
-        create_link("PST", "PST_K_FILE[4]", &PST_K_FILE[4], OPENING_ENDGAME);
-        create_link("PST", "PST_K_FILE[5]", &PST_K_FILE[5], OPENING_ENDGAME);
-        create_link("PST", "PST_K_FILE[6]", &PST_K_FILE[6], OPENING_ENDGAME);
-        create_link("PST", "PST_K_FILE[7]", &PST_K_FILE[7], OPENING_ENDGAME);
     }
 }
 
@@ -563,27 +553,64 @@ double calc_e_main(double k, int tune_param[], int thread_count, TUNE_THREAD thr
         THREAD_CREATE(thread_list[i].thread_id, calc_e_sub, &thread_list[i]);
     }
 
-    double  error = 0;
-    double  count = 0;
-
     for (int i = 0; i < thread_count; i++) {
         THREAD_WAIT(thread_list[i].thread_id);
+    }
 
+    double error = 0;
+
+    for (int i = 0; i < thread_count; i++) {
         if (thread_list[i].position_count != MAX_POS_PER_THREAD) {
             FILE *fe = fopen("tune_errors.txt", "a");
             fprintf(fe, "error: thread %d position_count: %d positions_per_thread: %d\n", i, thread_list[i].position_count, MAX_POS_PER_THREAD);
             fclose(fe);
             continue;
         }
-
         error += thread_list[i].error;
-        count += thread_list[i].position_count;
     }
 
-    return error / count;
+    return error / (double)MAX_POSITIONS;
 }
 
 void *calc_e_sub(void *pv_thread_data)
+{
+    TUNE_THREAD *thread_data = (TUNE_THREAD *)pv_thread_data;
+
+    double  result;
+    double  x;
+
+    for (int i = 0; i < MAX_POS_PER_THREAD; i++) {
+        char *line = thread_data->position[i];
+
+        char *pres = strchr(line, '[');
+        if (!pres) continue;
+
+        result = 0.5;
+        if (!strncmp(pres, "[1.0]", 5)) result = 1.0;
+        if (!strncmp(pres, "[0.5]", 5)) result = 0.5;
+        if (!strncmp(pres, "[0.0]", 5)) result = 0.0;
+
+        //printf("%s %f ", line, result);
+
+        thread_data->position_count++;
+
+        new_game(&thread_data->game, line);
+        double eval = (double)evaluate(&thread_data->game, -MAX_SCORE, MAX_SCORE) / 2;
+        if (side_on_move(&thread_data->game.board) == BLACK) eval = -eval;
+
+        //printf("%f\n", eval);
+
+        x = -(thread_data->k * eval / 400.0);
+        x = 1.0 / (1.0 + exp(x));
+        x = pow(result - x, 2);
+
+        thread_data->error += x;
+    }
+
+    return NULL;
+}
+
+void *calc_e_sub_old(void *pv_thread_data)
 {
     TUNE_THREAD *thread_data = (TUNE_THREAD *)pv_thread_data;
 
@@ -610,7 +637,6 @@ void *calc_e_sub(void *pv_thread_data)
         
         int in_check = is_incheck(&thread_data->game.board, side_on_move(&thread_data->game.board));
         double eval = (double)quiesce(&thread_data->game, in_check, -MAX_SCORE, MAX_SCORE, 0);
-        if (side_on_move(&thread_data->game.board) == BLACK) eval = -eval;
      
         switch (line[0]) {
         case 'w': result = 1.0; break;
@@ -619,7 +645,7 @@ void *calc_e_sub(void *pv_thread_data)
         default: printf("wrong result character at line: %s\n", line); result = 0.5; break;
         }
 
-        x = -thread_data->k * eval / 400.0;
+        x = -(thread_data->k * eval / 400.0);
         x = 1.0 / (1.0 + pow(10, x));
         x = pow(result - x, 2);
 
@@ -643,7 +669,7 @@ double calc_min_k(void)
     double e;
     double s = 9999;
 
-    for (i = -2; i <= 2; i += 0.1)  {
+    for (i = 1; i <= 3; i += 0.1)  {
         unsigned start = util_get_time();
         e = calc_e_main(i, tune_param_value, MAX_TUNE_THREADS, tune_thread);
         if (e < s) {
@@ -699,13 +725,13 @@ void select_positions(char *input_pgn, char *output_pos)
             printf("game %3d: %s vs %s: %s                  \r", pgn_file.game_number, pgn_game.white, pgn_game.black, pgn_game.result);
         }
         
-        new_game(game, FEN_NEW_GAME);
+        new_game(game, pgn_game.initial_fen);
 
         settings.single_move_time = MAX_TIME;
         settings.total_move_time = MAX_TIME;
         settings.moves_per_level = 0;
         settings.max_depth = MAX_DEPTH;
-        settings.post_flag = POST_XBOARD;
+        settings.post_flag = POST_NONE;
         settings.use_book = FALSE;
 
         prepare_search(game, &settings);
@@ -733,11 +759,13 @@ void select_positions(char *input_pgn, char *output_pos)
 
             make_move(&game->board, move);
 
-            if (pgn_game.move_number <= 4) continue;
+            if (pgn_game.move_number <= 8) continue;
+            if (side_on_move(&game->board) != WHITE) continue;
 
             int in_check = is_incheck(&game->board, side_on_move(&game->board));
             int score = quiesce(game, in_check, -MAX_SCORE, MAX_SCORE, 0);
             if (is_mate_score(score)) continue;
+            if (score > VALUE_BISHOP) continue;
 
             util_get_board_fen(&game->board, fen);
 

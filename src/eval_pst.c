@@ -90,7 +90,8 @@ int eval_pst_queen(int color, int pcsq)
 
     int relative_rank = get_relative_rank(color, get_rank(pcsq));
     int file = get_file(pcsq);
-    return PST_Q_RANK[relative_rank] + PST_Q_FILE[file];
+    int file_center = (file < 4 ? file : 7 - file);
+    return PST_Q_RANK[relative_rank] + PST_Q_FILE[file_center];
 }
 
 //------------------------------------------------------------------------------------
@@ -103,7 +104,8 @@ int eval_pst_king(int color, int pcsq)
 
     int relative_rank = get_relative_rank(color, get_rank(pcsq));
     int file = get_file(pcsq);
-    return PST_K_RANK[relative_rank] + PST_K_FILE[file];
+    int file_center = (file < 4 ? file : 7 - file);
+    return PST_K_RANK[relative_rank] + PST_K_FILE[file_center];
 }
 
 //------------------------------------------------------------------------------------

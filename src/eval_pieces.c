@@ -104,7 +104,7 @@ void eval_pieces_finalize(EVALUATION *eval_values, int myc, int opp)
         eval_values->king_attack_count[myc] = (int)(attack_percent * eval_values->king_attack_count[myc]);
         int king_attack = (int)(eval_values->king_attack_value[myc] * B_KING_ATTACK *
                                 KING_ATTACK_MULTI * eval_values->king_attack_count[myc] / 100);
-        king_attack -= eval_values->king_defend_count[opp] * KING_DEFENDER;
+        king_attack -= eval_values->king_defend_count[opp] * B_KING_DEFENDER;
         eval_values->king[opp] -= MAKE_SCORE(king_attack, king_attack * KING_ATTACK_EGPCT / 100);
     }
 }
