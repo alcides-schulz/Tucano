@@ -168,7 +168,6 @@ void eval_param_init(void)
     PST_K_FILE[1] = MAKE_SCORE(62, 47);
     PST_K_FILE[2] = MAKE_SCORE(-27, 82);
     PST_K_FILE[3] = MAKE_SCORE(-27, 80);
-
 }
 
 // END

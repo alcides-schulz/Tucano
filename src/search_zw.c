@@ -146,7 +146,7 @@ int search_zw(GAME *game, UINT incheck, int beta, int depth)
     }
 
     //  Prob-Cut: after a capture a low depth with reduced beta indicates it is safe to ignore this node
-    if (depth >= 5 && !incheck && !is_mate_score(beta) && move_is_capture(get_last_move_made(&game->board))) {
+    if (depth >= 5 && !incheck && !is_mate_score(beta)) {
         int beta_cut = beta + 100;
         MOVE_LIST mlpc;
         select_init(&mlpc, game, incheck, trans_move, TRUE);
