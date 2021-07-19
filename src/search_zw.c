@@ -204,8 +204,7 @@ int search_zw(GAME *game, UINT incheck, int beta, int depth)
                     // Late move reductions: reduce depth for later moves
                     if (move_count > 3 && depth > 2) {
                         reductions = reduction_table[MIN(depth, MAX_DEPTH - 1)][MIN(move_count, MAX_MOVE - 1)];
-                        if (move_has_bad_history) reductions++;
-                        if (!improving) reductions++;
+                        if (move_has_bad_history || !improving) reductions++;
                     }
                 }
             }

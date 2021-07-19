@@ -20,7 +20,7 @@
 
 #define ENGINE "Tucano"
 #define AUTHOR "Alcides Schulz"
-#define VERSION "9.15"
+#define VERSION "9.16"
 
 void        develop_workbench(void);
 double      bench(int depth, int print);
@@ -610,8 +610,11 @@ int valid_hash_size(int hash_size) {
 //  Used for development tests.
 //-------------------------------------------------------------------------------------------------
 
+void extract_games(char *input_pgn);
+
 void develop_workbench(void)
 {
+    extract_games("a.pgn");
 }
 
 //END

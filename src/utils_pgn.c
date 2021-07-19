@@ -337,13 +337,11 @@ void extract_games(char *input_pgn)
         }
 
         if (strstr(pgn_game.result, "1-0") == NULL) continue;
-        //if (strstr(pgn_game.white, "913") == NULL) continue;
 
         new_game(game, pgn_game.initial_fen);
 
         int valid_game = TRUE;
         int max_difference = 0;
-        //int king_rank = 0;
         int move_count = 0;
 
         while (pgn_next_move(&pgn_game, &pgn_move)) {
@@ -362,15 +360,11 @@ void extract_games(char *input_pgn)
             move_count++;
 
             int diff = material_value(&game->board, BLACK) - material_value(&game->board, WHITE);
-            if (diff > VALUE_PAWN * 3) max_difference += diff / 2;
-
-            //if (move_count <= 40) king_rank += get_relative_rank(WHITE, get_rank(king_square(&game->board, WHITE)));
+            if (diff > 0) max_difference += diff / 2;
         }
         if (!valid_game) continue;
         
         if (max_difference <= 0) continue;
-        //int average_king_rank = king_rank / 40;
-        //if (average_king_rank <= 0) continue;
 
         char output_name[1024];
         sprintf(output_name, "d:/temp/games/%05d.%05d.pgn", max_difference, game_count);
