@@ -97,6 +97,7 @@ int search_pv(GAME *game, UINT incheck, int alpha, int beta, int depth)
             if (tt_record.info.depth >= depth - 3 && !is_mate_score(score)) {
                 int reduced_beta = score - 4 * depth;
                 score = search_singular(game, incheck, reduced_beta, depth / 2, move);
+                if (game->search.abort) return 0;
                 if (score < reduced_beta) {
                     extensions = 1;
                 }

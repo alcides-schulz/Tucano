@@ -102,12 +102,8 @@ int search_singular(GAME *game, UINT incheck, int beta, int depth, MOVE exclude_
 
                     // Late move reductions: reduce depth for later moves
                     if (move_count > 3 && depth > 2) {
-                        reductions = 1;
-                        int move_has_bad_history = get_has_bad_history(&game->move_order, turn, move);
-                        if (!incheck && depth > 5 && move_has_bad_history) {
-                            reductions += depth / 6 + move_count / 6;
-                        }
-                        reductions = MIN(reductions, 5);
+                        reductions = reduction_table[MIN(depth, MAX_DEPTH - 1)][MIN(move_count, MAX_MOVE - 1)];
+                        if (reductions > 0 && !get_has_bad_history(&game->move_order, turn, move)) reductions--;
                     }
                 }
             }
