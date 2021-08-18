@@ -407,19 +407,14 @@ void util_get_board_fen(BOARD *board, char *fen)
     else
         fen[idx++] = 'b';
     fen[idx++] = ' ';
-    if (can_castle_ks_flag(board, WHITE) || can_castle_qs_flag(board, WHITE) || can_castle_ks_flag(board, BLACK) || can_castle_qs_flag(board, BLACK)) {
-        if (can_castle_ks_flag(board, WHITE))
-            fen[idx++] = 'K';
-        if (can_castle_qs_flag(board, WHITE))
-            fen[idx++] = 'Q';
-        if (can_castle_ks_flag(board, BLACK))
-            fen[idx++] = 'k';
-        if (can_castle_qs_flag(board, BLACK))
-            fen[idx++] = 'q';
-    }
-    else {
-        fen[idx++] = '-';
-    }
+    
+    int can_castle = FALSE;
+    if (can_generate_castle_ks(board, WHITE)) { fen[idx++] = 'K'; can_castle = TRUE; }
+    if (can_generate_castle_qs(board, WHITE)) { fen[idx++] = 'Q'; can_castle = TRUE; }
+    if (can_generate_castle_ks(board, BLACK)) { fen[idx++] = 'k'; can_castle = TRUE; }
+    if (can_generate_castle_qs(board, BLACK)) { fen[idx++] = 'q'; can_castle = TRUE; }
+    if (!can_castle) fen[idx++] = '-';
+
     fen[idx++] = ' ';
     if (ep_square_bb(board)) {
         fen[idx++] = '-';

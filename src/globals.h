@@ -821,6 +821,7 @@ int     pgn_next_game(PGN_FILE *pgn, PGN_GAME *game);
 int     pgn_next_move(PGN_GAME *game, PGN_MOVE *move);
 void    pgn_move_desc(MOVE move, char *string, int inc_file, int inc_rank);
 MOVE    pgn_engine_move(GAME *game, PGN_MOVE *pgn_move);
+int     pgn_game_has_valid_result(PGN_GAME *pgn_game);
 
 // Perf
 void    perft(int depth);

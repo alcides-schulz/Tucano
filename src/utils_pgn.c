@@ -21,6 +21,8 @@
 //    PGN file parser utility - read cutechess pgn saved files
 //-------------------------------------------------------------------------------------------------
 
+char *VALID_RESULT[] = { "White mates", "Black mates", "Draw by" };
+
 int pgn_open(PGN_FILE *game, char *filename) {
     game->file = fopen(filename, "r");
     if (!game->file) return FALSE;
@@ -383,6 +385,14 @@ void extract_games(char *input_pgn)
     free(game);
 
     printf("\ndone.\n");
+}
+
+int pgn_game_has_valid_result(PGN_GAME *pgn_game)
+{
+    for (size_t i = 0; i < sizeof(VALID_RESULT) / sizeof(VALID_RESULT[0]); i++) {
+        if (strstr(pgn_game->string, VALID_RESULT[i]) != NULL) return TRUE;
+    }
+    return FALSE;
 }
 
 //END

@@ -20,7 +20,7 @@
 
 #define ENGINE "Tucano"
 #define AUTHOR "Alcides Schulz"
-#define VERSION "9.17"
+#define VERSION "9.18"
 
 void        develop_workbench(void);
 double      bench(int depth, int print);
@@ -610,8 +610,15 @@ int valid_hash_size(int hash_size) {
 //  Used for development tests.
 //-------------------------------------------------------------------------------------------------
 
+void generate_nn_data(int total_games, int depth, char *output_filename);
+
 void develop_workbench(void)
 {
+    //printf("%d\n", rand());
+
+    char file_name[1000];
+    sprintf(file_name, "data/nndd_%u.plain", util_get_time());
+    generate_nn_data(100 * 1000000, 6, file_name);
 }
 
 //END
