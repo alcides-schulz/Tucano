@@ -370,62 +370,62 @@ void print_moves(BOARD *board, MOVE_LIST *ml)
 }
 
 //-------------------------------------------------------------------------------------------------
-//  Create the fen represtation of current position
+//  Create the fen representation of current position
 //-------------------------------------------------------------------------------------------------
 void util_get_board_fen(BOARD *board, char *fen)
 {
-    int     i;
-    int     f;
-    int     r;
-    char    b[64];
-    int     idx;
-
-    util_get_board_chars(board, b);
-
-    f = idx = 0;
-    for (i = 0, r = 0; i < 64; i++, r++) {
-        if (b[i] == ' ')
-            f++;
-        else {
-            if (f)
-                fen[idx++] = '0' + (char)f;
-            fen[idx++] = b[i];
-            f = 0;
+    char empty = '0';
+    U64 all_pieces = all_pieces_bb(board, WHITE) | all_pieces_bb(board, BLACK);
+    for (int square = 0; square < 64; square++) {
+        if (square > 0 && square % 8 == 0) {
+            if (empty != '0') {
+                *fen++ = empty;
+                empty = '0';
+            }
+            *fen++ = '/';
         }
-        if (r == 7) {
-            if (f)
-                fen[idx++] = '0' + (char)f;
-            f = 0;
-            if (i != 63)
-                fen[idx++] = '/';
-            r = -1;
+        if (!bb_is_one(all_pieces, square)) {
+            empty++;
+            continue;
         }
+        if (empty != '0') {
+            *fen++ = empty;
+            empty = '0';
+        }
+        int piece = piece_on_square(board, WHITE, square);
+        if (piece != NO_PIECE) {
+            *fen++ = piece_letter(piece);
+            continue;
+        }
+        *fen++ = (char)tolower(piece_letter(piece_on_square(board, BLACK, square)));
     }
-    fen[idx++] = ' ';
-    if (side_on_move(board) == WHITE)
-        fen[idx++] = 'w';
-    else
-        fen[idx++] = 'b';
-    fen[idx++] = ' ';
-    
-    int can_castle = FALSE;
-    if (can_generate_castle_ks(board, WHITE)) { fen[idx++] = 'K'; can_castle = TRUE; }
-    if (can_generate_castle_qs(board, WHITE)) { fen[idx++] = 'Q'; can_castle = TRUE; }
-    if (can_generate_castle_ks(board, BLACK)) { fen[idx++] = 'k'; can_castle = TRUE; }
-    if (can_generate_castle_qs(board, BLACK)) { fen[idx++] = 'q'; can_castle = TRUE; }
-    if (!can_castle) fen[idx++] = '-';
+    if (empty != '0') *fen++ = empty;
 
-    fen[idx++] = ' ';
+    *fen++ = ' ';
+    if (side_on_move(board) == WHITE)
+        *fen++ = 'w';
+    else
+        *fen++ = 'b';
+    *fen++ = ' ';
+
+    int can_castle = FALSE;
+    if (can_generate_castle_ks(board, WHITE)) { *fen++ = 'K'; can_castle = TRUE; }
+    if (can_generate_castle_qs(board, WHITE)) { *fen++ = 'Q'; can_castle = TRUE; }
+    if (can_generate_castle_ks(board, BLACK)) { *fen++ = 'k'; can_castle = TRUE; }
+    if (can_generate_castle_qs(board, BLACK)) { *fen++ = 'q'; can_castle = TRUE; }
+    if (!can_castle) *fen++ = '-';
+
+    *fen++ = ' ';
     if (ep_square_bb(board)) {
-        fen[idx++] = '-';
-        fen[idx++] = file_letter(ep_square(board));
-        fen[idx++] = rank_number(ep_square(board));
+        *fen++ = '-';
+        *fen++ = file_letter(ep_square(board));
+        *fen++ = rank_number(ep_square(board));
     }
     else {
-        fen[idx++] = '-';
+        *fen++ = '-';
     }
 
-    fen[idx] = 0;
+    *fen = '\0';
 }
 
 //-------------------------------------------------------------------------------------------------

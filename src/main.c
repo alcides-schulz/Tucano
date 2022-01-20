@@ -18,9 +18,13 @@
 #define EXTERN
 #include "globals.h"
 
+#ifdef TUCANNUE
+#include "nnue/nnue.h"
+#endif
+
 #define ENGINE "Tucano"
 #define AUTHOR "Alcides Schulz"
-#define VERSION "9.18"
+#define VERSION "10.00"
 
 void        develop_workbench(void);
 double      bench(int depth, int print);
@@ -55,6 +59,7 @@ int main(int argc, char *argv[])
     EVAL_TUNING = FALSE;
     USE_EVAL_TABLE = TRUE;
     USE_PAWN_TABLE = TRUE;
+    USE_NN_EVAL = FALSE;
 
     // Command line options
     for (int i = 0; i < argc; i++) {
@@ -72,8 +77,33 @@ int main(int argc, char *argv[])
             if (++i < argc) strcpy(syzygy_path, argv[i]);
         }
 #endif
+#ifdef TUCANNUE
+        if (!strcmp("-eval_file", argv[i])) {
+            if (++i < argc) USE_NN_EVAL = nnue_init(argv[i]);
+        }
+#endif
     }
 
+#ifdef TUCANNUE
+    // Try to load the eval file if located in the same folder as tucano
+    if (!USE_NN_EVAL) {
+        char nnue_file[1000];
+        if (strlen(argv[0]) < 1000) {
+            strcpy(nnue_file, argv[0]);
+            char *last_slash = strrchr(nnue_file, '\\'); // windows
+            if (last_slash == NULL) {
+                last_slash = strrchr(nnue_file, '/'); // linux
+            }
+            if (last_slash != NULL) {
+                strcpy(last_slash + 1, TUCANO_EVAL_FILE);
+            }
+            else {
+                strcpy(nnue_file, TUCANO_EVAL_FILE);
+            }
+            USE_NN_EVAL = nnue_init(nnue_file);
+        }
+    }
+#endif
     printf("   hash table: %d MB, threads: %d\n", hash_size, threads);
 
     // Initializations
@@ -90,7 +120,6 @@ int main(int argc, char *argv[])
         if (tb_init(syzygy_path)) {
             printf("# using egtb syzygy path=%s TB_LARGEST=%d\n", syzygy_path, TB_LARGEST);
         }
-
     }
 #endif
     settings_init();
@@ -338,6 +367,14 @@ int main(int argc, char *argv[])
             develop_workbench();
             continue;
         }
+#ifdef TUCANNUE
+        if (!strcmp(command, "nnue")) {
+            char nnue_file[1000];
+            sscanf(line, "nnue %s\n", nnue_file);
+            USE_NN_EVAL = nnue_init(nnue_file);
+            continue;
+        }
+#endif
         if (!strcmp(command, "auto")) {
             // auto play mode, used for testings.
             int auto_play_count = 1;
@@ -610,15 +647,9 @@ int valid_hash_size(int hash_size) {
 //  Used for development tests.
 //-------------------------------------------------------------------------------------------------
 
-void generate_nn_data(int total_games, int depth, char *output_filename);
-
 void develop_workbench(void)
 {
-    //printf("%d\n", rand());
 
-    char file_name[1000];
-    sprintf(file_name, "data/nndd_%u.plain", util_get_time());
-    generate_nn_data(100 * 1000000, 6, file_name);
 }
 
 //END

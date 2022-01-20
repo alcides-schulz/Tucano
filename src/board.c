@@ -32,7 +32,8 @@ void set_fen(BOARD *board, char *fen)
     int i, r, f, inc;
 
     memset(board, 0, sizeof(BOARD));
-	for (i = 0; i < 64; i++) {
+
+    for (i = 0; i < 64; i++) {
 		board->state[WHITE].square[i] = NO_PIECE;
 		board->state[BLACK].square[i] = NO_PIECE;
 	}
@@ -106,7 +107,7 @@ void set_fen(BOARD *board, char *fen)
         i++;
     else  {
         if (fen[i] >= 'a' && fen[i] <= 'h' && fen[i+1] >= '1' && fen[i+1] <= '8')
-            board->ep_square = (('8' - fen[i+1]) * 8) + (fen[i] - 'a');
+            board->ep_square = (U8)((('8' - fen[i+1]) * 8) + (fen[i] - 'a'));
         i += 2;
     }
     if (board->ep_square != 0)
@@ -305,11 +306,9 @@ void undo_move(BOARD *board)
 
     switch (unpack_type(move)) {
         case MT_QUIET:
-            //move_piece_undo(board, side_on_move(board), board->state[side_on_move(board)].square[tosq], tosq, frsq);
             move_piece_undo(board, turn, mvpc, tosq, frsq);
             break;
         case MT_CAPPC:
-            //move_piece_undo(board, side_on_move(board), board->state[side_on_move(board)].square[tosq], tosq, frsq);
             move_piece_undo(board, turn, mvpc, tosq, frsq);
             set_piece_undo(board, opp, unpack_capture(move), tosq);
             break;
@@ -491,11 +490,11 @@ void move_piece_undo(BOARD *board, int color, int type, int frsq, int tosq)
 //-------------------------------------------------------------------------------------------------
 //  Place a piece on square during undo method. Does not need to update some data.
 //-------------------------------------------------------------------------------------------------
-void set_piece_undo(BOARD *board, int color, int type, int index)
+void set_piece_undo(BOARD *board, int color, int type, int tosq)
 {
-    U64     bb_set = square_bb(index);
+    U64     bb_set = square_bb(tosq);
 
-    board->state[color].square[index] = (U8)type;
+    board->state[color].square[tosq] = (U8)type;
     board->state[color].piece[type] ^= bb_set;
     board->state[color].all_pieces ^= bb_set;
     board->state[color].count[type]++;
@@ -504,11 +503,11 @@ void set_piece_undo(BOARD *board, int color, int type, int index)
 //-------------------------------------------------------------------------------------------------
 //  Remove a piece from square during undo method. Does not need to update some data.
 //-------------------------------------------------------------------------------------------------
-void remove_piece_undo(BOARD *board, int color, int type, int index)
+void remove_piece_undo(BOARD *board, int color, int type, int frsq)
 {
-    U64     bb_remove = square_bb(index);
+    U64     bb_remove = square_bb(frsq);
 
-    board->state[color].square[index] = NO_PIECE;
+    board->state[color].square[frsq] = NO_PIECE;
     board->state[color].piece[type] ^= bb_remove;
     board->state[color].all_pieces ^= bb_remove;
     board->state[color].count[type]--;

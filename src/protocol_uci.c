@@ -17,6 +17,10 @@ You can find the GNU General Public License at http://www.gnu.org/licenses/
 
 #include "globals.h"
 
+#ifdef TUCANNUE
+#include "nnue/nnue.h"
+#endif
+
 //-------------------------------------------------------------------------------------------------
 //    UCI protocol implementation.
 //-------------------------------------------------------------------------------------------------
@@ -33,6 +37,7 @@ void remove_line_feed_chars(char *line);
 #define HASH_OPTION_STRING "setoption name Hash value "
 #define THREADS_OPTION_STRING "setoption name Threads value "
 #define SYZYGY_OPTION_STRING "setoption name SyzygyPath value "
+#define EVAL_FILE_OPTION_STRING "setoption name EvalFile value "
 
 //-------------------------------------------------------------------------------------------------
 //    UCI main loop.
@@ -48,6 +53,10 @@ void uci_loop(char *engine_name, char *engine_version, char *engine_author) {
     printf("option name Threads type spin default 1 min %d max %d\n", MIN_THREADS, MAX_THREADS);
     printf("option name SyzygyPath type string default <empty>\n");
     printf("option name Ponder type check default false\n");
+#ifdef TUCANNUE
+    printf("option name EvalFile type string default <empty>\n");
+#endif
+
     printf("uciok\n");
     
     while (TRUE) {
@@ -89,6 +98,14 @@ void uci_loop(char *engine_name, char *engine_version, char *engine_author) {
             char *syzygy_path = &uci_line[strlen(SYZYGY_OPTION_STRING)];
             tb_init(syzygy_path);
             printf("info string SyzygyPath set to %s/%d\n", syzygy_path, TB_LARGEST);
+            continue;
+        }
+#endif
+
+#ifdef TUCANNUE
+        if (!strncmp(uci_line, EVAL_FILE_OPTION_STRING, strlen(EVAL_FILE_OPTION_STRING))) {
+            char *eval_file = &uci_line[strlen(EVAL_FILE_OPTION_STRING)];
+            USE_NN_EVAL = nnue_init(eval_file);
             continue;
         }
 #endif

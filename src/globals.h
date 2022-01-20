@@ -364,7 +364,7 @@ typedef struct s_eval_table
 }   EVAL_TABLE;
 
 #define PAWN_TABLE_SIZE 16384
-#define EVAL_TABLE_SIZE 32768
+#define EVAL_TABLE_SIZE 65536
 
 typedef struct s_eval_values
 {
@@ -693,6 +693,9 @@ int     eval_pst_king(int color, int pcsq);
 void    eval_pst_print(void);
 void    eval_tune(void);
 
+// Neural Network
+void    tnn_write_record(FILE *bin_file, char *fen, int eval);
+
 // Evaluation Terms
 // Material
 EXTERN int SCORE_PAWN;
@@ -866,5 +869,8 @@ int     pawn_is_candidate(BOARD *board, int pcsq, int color);
 U32 egtb_probe_wdl(BOARD *board, int depth, int ply);
 
 #endif
+
+EXTERN int USE_NN_EVAL;
+#define TUCANO_EVAL_FILE "tucano_nn01.bin"
 
 //End

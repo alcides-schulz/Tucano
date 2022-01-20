@@ -10,7 +10,26 @@ In case of any question please send me an email (alcides_schulz@hotmail.com) or 
 
 Tucano can be downloaded from github: https://github.com/alcides-schulz/Tucano
 
-![alt text](image/tucano_playing.png "Tucano")
+Neural Network Evaluation
+-------------------------
+Starting with version 10 release, Tucano uses a neural network evaluation, which increases the engine strength.
+This network was trained on about 1.5 billion positions using Tucano's evaluation at depth 8 and Nodchip trainer's code (https://github.com/nodchip/Stockfish).
+The neural network access code is from Daniel Shawn nnue library (https://github.com/dshawul/nnue-probe).
+In order to use neural network you need to use an evaluation file, currently tucano_nn01.bin, that can be found in the Tucano’s github release section.
+
+When running tucano, it will try to load the file from the same folder where tucano executable is.
+You can load a different file by using a new command line parameter, e.g.: tucano -eval_file tucano_nn01.bin.
+Also, you can send the file name through the new UCI option "name EvalFile type string".
+
+It is important to make sure tucano can locate the eval file. 
+To validate the file is loaded you can start tucano on your system and see if it shows the message below:
+ 
+        Tucano chess engine by Alcides Schulz - 10.00 (type 'help' for information)
+
+        Eval file 'tucano_nn01.bin' loaded !
+            hash table: 64 MB, threads: 1
+
+It is not recommend to run without the neural network evaluation. Performance of the engine will not be much better than previous version 9.
 
 Terms of use
 ------------
@@ -28,8 +47,8 @@ Alcides Schulz.
 
 Running Tucano
 --------------
-Tucano version 9.00 supports both XBoard and UCI protocols. 
-I recommend using UCI from now on. I'm planning to remove XBoard protocol on the next version.
+Version 8.0 and earlier supports XBoard protocol.
+Starting from version 9.00 it supports UCI protocol, which is recommended to use.
 
 Syzygy endgame tablebases
 -------------------------
@@ -40,36 +59,54 @@ Starting on version 8.00, tucano supports syzygy (option SyzygyPath). It leverag
     - Fathom: syzygy probing tool by Jon Dart.
     
     
-Protocol options
-----------------
-Tucano supports the following options (version 8.00 and alter):
+UCI Protocol options
+--------------------
+Tucano supports the following uci options:
 
-    option Threads=N
-    	N = 1 to 64
-    option Hash=N
-    	N = 8 to 16384
-    option SyzygyPath="F"
-    	F = folder where Syzygy end game tablebase is
+    option name Hash type spin default 64 min 8 max 65536
+    option name Threads type spin default 1 min 1 max 256
+    option name SyzygyPath type string default <empty>
+    option name Ponder type check default false
+    option name EvalFile type string default <empty>
 
 Command Line options
 --------------------
-tucano -hash N -threads N -syzygy_path F
+tucano -hash N -threads N -syzygy_path F -eval_file E
 
    -hash indicates the size of hash table, default = 64 MB, minimum: 8 MB, maximum: 65536 MB.
-   
-   -threads indicates how many threads to use during search, minimum: 1, maximum: 256. Depends on how many cores you computer have.
-   
+   -threads indicates how many threads to use during search, minimum: 1, maximum: 256. Depends on how many cores your computer have.
    -syzygy_path indicates the folder of syzygy endgame tablebase.
-
+   -eval_file indicates the location of neural network file used by evaluation.
    
 Signature
 ---------
 If you compile tucano you can use the command "bench" to get a signature. Just start tucano and type "bench". 
-Signature is a generated number after searching a couple of positions to indicate you have the correct compilation. 
+Signature is a number generated after searching a couple of positions to indicate you have the correct compilation. 
 If you don't get the correct signature it means that something is wrong with the compilation process and the program may not perform correctly.
 
-9.00: 21898211
-8.00: 32406478
+10.00:  5734637 (with nn eval file loaded)
+ 9.00: 21898211
+ 8.00: 32406478
+
+ Executable
+ ----------
+The release will come with executables for different plataforms, try to use the one that providers the most nodes per seconds. 
+Start tucano and type the command "speed", you should see the following report:
+
+        Tucano chess engine by Alcides Schulz - 10.00 (type 'help' for information)
+
+        Eval file 'D:\ChessProg\tucano\tucano_nn01.bin' loaded !
+           hash table: 64 MB, threads: 1
+
+        speed
+        running speed test 1 of 5...
+        running speed test 2 of 5...
+        running speed test 3 of 5...
+        running speed test 4 of 5...
+        running speed test 5 of 5...
+
+        Speed test: nodes per second average = 1376k
+
 
 Compilation
 -----------
@@ -77,17 +114,29 @@ The main platform used for development is Windows.
 I try to use standard functions and make tucano portable, so it can be compiled on other platforms, but there's no warranty it will work on all of them.
 You can report issues with other platforms and I will try to address as possible.
 
-Note: for syzygy tablebases it is necessary to compile with c99 standard. If you have a compiler that doesn't support c99, you can remove the preprocessor EGTB_SYZYGY, but it will not have the end game tablebase support.
-
 Here are the commands used for compilation:
 
-Windows (compile using mingW version 7.2.0)
+Windows (compiled using mingW version 7.2.0)
 
-    gcc -std=c99 -O3 -DEGTB_SYZYGY -Wall -Wfatal-errors -m64 -mtune=generic -s -static -Isrc -flto -o tucano.exe src\*.c src\fathom\tbprobe.c
+AVX2
+    gcc -o tucano_avx2.exe -DEGTB_SYZYGY -DTUCANNUE -O3 -Isrc -flto -m64 -mtune=generic -s -static -Wall -Wfatal-errors -DUSE_AVX2 -mavx2 -DUSE_SSE41 -msse4.1 -DUSE_SSSE3 -mssse3 -DUSE_SSE2 -msse2 -DUSE_SSE -msse src\*.c src\nnue\*.cpp src\fathom\tbprobe.c
+SSE4.1
+    gcc -o tucano_sse4.exe -DEGTB_SYZYGY -DTUCANNUE -O3 -Isrc -flto -m64 -mtune=generic -s -static -Wall -Wfatal-errors -DUSE_SSE41 -msse4.1 -DUSE_SSSE3 -mssse3 -DUSE_SSE2 -msse2 -DUSE_SSE -msse src\*.c src\nnue\*.cpp src\fathom\tbprobe.c
+SSE3
+    gcc -o tucano_sse4.exe -DEGTB_SYZYGY -DTUCANNUE -O3 -Isrc -flto -m64 -mtune=generic -s -static -Wall -Wfatal-errors -DUSE_SSSE3 -mssse3 -DUSE_SSE2 -msse2 -DUSE_SSE -msse src\*.c src\nnue\*.cpp src\fathom\tbprobe.c
+SSE2
+    gcc -o tucano_sse4.exe -DEGTB_SYZYGY -DTUCANNUE -O3 -Isrc -flto -m64 -mtune=generic -s -static -Wall -Wfatal-errors -DUSE_SSE2 -msse2 -DUSE_SSE -msse src\*.c src\nnue\*.cpp src\fathom\tbprobe.c
+
+OLD
+    gcc -o tucano_old.exe -DEGTB_SYZYGY -DTUCANNUE -O3 -Isrc -flto -m64 -mtune=generic -s -static -Wall -Wfatal-errors src\*.c src\nnue\*.cpp src\fathom\tbprobe.c
 
 Linux and ARM V8 (using src/makefile):
 
     cd src
 
-    make release
+    make <architeture>
+
+    <architecture>: avx2, sse4, sse3, sse2, old
+
+Note: It is recommend to use AVX2 or the higher SSE in order to have a good performance with neural network evaluation. 
 

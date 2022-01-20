@@ -121,7 +121,7 @@
       <FloatingPointModel>Fast</FloatingPointModel>
       <CompileAs>CompileAsC</CompileAs>
       <WarningLevel>EnableAllWarnings</WarningLevel>
-      <PreprocessorDefinitions>VS2017;EGTB_SYZYGYxx</PreprocessorDefinitions>
+      <PreprocessorDefinitions>VS2017;EGTB_SYZYGYxx;TUCANNUExx</PreprocessorDefinitions>
       <ObjectFileName>$(IntDir)OBJ\</ObjectFileName>
       <Optimization>Full</Optimization>
     </ClCompile>
@@ -138,6 +138,8 @@
     <ClInclude Include="src\fathom\tbconfig.h" />
     <ClInclude Include="src\fathom\tbprobe.h" />
     <ClInclude Include="src\globals.h" />
+    <ClInclude Include="src\nnue\misc.h" />
+    <ClInclude Include="src\nnue\nnue.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\analyze.c" />
@@ -167,6 +169,8 @@
     <ClCompile Include="src\move.c" />
     <ClCompile Include="src\move_order.c" />
     <ClCompile Include="src\move_selector.c" />
+    <ClCompile Include="src\nnue\misc.cpp" />
+    <ClCompile Include="src\nnue\nnue.cpp" />
     <ClCompile Include="src\protocol_uci.c" />
     <ClCompile Include="src\search_egtb_syzygy.c" />
     <ClCompile Include="src\search_main.c" />
@@ -180,7 +184,7 @@
     <ClCompile Include="src\test_auto_play.c" />
     <ClCompile Include="src\test_epd.c" />
     <ClCompile Include="src\test_eval_symmetry.c" />
-    <ClCompile Include="src\test_open.c" />
+    <ClCompile Include="src\test_nnue_utils.c" />
     <ClCompile Include="src\test_perft.c" />
     <ClCompile Include="src\test_perftx.c" />
     <ClCompile Include="src\test_perfty.c" />
@@ -205,6 +209,9 @@
     <None Include="src\fathom\LICENSE" />
     <None Include="src\fathom\README.md" />
     <None Include="src\makefile" />
+    <None Include="src\nnue\LICENSE" />
+    <None Include="src\nnue\Makefile" />
+    <None Include="src\nnue\README.md" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

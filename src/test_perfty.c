@@ -319,7 +319,7 @@ void perfty(void)
 U64 perfty_nodes(GAME *game, int depth)
 {
     U64         nodes = 0;
-    int         move;
+    MOVE        move;
     MOVE_LIST   move_list;
 
     if (depth == 0) return 1;

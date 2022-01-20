@@ -46,7 +46,6 @@ int search_zw(GAME *game, UINT incheck, int beta, int depth)
     assert(incheck == 0 || incheck == 1);
     assert(beta >= -MAX_SCORE && beta <= MAX_SCORE);
     assert(depth <= MAX_DEPTH);
-    assert(can_null == 0 || can_null == 1);
 
     check_time(game);
     if (game->search.abort) return 0;
@@ -70,7 +69,7 @@ int search_zw(GAME *game, UINT incheck, int beta, int depth)
     // transposition table score or move hint
     TT_RECORD tt_record;
     tt_read(game->board.key, &tt_record);
-    if (tt_record.data && tt_record.info.depth >= depth) {
+    if (tt_record.data && tt_record.info.depth >= depth && !EVAL_TUNING) {
         score = score_from_tt(tt_record.info.score, ply);
         if (tt_record.info.flag == TT_EXACT) return score;
         if (score >= beta && tt_record.info.flag == TT_LOWER) return score;
@@ -246,11 +245,13 @@ int search_zw(GAME *game, UINT incheck, int beta, int depth)
         return (incheck ? -MATE_VALUE + ply : 0);
     }
 
-    tt_record.info.move = MOVE_NONE;
-    tt_record.info.depth = (S8)depth;
-    tt_record.info.flag = TT_UPPER;
-    tt_record.info.score = score_to_tt(best_score, ply);
-    tt_save(game->board.key, &tt_record);
+    if (!EVAL_TUNING) {
+        tt_record.info.move = MOVE_NONE;
+        tt_record.info.depth = (S8)depth;
+        tt_record.info.flag = TT_UPPER;
+        tt_record.info.score = score_to_tt(best_score, ply);
+        tt_save(game->board.key, &tt_record);
+    }
 
     return best_score;
 }

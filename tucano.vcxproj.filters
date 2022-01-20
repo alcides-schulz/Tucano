@@ -11,6 +11,9 @@
     <Filter Include="src\fathom">
       <UniqueIdentifier>{2a5474d0-c49b-40de-af1a-c7a3e4ad332d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\nnue">
+      <UniqueIdentifier>{6465c1b2-6578-4f74-a923-981322a72092}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\fathom\tbconfig.h">
@@ -21,6 +24,12 @@
     </ClInclude>
     <ClInclude Include="src\globals.h">
       <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\nnue\misc.h">
+      <Filter>src\nnue</Filter>
+    </ClInclude>
+    <ClInclude Include="src\nnue\nnue.h">
+      <Filter>src\nnue</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -126,9 +135,6 @@
     <ClCompile Include="src\move_gen_quiet.c">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\test_open.c">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="src\utils_pgn.c">
       <Filter>src</Filter>
     </ClCompile>
@@ -180,6 +186,15 @@
     <ClCompile Include="src\transposition.c">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="src\test_nnue_utils.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\nnue\misc.cpp">
+      <Filter>src\nnue</Filter>
+    </ClCompile>
+    <ClCompile Include="src\nnue\nnue.cpp">
+      <Filter>src\nnue</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Image Include="image\tucano.bmp">
@@ -202,6 +217,15 @@
     </None>
     <None Include="src\makefile">
       <Filter>src</Filter>
+    </None>
+    <None Include="src\nnue\LICENSE">
+      <Filter>src\nnue</Filter>
+    </None>
+    <None Include="src\nnue\Makefile">
+      <Filter>src\nnue</Filter>
+    </None>
+    <None Include="src\nnue\README.md">
+      <Filter>src\nnue</Filter>
     </None>
   </ItemGroup>
 </Project>

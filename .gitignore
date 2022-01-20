@@ -277,3 +277,9 @@ __pycache__/
 /tune-pnn.txt
 /src-search-change.zip
 /eval_pawn_nn.h
+/tucano_avx2.exe
+/tucano_base.exe
+/tucano_sse4.exe
+/tucano_sse2.exe
+/tucano_sse3.exe
+*.exe
