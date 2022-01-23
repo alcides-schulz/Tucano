@@ -21,9 +21,6 @@
 //  Search management process.
 //-------------------------------------------------------------------------------------------------
 
-U64     cnt = 0;
-U64     hit = 0;
-
 int     search_asp(GAME *game_data, int incheck, int depth, int prev_score);
 void    *iterative_deepening(void *pv_game);
 
@@ -35,7 +32,10 @@ int     additional_threads = 0;
 //-------------------------------------------------------------------------------------------------
 void threads_init(int threads_count)
 {
-    if (thread_data != NULL) free(thread_data);
+    if (thread_data != NULL) {
+        free(thread_data);
+        thread_data = NULL;
+    }
     if (threads_count <= 0) threads_count = 1;
     additional_threads = threads_count - 1;
     if (additional_threads == 0) return;

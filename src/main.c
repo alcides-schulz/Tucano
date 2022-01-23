@@ -24,7 +24,7 @@
 
 #define ENGINE "Tucano"
 #define AUTHOR "Alcides Schulz"
-#define VERSION "10.00"
+#define VERSION "10.01"
 
 void        develop_workbench(void);
 double      bench(int depth, int print);
@@ -570,8 +570,8 @@ double bench(int depth, int print)
     int total_tests = 0;
     for (int i = 0; test[i]; i++) total_tests++;
 
-    U64     nodes = 0;
-    int     elapsed = 1;
+    U64 nodes = 0;
+    int start = util_get_time();
 
     for (int i = 0; test[i]; i++) {
         if (print) printf("%d/%d) %s\n", i + 1, total_tests, test[i]);
@@ -580,9 +580,10 @@ double bench(int depth, int print)
 
         search_run(game, &settings);
 
-        nodes += game->search.nodes;
-        elapsed += game->search.elapsed_time;
+        nodes += game->search.nodes + get_additional_threads_nodes();
     }
+
+    int elapsed = util_get_time() - start;
 
     double nps = 1000.0 * (double)nodes / elapsed;
 
