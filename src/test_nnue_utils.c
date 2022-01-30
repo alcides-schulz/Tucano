@@ -43,14 +43,14 @@ NNDD    nndd[1024];
 //-------------------------------------------------------------------------------------------------
 //  Generate data for NN Training
 //  output_filename extension determines file format:
-//      *.bin -> binary format for tucano nn trainer.
+//      *.tnn -> format for tucano nn trainer.
 //      *.plain or other -> plain format compatible with nodchip nnue trainer
 //-------------------------------------------------------------------------------------------------
-void generate_nn_data(int positions_total, int depth, char *output_filename)
+void generate_nn_data(int positions_total, int max_nodes, char *output_filename)
 {
     GAME        *game;
     SETTINGS    settings;
-    int         binary_format = FALSE;
+    int         tnn_format = FALSE;
 
     game = (GAME *)malloc(sizeof(GAME));
     if (game == NULL) {
@@ -58,18 +58,19 @@ void generate_nn_data(int positions_total, int depth, char *output_filename)
         return;
     }
 
-    if (strlen(output_filename) > 4 && !strcmp(&output_filename[strlen(output_filename) - 4], ".bin")) {
-        binary_format = TRUE;
+    if (strlen(output_filename) > 4 && !strcmp(&output_filename[strlen(output_filename) - 4], ".tnn")) {
+        tnn_format = TRUE;
     }
 
     settings.single_move_time = MAX_TIME;
     settings.total_move_time = 0;
     settings.moves_per_level = 0;
-    settings.max_depth = depth;
+    settings.max_depth = MAX_DEPTH;
     settings.post_flag = POST_NONE;
     settings.use_book = FALSE;
+    settings.max_nodes = max_nodes;
 
-    FILE *output = fopen(output_filename, binary_format ? "wb" : "w");
+    FILE *output = fopen(output_filename, "w");
 
     tt_init(TRANS_SIZE_GEN);
 
@@ -92,7 +93,7 @@ void generate_nn_data(int positions_total, int depth, char *output_filename)
             search_run(game, &settings);
             if (!game->search.best_move) break;
 
-            if (ABS(game->search.best_score) <= MAX_EVAL && unpack_type(game->search.best_move) != MT_EPCAP) {
+            if (ABS(game->search.best_score) <= 300 && move_is_quiet(game->search.best_move)) {
                 util_get_board_fen(&game->board, nndd[nndd_count].fen);
                 util_get_move_string(game->search.best_move, nndd[nndd_count].move);
                 nndd[nndd_count].ply = get_history_ply(&game->board);
@@ -105,34 +106,40 @@ void generate_nn_data(int positions_total, int depth, char *output_filename)
         }
 
         int game_result = get_game_result(game);
+        if (game_result == GR_NOT_FINISH) continue;
 
-        if (game_result != GR_NOT_FINISH) {
-            for (int i = 0; i < nndd_count; i++) {
-                if (binary_format) {
-                    //tnn_write_record(output, nndd[i].fen, nndd[i].score);
+        for (int i = 0; i < nndd_count; i++) {
+            if (tnn_format) {
+                //rnbqkbr1/1p1pppp1/2p4p/p4n2/1PPP4/B5PN/P3PP1P/RN1QKB1R b - -;score=12;[1-0]
+                fprintf(output, "%s;", nndd[i].fen);
+                fprintf(output, "score=%d;", nndd[i].side == WHITE ? nndd[i].score : -nndd[i].score);
+                switch (game_result) {
+                case GR_WHITE_WIN: fprintf(output, "[1-0]\n"); break;
+                case GR_BLACK_WIN: fprintf(output, "[0-1]\n"); break;
+                default: fprintf(output, "[1/2]\n"); break;
                 }
-                else {
-                    fprintf(output, "fen %s\n", nndd[i].fen);
-                    fprintf(output, "move %s\n", nndd[i].move);
-                    fprintf(output, "score %d\n", nndd[i].score);
-                    fprintf(output, "ply %d\n", nndd[i].ply);
-                    switch (game_result) {
-                    case GR_WHITE_WIN:
-                        fprintf(output, "result %d\n", nndd[i].side == WHITE ? 1 : -1);
-                        break;
-                    case GR_BLACK_WIN:
-                        fprintf(output, "result %d\n", nndd[i].side == BLACK ? 1 : -1);
-                        break;
-                    default:
-                        fprintf(output, "result 0\n");
-                        break;
-                    }
-                    fprintf(output, "e\n");
-                }
-                fflush(output);
-                positions_count++;
-                if (positions_count >= positions_total) break;
             }
+            else { // NNUE plain format
+                //fen r1bqkbnr/4pp1p/nppp2p1/p7/Q1P2P2/2NPP3/PP4PP/R1B1KBNR b - -f3
+                //move c8d7
+                //score 134
+                //ply 13
+                //result 0
+                //e
+                fprintf(output, "fen %s\n", nndd[i].fen);
+                fprintf(output, "move %s\n", nndd[i].move);
+                fprintf(output, "score %d\n", nndd[i].score);
+                fprintf(output, "ply %d\n", nndd[i].ply);
+                switch (game_result) {
+                case GR_WHITE_WIN: fprintf(output, "result %d\n", nndd[i].side == WHITE ? 1 : -1); break;
+                case GR_BLACK_WIN: fprintf(output, "result %d\n", nndd[i].side == BLACK ? 1 : -1); break;
+                default: fprintf(output, "result 0\n"); break;
+                }
+                fprintf(output, "e\n");
+            }
+            fflush(output);
+            positions_count++;
+            if (positions_count >= positions_total) break;
         }
 
         fflush(output);
@@ -215,16 +222,16 @@ void generate_nn_files()
 
     for (int i = 1; i <= 100; i++) {
 #ifdef _MSC_VER
-        sprintf(to_file, "d:/temp/d%03d.plain", i);
+        sprintf(to_file, "d:/temp/d%03d.tnn", i);
 #else
-        sprintf(to_file, "./data/d%03d.plain", i);
+        sprintf(to_file, "./data/d%03d.tnn", i);
 #endif
         FILE *tf = fopen(to_file, "r");
         if (tf != NULL) {
             fclose(tf);
             continue;
         }
-        generate_nn_data(100000000, 8, to_file);
+        generate_nn_data(100000000, 5000, to_file);
         break;
     }
 }

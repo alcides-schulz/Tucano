@@ -24,7 +24,7 @@
 
 #define ENGINE "Tucano"
 #define AUTHOR "Alcides Schulz"
-#define VERSION "10.01"
+#define VERSION "10.02"
 
 void        develop_workbench(void);
 double      bench(int depth, int print);
@@ -521,6 +521,7 @@ void settings_init(void)
     game_settings.max_depth = MAX_DEPTH;
     game_settings.post_flag = POST_DEFAULT;
     game_settings.use_book = FALSE;
+    game_settings.max_nodes = 0;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -564,6 +565,7 @@ double bench(int depth, int print)
     settings.single_move_time = MAX_TIME;
     settings.total_move_time = MAX_TIME;
     settings.use_book = FALSE;
+    settings.max_nodes = 0;
 
     if (print) printf("Benchmark (depth=%d)\n", depth);
 
@@ -648,9 +650,11 @@ int valid_hash_size(int hash_size) {
 //  Used for development tests.
 //-------------------------------------------------------------------------------------------------
 
+void generate_nn_files();
+
 void develop_workbench(void)
 {
-
+    generate_nn_files();
 }
 
 //END

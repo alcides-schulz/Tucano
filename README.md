@@ -22,14 +22,14 @@ You can load a different file by using a new command line parameter, e.g.: tucan
 Also, you can send the file name through the new UCI option "name EvalFile type string".
 
 It is important to make sure tucano can locate the eval file. 
-To validate the file is loaded you can start tucano on your system and see if it shows the message below:
+To validate if the file is loaded you can start tucano on your system and see if it shows the message below:
  
         Tucano chess engine by Alcides Schulz - 10.00 (type 'help' for information)
 
         Eval file 'tucano_nn01.bin' loaded !
             hash table: 64 MB, threads: 1
 
-It is not recommend to run without the neural network evaluation. Performance of the engine will not be much better than previous version 9.
+It is recommend to run with the neural network evaluation, othwerwise the performance will not be much better than previous version 9.
 
 Terms of use
 ------------
@@ -48,7 +48,7 @@ Alcides Schulz.
 Running Tucano
 --------------
 Version 8.0 and earlier supports XBoard protocol.
-Starting from version 9.00 it supports UCI protocol, which is recommended to use.
+Starting from version 9.00 it supports UCI protocol, which is the recommended protocol to use.
 
 Syzygy endgame tablebases
 -------------------------
@@ -84,9 +84,9 @@ If you compile tucano you can use the command "bench" to get a signature. Just s
 Signature is a number generated after searching a couple of positions to indicate you have the correct compilation. 
 If you don't get the correct signature it means that something is wrong with the compilation process and the program may not perform correctly.
 
-10.00:  5734637 (with nn eval file loaded)
- 9.00: 21898211
- 8.00: 32406478
+    10.00:  5734637 (with nn eval file loaded)
+     9.00: 21898211
+     8.00: 32406478
 
  Executable
  ----------
@@ -117,29 +117,23 @@ You can report issues with other platforms and I will try to address as possible
 Here are the commands used for compilation:
 
 Windows (compiled using mingW version 7.2.0)
-
-AVX2
-    gcc -o tucano_avx2.exe -DEGTB_SYZYGY -DTUCANNUE -O3 -Isrc -flto -m64 -mtune=generic -s -static -Wall -Wfatal-errors -DUSE_AVX2 -mavx2 -DUSE_SSE41 -msse4.1 -DUSE_SSSE3 -mssse3 -DUSE_SSE2 -msse2 -DUSE_SSE -msse src\*.c src\nnue\*.cpp src\fathom\tbprobe.c
-    
-SSE4.1
-    gcc -o tucano_sse4.exe -DEGTB_SYZYGY -DTUCANNUE -O3 -Isrc -flto -m64 -mtune=generic -s -static -Wall -Wfatal-errors -DUSE_SSE41 -msse4.1 -DUSE_SSSE3 -mssse3 -DUSE_SSE2 -msse2 -DUSE_SSE -msse src\*.c src\nnue\*.cpp src\fathom\tbprobe.c
-    
-SSE3
-    gcc -o tucano_sse4.exe -DEGTB_SYZYGY -DTUCANNUE -O3 -Isrc -flto -m64 -mtune=generic -s -static -Wall -Wfatal-errors -DUSE_SSSE3 -mssse3 -DUSE_SSE2 -msse2 -DUSE_SSE -msse src\*.c src\nnue\*.cpp src\fathom\tbprobe.c
-    
-SSE2
-    gcc -o tucano_sse4.exe -DEGTB_SYZYGY -DTUCANNUE -O3 -Isrc -flto -m64 -mtune=generic -s -static -Wall -Wfatal-errors -DUSE_SSE2 -msse2 -DUSE_SSE -msse src\*.c src\nnue\*.cpp src\fathom\tbprobe.c
-
-OLD
-    gcc -o tucano_old.exe -DEGTB_SYZYGY -DTUCANNUE -O3 -Isrc -flto -m64 -mtune=generic -s -static -Wall -Wfatal-errors src\*.c src\nnue\*.cpp src\fathom\tbprobe.c
+    AVX2
+        gcc -o tucano_avx2.exe -DEGTB_SYZYGY -DTUCANNUE -O3 -Isrc -flto -m64 -mtune=generic -s -static -Wall -Wfatal-errors -DUSE_AVX2 -mavx2 -DUSE_SSE41 -msse4.1 -DUSE_SSSE3 -mssse3 -DUSE_SSE2 -msse2 -DUSE_SSE -msse src\*.c src\nnue\*.cpp src\fathom\tbprobe.c
+    SSE4.1
+        gcc -o tucano_sse4.exe -DEGTB_SYZYGY -DTUCANNUE -O3 -Isrc -flto -m64 -mtune=generic -s -static -Wall -Wfatal-errors -DUSE_SSE41 -msse4.1 -DUSE_SSSE3 -mssse3 -DUSE_SSE2 -msse2 -DUSE_SSE -msse src\*.c src\nnue\*.cpp src\fathom\tbprobe.c
+    SSE3
+        gcc -o tucano_sse4.exe -DEGTB_SYZYGY -DTUCANNUE -O3 -Isrc -flto -m64 -mtune=generic -s -static -Wall -Wfatal-errors -DUSE_SSSE3 -mssse3 -DUSE_SSE2 -msse2 -DUSE_SSE -msse src\*.c src\nnue\*.cpp src\fathom\tbprobe.c
+    SSE2
+        gcc -o tucano_sse4.exe -DEGTB_SYZYGY -DTUCANNUE -O3 -Isrc -flto -m64 -mtune=generic -s -static -Wall -Wfatal-errors -DUSE_SSE2 -msse2 -DUSE_SSE -msse src\*.c src\nnue\*.cpp src\fathom\tbprobe.c
+    OLD
+        gcc -o tucano_old.exe -DEGTB_SYZYGY -DTUCANNUE -O3 -Isrc -flto -m64 -mtune=generic -s -static -Wall -Wfatal-errors src\*.c src\nnue\*.cpp src\fathom\tbprobe.c
 
 Linux and ARM V8 (using src/makefile):
 
     cd src
-
     make <architeture>
 
-    <architecture>: avx2, sse4, sse3, sse2, old
+        <architecture>: avx2, sse4, sse3, sse2, old
 
 Note: It is recommend to use AVX2 or the higher SSE in order to have a good performance with neural network evaluation. 
 

@@ -41,6 +41,7 @@ void prepare_search(GAME *game, SETTINGS *settings)
     game->search.use_book = settings->use_book;
     game->search.max_depth = settings->max_depth;
     game->search.is_single_move_time = FALSE;
+    game->search.max_nodes = settings->max_nodes;
 
     //  Specific time per move
     if (settings->single_move_time > 0) {
@@ -129,6 +130,12 @@ void check_time(GAME *search_data)
 {
     if (!search_data->is_main_thread) { // check time for main thread only
         return;
+    }
+    if (search_data->search.max_nodes) {
+        if (search_data->search.nodes + get_additional_threads_nodes() >= search_data->search.max_nodes) {
+            search_data->search.abort = TRUE;
+            return;
+        }
     }
     if (search_data->search.nodes & TIME_CHECK) {
         return;

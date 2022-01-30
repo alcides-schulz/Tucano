@@ -335,6 +335,7 @@ typedef struct s_search
     UINT    extended_move_time;     // max time for long search
     UINT    normal_finish_time;     // calculated time to finish
     UINT    extended_finish_time;   // extended time to finish
+    U64     max_nodes;              // maximum number of nodes to seach
     UINT    start_time;             // recorded start time
     UINT    end_time;               // recorded end time
     UINT    elapsed_time;           // search duration
@@ -506,6 +507,7 @@ typedef struct s_settings {
     int     max_depth;              // set by sd command.
     int     post_flag;              // post format.
     int     use_book;               // opening book use.
+    U64     max_nodes;              // maximum nodes per search, 0 = no limit.
 }   SETTINGS;
 
 // Zobrish Keys (hash)
@@ -668,6 +670,7 @@ void    remove_piece_undo(BOARD *board, int color, int type, int index);
 
 // Utils
 UINT    util_get_time(void);
+void    util_sleep(int milliseconds);
 void    util_get_move_string(MOVE move, char *string);
 void    util_get_move_desc(MOVE move, char *string, int inc_file);
 MOVE    util_parse_move(GAME *game, char *move_string);

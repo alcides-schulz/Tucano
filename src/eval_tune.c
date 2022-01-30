@@ -549,6 +549,7 @@ double calc_e_main(double k, int tune_param[], int thread_count, TUNE_THREAD thr
         thread_list[i].settings.single_move_time = MAX_TIME;
         thread_list[i].settings.total_move_time = MAX_TIME;
         thread_list[i].settings.use_book = FALSE;
+        thread_list[i].settings.max_nodes = 0;
 
         THREAD_CREATE(thread_list[i].thread_id, calc_e_sub, &thread_list[i]);
     }
@@ -733,6 +734,7 @@ void select_positions(char *input_pgn, char *output_pos)
         settings.max_depth = MAX_DEPTH;
         settings.post_flag = POST_NONE;
         settings.use_book = FALSE;
+        settings.max_nodes = 0;
 
         prepare_search(game, &settings);
 

@@ -27,8 +27,10 @@ You can find the GNU General Public License at http://www.gnu.org/licenses/
 
 char    uci_line[MAX_READ];
 char    go_line[MAX_READ];
-int     uci_is_pondering = FALSE;
-int     uci_is_infinite = FALSE;
+
+volatile int uci_is_pondering = FALSE;
+volatile int uci_is_infinite = FALSE;
+volatile int search_setup_complete = FALSE;
 
 void *execute_uci_go(void *line);
 void parse_uci_position(char *line);
@@ -43,7 +45,7 @@ void remove_line_feed_chars(char *line);
 //    UCI main loop.
 //-------------------------------------------------------------------------------------------------
 void uci_loop(char *engine_name, char *engine_version, char *engine_author) {
-
+    
     THREAD_ID go_thread = 0;
 
     // UCI initialization
@@ -96,8 +98,10 @@ void uci_loop(char *engine_name, char *engine_version, char *engine_author) {
 #ifdef EGTB_SYZYGY
         if (!strncmp(uci_line, SYZYGY_OPTION_STRING, strlen(SYZYGY_OPTION_STRING))) {
             char *syzygy_path = &uci_line[strlen(SYZYGY_OPTION_STRING)];
-            tb_init(syzygy_path);
-            printf("info string SyzygyPath set to %s/%d\n", syzygy_path, TB_LARGEST);
+            if (strlen(syzygy_path) && strcmp(syzygy_path, "<empty>")) {
+                tb_init(syzygy_path);
+                printf("info string SyzygyPath set to %s/%d\n", syzygy_path, TB_LARGEST);
+            }
             continue;
         }
 #endif
@@ -105,7 +109,9 @@ void uci_loop(char *engine_name, char *engine_version, char *engine_author) {
 #ifdef TUCANNUE
         if (!strncmp(uci_line, EVAL_FILE_OPTION_STRING, strlen(EVAL_FILE_OPTION_STRING))) {
             char *eval_file = &uci_line[strlen(EVAL_FILE_OPTION_STRING)];
-            USE_NN_EVAL = nnue_init(eval_file);
+            if (strlen(eval_file) && strcmp(eval_file, "<empty>")) {
+                USE_NN_EVAL = nnue_init(eval_file);
+            }
             continue;
         }
 #endif
@@ -120,16 +126,20 @@ void uci_loop(char *engine_name, char *engine_version, char *engine_author) {
             uci_is_pondering = FALSE;
             // execute the go command in a new thread
             strcpy(go_line, uci_line);
+            search_setup_complete = FALSE;
             THREAD_CREATE(go_thread, execute_uci_go, go_line);
             continue;
         }
 
         if (!strcmp(uci_line, "ponderhit")) {
+            while (!search_setup_complete) { util_sleep(1); }
             uci_is_pondering = FALSE; // stop pondering but search can continue
+            THREAD_WAIT(go_thread);
             continue;
         }
 
         if (!strcmp(uci_line, "stop")) {
+            while (!search_setup_complete) { util_sleep(1); }
             main_game.search.abort = TRUE;
             uci_is_infinite = FALSE;
             uci_is_pondering = FALSE;
@@ -167,6 +177,7 @@ void *execute_uci_go(void *pv_line)
     int wtime = -1;
     int btime = -1;
     int move_time = -1;
+    U64 max_nodes = 0;
 
     char *token = strtok((char *)pv_line, " "); // skip "go "
 
@@ -181,6 +192,10 @@ void *execute_uci_go(void *pv_line)
         }
         if (!strcmp(token, "depth")) {
             depth = atoi(strtok(NULL, " "));
+            continue;
+        }
+        if (!strcmp(token, "nodes")) {
+            max_nodes = atoll(strtok(NULL, " "));
             continue;
         }
         if (!strcmp(token, "infinite")) {
@@ -207,6 +222,7 @@ void *execute_uci_go(void *pv_line)
     game_settings.single_move_time = 0;
     game_settings.total_move_time = 0;
     game_settings.moves_to_go = 0;
+    game_settings.max_nodes = 0;
 
     int time = side_on_move(&main_game.board) == WHITE ? wtime : btime;
 
@@ -217,25 +233,35 @@ void *execute_uci_go(void *pv_line)
     if (ponder) uci_is_pondering = TRUE;
     if (infinite) uci_is_infinite = TRUE;
     if (uci_is_infinite) game_settings.single_move_time = MAX_TIME;
+    if (max_nodes != 0) game_settings.max_nodes = max_nodes;
+
+    search_setup_complete = TRUE;
 
     // search
     search_run(&main_game, &game_settings);
 
     // Ponder: if search finish early have to wait for stop or ponderhit commands from uci
-    while (uci_is_pondering);
+    while (uci_is_pondering) { 
+        util_sleep(1);
+    }
 
     // Infinite: if search finish early have to wait for stop command from uci
-    if (uci_is_infinite) while (!main_game.search.abort);
+    if (uci_is_infinite) { 
+        while (!main_game.search.abort) { 
+            util_sleep(1);
+        } 
+    }
 
-    // print move
-    char move_string[10];
+    // make and print best move found
     make_move(&main_game.board, main_game.search.best_move);
-    util_get_move_string(main_game.search.best_move, move_string);
-    printf("bestmove %s ", move_string);
 
+    char move_string[10];
+    util_get_move_string(main_game.search.best_move, move_string);
+
+    printf("bestmove %s", move_string);
     if (main_game.search.ponder_move != MOVE_NONE) {
         util_get_move_string(main_game.search.ponder_move, move_string);
-        printf("ponder %s", move_string);
+        printf(" ponder %s", move_string);
     }
 
     printf("\n"); 
