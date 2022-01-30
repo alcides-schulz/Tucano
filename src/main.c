@@ -24,7 +24,7 @@
 
 #define ENGINE "Tucano"
 #define AUTHOR "Alcides Schulz"
-#define VERSION "10.02"
+#define VERSION "10.03"
 
 void        develop_workbench(void);
 double      bench(int depth, int print);
@@ -403,6 +403,10 @@ int main(int argc, char *argv[])
             //  Benchmark
             if (hash_size != 64) {
                 printf("'bench' command requires hash size of 64. Current hash size is %d. Use 'option Hash=64'.\n", hash_size);
+                continue;
+            }
+            if (threads != 1) {
+                printf("'bench' command requires 1 thread only. Current threads is %d. Use 'option Threads=1'.\n", threads);
                 continue;
             }
             bench(16, TRUE);
