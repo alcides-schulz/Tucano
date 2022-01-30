@@ -117,23 +117,29 @@ You can report issues with other platforms and I will try to address as possible
 Here are the commands used for compilation:
 
 Windows (compiled using mingW version 7.2.0)
-    AVX2
+
+        AVX2
         gcc -o tucano_avx2.exe -DEGTB_SYZYGY -DTUCANNUE -O3 -Isrc -flto -m64 -mtune=generic -s -static -Wall -Wfatal-errors -DUSE_AVX2 -mavx2 -DUSE_SSE41 -msse4.1 -DUSE_SSSE3 -mssse3 -DUSE_SSE2 -msse2 -DUSE_SSE -msse src\*.c src\nnue\*.cpp src\fathom\tbprobe.c
-    SSE4.1
+        
+        SSE4.1
         gcc -o tucano_sse4.exe -DEGTB_SYZYGY -DTUCANNUE -O3 -Isrc -flto -m64 -mtune=generic -s -static -Wall -Wfatal-errors -DUSE_SSE41 -msse4.1 -DUSE_SSSE3 -mssse3 -DUSE_SSE2 -msse2 -DUSE_SSE -msse src\*.c src\nnue\*.cpp src\fathom\tbprobe.c
-    SSE3
+        
+        SSE3
         gcc -o tucano_sse4.exe -DEGTB_SYZYGY -DTUCANNUE -O3 -Isrc -flto -m64 -mtune=generic -s -static -Wall -Wfatal-errors -DUSE_SSSE3 -mssse3 -DUSE_SSE2 -msse2 -DUSE_SSE -msse src\*.c src\nnue\*.cpp src\fathom\tbprobe.c
-    SSE2
+        
+        SSE2
         gcc -o tucano_sse4.exe -DEGTB_SYZYGY -DTUCANNUE -O3 -Isrc -flto -m64 -mtune=generic -s -static -Wall -Wfatal-errors -DUSE_SSE2 -msse2 -DUSE_SSE -msse src\*.c src\nnue\*.cpp src\fathom\tbprobe.c
-    OLD
+        
+        OLD
         gcc -o tucano_old.exe -DEGTB_SYZYGY -DTUCANNUE -O3 -Isrc -flto -m64 -mtune=generic -s -static -Wall -Wfatal-errors src\*.c src\nnue\*.cpp src\fathom\tbprobe.c
 
-Linux and ARM V8 (using src/makefile):
 
+Linux and ARM V8 (using src/makefile):
+    
     cd src
     make <architeture>
-
-        <architecture>: avx2, sse4, sse3, sse2, old
+          <architecture>: avx2, sse4, sse3, sse2, old
 
 Note: It is recommend to use AVX2 or the higher SSE in order to have a good performance with neural network evaluation. 
 
+//END
