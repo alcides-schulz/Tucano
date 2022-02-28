@@ -68,15 +68,15 @@ Tucano supports the following uci options:
     option name SyzygyPath type string default <empty>
     option name Ponder type check default false
     option name EvalFile type string default <empty>
-
+    
 Command Line options
 --------------------
 tucano -hash N -threads N -syzygy_path F -eval_file E
 
-   -hash indicates the size of hash table, default = 64 MB, minimum: 8 MB, maximum: 65536 MB.
-   -threads indicates how many threads to use during search, minimum: 1, maximum: 256. Depends on how many cores your computer have.
-   -syzygy_path indicates the folder of syzygy endgame tablebase.
-   -eval_file indicates the location of neural network file used by evaluation.
+    -hash indicates the size of hash table, default = 64 MB, minimum: 8 MB, maximum: 65536 MB.
+    -threads indicates how many threads to use during search, minimum: 1, maximum: 256. Depends on how many cores your computer have.
+    -syzygy_path indicates the folder of syzygy endgame tablebase.
+    -eval_file indicates the location of neural network file used by evaluation.
    
 Signature
 ---------
