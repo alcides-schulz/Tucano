@@ -77,8 +77,9 @@ void set_fen(BOARD *board, char *fen)
 
     // White or black to play
     while (fen[i] && fen[++i] == ' ');
-    if (fen[i] == 'w') 
+    if (fen[i] == 'w') {
         board->side_on_move = WHITE;
+    }
     if (fen[i] == 'b')  {
         board->side_on_move = BLACK;
         board->key ^= zk_color();
@@ -103,8 +104,9 @@ void set_fen(BOARD *board, char *fen)
 
     // En-passant square
     board->ep_square = 0;
-    if (fen[i] && fen[++i] == '-')
+    if (fen[i] && fen[++i] == '-') {
         i++;
+    }
     else  {
         if (fen[i] >= 'a' && fen[i] <= 'h' && fen[i+1] >= '1' && fen[i+1] <= '8')
             board->ep_square = (U8)((('8' - fen[i+1]) * 8) + (fen[i] - 'a'));
@@ -114,18 +116,19 @@ void set_fen(BOARD *board, char *fen)
         board->key ^= zk_ep(board->ep_square);
 
     // 50 move count
-    while (fen[i] && fen[i] == ' ')
-        i++;
+    while (fen[i] && fen[i] == ' ') i++;
 
     board->fifty_move_rule = 0;
     while (fen[i] && fen[i] != ' ')  {
-        if (fen[i] >= '0' && fen[i] <= '9')
+        if (fen[i] >= '0' && fen[i] <= '9') {
             board->fifty_move_rule = board->fifty_move_rule * 10 + (fen[i] - '0');
+        }
         i++;
     }
 
-    if (board->fifty_move_rule <= 0 || board->fifty_move_rule > 100)
+    if (board->fifty_move_rule <= 0 || board->fifty_move_rule > 100) {
         board->fifty_move_rule = 0;
+    }
 
     // Setup additional state data.
     board->ply = 0;

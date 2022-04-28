@@ -40,34 +40,28 @@ void gen_check_evasions(BOARD *board, MOVE_LIST *ml)
     }
     U64 queen_rook_checks = bb_rook_attacks(king_pcsq, occupied_bb(board)) & queen_rook_bb(board, opp);
     while (queen_rook_checks) {
-        attack_square = bb_last_index(queen_rook_checks);
+        attack_square = bb_pop_last_index(&queen_rook_checks);
         attack_count++;
-        bb_clear_bit(&queen_rook_checks, attack_square);
     }
     U64 queen_bishop_checks = bb_bishop_attacks(king_pcsq, occupied_bb(board)) & queen_bishop_bb(board, opp);
     while (queen_bishop_checks) {
-        attack_square = bb_last_index(queen_bishop_checks);
+        attack_square = bb_pop_last_index(&queen_bishop_checks);
         attack_count++;
-        bb_clear_bit(&queen_bishop_checks, attack_square);
     }
     U64 pawn_checks = pawn_attack_bb(opp, king_pcsq) & pawn_bb(board, opp);
     while (pawn_checks) {
-        attack_square = bb_last_index(pawn_checks);
+        attack_square = bb_pop_last_index(&pawn_checks);
         attack_count++;
-        bb_clear_bit(&pawn_checks, attack_square);
     }
-
     U64 king_captures = king_moves_bb(king_pcsq) & all_pieces_bb(board, opp);
     while (king_captures) {
-        int to = bb_first_index(king_captures);
+        int to = bb_pop_first_index(&king_captures);
         add_move(ml, pack_capture(KING, piece_on_square(board, opp, to), king_pcsq, to));
-        bb_clear_bit(&king_captures, to);
     }
     U64 king_moves = king_moves_bb(king_pcsq) & empty_bb(board);
     while (king_moves) {
-        int to = bb_first_index(king_moves);
+        int to = bb_pop_first_index(&king_moves);
         add_move(ml, pack_quiet(KING, king_pcsq, to));
-        bb_clear_bit(&king_moves, to);
     }
 
     // When there is more than one attacker, only king moves are possible.
@@ -78,31 +72,29 @@ void gen_check_evasions(BOARD *board, MOVE_LIST *ml)
 
     U64 knight_capture = knight_moves_bb(attack_square) & knight_bb(board, myc);
     while (knight_capture) {
-        int from = bb_last_index(knight_capture);
+        int from = bb_pop_last_index(&knight_capture);
         add_move(ml, pack_capture(KNIGHT, attacker_piece, from, attack_square));
-        bb_clear_bit(&knight_capture, from);
     }
     U64 queen_rook_capture = bb_rook_attacks(attack_square, occupied_bb(board)) & queen_rook_bb(board, myc);
     while (queen_rook_capture) {
-        int from = bb_last_index(queen_rook_capture);
+        int from = bb_pop_last_index(&queen_rook_capture);
         add_move(ml, pack_capture(piece_on_square(board, myc, from), attacker_piece, from, attack_square));
-        bb_clear_bit(&queen_rook_capture, from);
     }
     U64 queen_bishop_capture = bb_bishop_attacks(attack_square, occupied_bb(board)) & queen_bishop_bb(board, myc);
     while (queen_bishop_capture) {
-        int from = bb_last_index(queen_bishop_capture);
+        int from = bb_pop_last_index(&queen_bishop_capture);
         add_move(ml, pack_capture(piece_on_square(board, myc, from), attacker_piece, from, attack_square));
-        bb_clear_bit(&queen_bishop_capture, from);
     }
 
     U64 pawn_capture = pawn_attack_bb(myc, attack_square) & pawn_bb(board, myc);
     while (pawn_capture) {
-        int from = bb_last_index(pawn_capture);
-        if (attack_square < 8 || attack_square > 55)
+        int from = bb_pop_last_index(&pawn_capture);
+        if (attack_square < 8 || attack_square > 55) {
             add_all_capture_promotions(ml, from, attack_square, attacker_piece);
-        else
+        }
+        else {
             add_move(ml, pack_capture(PAWN, attacker_piece, from, attack_square));
-        bb_clear_bit(&pawn_capture, from);
+        }
     }
     if (attacker_piece == PAWN && ep_square_bb(board)) {
         int to = ep_square(board);
@@ -122,36 +114,30 @@ void gen_check_evasions(BOARD *board, MOVE_LIST *ml)
     U64 attack_path = from_to_path_bb(king_pcsq, attack_square);
     U64 knights = knight_bb(board, myc);
     while (knights) {
-        int from = bb_first_index(knights);
+        int from = bb_pop_first_index(&knights);
         U64 knight_moves = knight_moves_bb(from) & attack_path;
         while (knight_moves) {
-            int to = bb_first_index(knight_moves);
+            int to = bb_pop_first_index(&knight_moves);
             add_move(ml, pack_quiet(KNIGHT, from, to));
-            bb_clear_bit(&knight_moves, to);
         }
-        bb_clear_bit(&knights, from);
     }
     U64 queen_bishop = queen_bishop_bb(board, myc);
     while (queen_bishop) {
-        int from = bb_first_index(queen_bishop);
+        int from = bb_pop_first_index(&queen_bishop);
         U64 queen_bishop_moves = bb_bishop_attacks(from, occupied_bb(board)) & attack_path;
         while (queen_bishop_moves) {
-            int to = bb_first_index(queen_bishop_moves);
+            int to = bb_pop_first_index(&queen_bishop_moves);
             add_move(ml, pack_quiet(piece_on_square(board, myc, from), from, to));
-            bb_clear_bit(&queen_bishop_moves, to);
         }
-        bb_clear_bit(&queen_bishop, from);
     }
     U64 queen_rook = queen_rook_bb(board, myc);
     while (queen_rook) {
-        int from = bb_first_index(queen_rook);
+        int from = bb_pop_first_index(&queen_rook);
         U64 queen_rook_moves = bb_rook_attacks(from, occupied_bb(board)) & attack_path;
         while (queen_rook_moves) {
-            int to = bb_first_index(queen_rook_moves);
+            int to = bb_pop_first_index(&queen_rook_moves);
             add_move(ml, pack_quiet(piece_on_square(board, myc, from), from, to));
-            bb_clear_bit(&queen_rook_moves, to);
         }
-        bb_clear_bit(&queen_rook, from);
     }
     if (myc == WHITE) {
         U64 pawns = pawn_bb(board, WHITE);
@@ -159,18 +145,18 @@ void gen_check_evasions(BOARD *board, MOVE_LIST *ml)
         U64 moves2sq = (((moves & BB_RANK_3) << 8) & empty_bb(board));
         U64 pawn_block = moves & attack_path;
         while (pawn_block) {
-            int to = bb_first_index(pawn_block);
-            if (get_rank(to) == RANK8)
+            int to = bb_pop_first_index(&pawn_block);
+            if (get_rank(to) == RANK8) {
                 add_all_promotions(ml, to + 8, to);
-            else
+            }
+            else {
                 add_move(ml, pack_quiet(PAWN, to + 8, to));
-            bb_clear_bit(&pawn_block, to);
+            }
         }
         pawn_block = moves2sq & attack_path;
         while (pawn_block) {
-            int to = bb_first_index(pawn_block);
+            int to = bb_pop_first_index(&pawn_block);
             add_move(ml, pack_pawn_2square(to + 16, to, to + 8));
-            bb_clear_bit(&pawn_block, to);
         }
     }
     else {
@@ -179,18 +165,18 @@ void gen_check_evasions(BOARD *board, MOVE_LIST *ml)
         U64 moves2sq = (((moves & BB_RANK_6) >> 8) & empty_bb(board));
         U64 pawn_block = moves & attack_path;
         while (pawn_block) {
-            int to = bb_first_index(pawn_block);
-            if (get_rank(to) == RANK1)
+            int to = bb_pop_first_index(&pawn_block);
+            if (get_rank(to) == RANK1) {
                 add_all_promotions(ml, to - 8, to);
-            else
+            }
+            else {
                 add_move(ml, pack_quiet(PAWN, to - 8, to));
-            bb_clear_bit(&pawn_block, to);
+            }
         }
         pawn_block = moves2sq & attack_path;
         while (pawn_block) {
-            int to = bb_first_index(pawn_block);
+            int to = bb_pop_first_index(&pawn_block);
             add_move(ml, pack_pawn_2square(to - 16, to, to - 8));
-            bb_clear_bit(&pawn_block, to);
         }
     }
 }

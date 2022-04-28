@@ -173,6 +173,8 @@ void    bb_init(void);
 int     bb_first_index(U64 bb);
 int     bb_last_index(U64 bb);
 int     bb_bit_count(U64 bb);
+int     bb_pop_first_index(U64 *bb);
+int     bb_pop_last_index(U64 *bb);
 
 U64     king_moves_bb(int from_square);
 U64     knight_moves_bb(int from_square);

@@ -36,6 +36,8 @@ typedef struct s_nndd
     int     score;
     int     ply;
     int     side;
+    int     depth;
+    U64     nodes;
 }   NNDD;
 
 NNDD    nndd[1024];
@@ -46,7 +48,7 @@ NNDD    nndd[1024];
 //      *.tnn -> format for tucano nn trainer.
 //      *.plain or other -> plain format compatible with nodchip nnue trainer
 //-------------------------------------------------------------------------------------------------
-void generate_nn_data(int positions_total, int max_nodes, char *output_filename)
+void generate_nn_data(int positions_total, int max_depth, int max_nodes, char *output_filename)
 {
     GAME        *game;
     SETTINGS    settings;
@@ -65,10 +67,13 @@ void generate_nn_data(int positions_total, int max_nodes, char *output_filename)
     settings.single_move_time = MAX_TIME;
     settings.total_move_time = 0;
     settings.moves_per_level = 0;
-    settings.max_depth = MAX_DEPTH;
+    settings.max_depth = max_depth;
     settings.post_flag = POST_NONE;
     settings.use_book = FALSE;
     settings.max_nodes = max_nodes;
+
+    int nodes_limit = max_nodes * 2;
+    int nodes_increment = max_nodes / 10;
 
     FILE *output = fopen(output_filename, "w");
 
@@ -80,6 +85,9 @@ void generate_nn_data(int positions_total, int max_nodes, char *output_filename)
 
     for (game_count = 1; game_count <= INT_MAX; game_count++) {
 
+        settings.max_nodes += nodes_increment;
+        if (settings.max_nodes > nodes_limit) settings.max_nodes = max_nodes;
+
         new_game(game, FEN_NEW_GAME);
 
         int random_moves_count = (rand() % 10) + 4;
@@ -90,15 +98,30 @@ void generate_nn_data(int positions_total, int max_nodes, char *output_filename)
 
         int nndd_count = 0;
         while (get_game_result(game) == GR_NOT_FINISH) {
+
+            settings.max_depth = max_depth;
+            //int queens = queen_count(&game->board, WHITE) + queen_count(&game->board, BLACK);
+            //settings.max_depth += (2 - MIN(2, queens)) / 2;
+            //int rooks = rook_count(&game->board, WHITE) + rook_count(&game->board, BLACK);
+            //settings.max_depth += (4 - MIN(4, rooks)) / 2;
+            //int knights = knight_count(&game->board, WHITE) + knight_count(&game->board, BLACK);
+            //settings.max_depth += (4 - MIN(4, knights)) / 2;
+            //int bishops = bishop_count(&game->board, WHITE) + bishop_count(&game->board, BLACK);
+            //settings.max_depth += (4 - MIN(4, bishops)) / 2;
+            //int pawns = pawn_count(&game->board, WHITE) + pawn_count(&game->board, BLACK);
+            //settings.max_depth += (16 - pawns) / 8;
+
             search_run(game, &settings);
             if (!game->search.best_move) break;
 
-            if (ABS(game->search.best_score) <= 300 && move_is_quiet(game->search.best_move)) {
+            if (ABS(game->search.best_score) <= MAX_EVAL && move_is_quiet(game->search.best_move)) {
                 util_get_board_fen(&game->board, nndd[nndd_count].fen);
                 util_get_move_string(game->search.best_move, nndd[nndd_count].move);
                 nndd[nndd_count].ply = get_history_ply(&game->board);
                 nndd[nndd_count].side = side_on_move(&game->board);
                 nndd[nndd_count].score = game->search.best_score;
+                nndd[nndd_count].depth = settings.max_depth;
+                nndd[nndd_count].nodes = game->search.nodes;
                 nndd_count++;
             }
 
@@ -114,10 +137,13 @@ void generate_nn_data(int positions_total, int max_nodes, char *output_filename)
                 fprintf(output, "%s;", nndd[i].fen);
                 fprintf(output, "score=%d;", nndd[i].side == WHITE ? nndd[i].score : -nndd[i].score);
                 switch (game_result) {
-                case GR_WHITE_WIN: fprintf(output, "[1-0]\n"); break;
-                case GR_BLACK_WIN: fprintf(output, "[0-1]\n"); break;
-                default: fprintf(output, "[1/2]\n"); break;
+                case GR_WHITE_WIN: fprintf(output, "[1-0]"); break;
+                case GR_BLACK_WIN: fprintf(output, "[0-1]"); break;
+                default: fprintf(output, "[1/2]"); break;
                 }
+                fprintf(output, ";depth=%d", nndd[i].depth);
+                fprintf(output, ";nodes=%"PRIu64"", nndd[i].nodes);
+                fprintf(output, "\n");
             }
             else { // NNUE plain format
                 //fen r1bqkbnr/4pp1p/nppp2p1/p7/Q1P2P2/2NPP3/PP4PP/R1B1KBNR b - -f3
@@ -147,7 +173,8 @@ void generate_nn_data(int positions_total, int max_nodes, char *output_filename)
         UINT elapsed_seconds = (util_get_time() - start_time) / 1000;
         elapsed_seconds = MAX(1, elapsed_seconds);
         int positions_per_second = positions_count / elapsed_seconds;
-        printf("file: %s -> positions %d of %d (game %d, positions per second: %u)...\r", output_filename, positions_count, positions_total, game_count, positions_per_second);
+        printf("file: %s -> positions %d of %d (game %d, nodes=%"PRIu64", positions per second: %u)...\r",
+            output_filename, positions_count, positions_total, game_count, settings.max_nodes, positions_per_second);
 
         if (positions_count >= positions_total) break;
     }
@@ -231,7 +258,11 @@ void generate_nn_files()
             fclose(tf);
             continue;
         }
-        generate_nn_data(100000000, 5000, to_file);
+#ifdef _MSC_VER
+        generate_nn_data(100000, 100, 10000, to_file);
+#else
+        generate_nn_data(100000000, 100, 10000, to_file);
+#endif
         break;
     }
 }

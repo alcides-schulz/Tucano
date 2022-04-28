@@ -23,35 +23,36 @@ You can find the GNU General Public License at http://www.gnu.org/licenses/
 //  Bitboard is used from left to right. Leftmost bit is 0, and rightmost bit is 63.
 //  Main methods are bb_first_index, bb_last_index, bb_bit_count.
 //  Takes advantage of GCC compiler builtins or MSC intrinsics (visual studio).
-//  Otherwise will use oftware implementation.
+//  Otherwise will use software implementation.
 //-------------------------------------------------------------------------------------------------
 
 #if defined(__GNUC__)
 //-------------------------------------------------------------------------------------------------
 //  Return index of the first "1" bit of a bitboard: 0 to 63.
 //-------------------------------------------------------------------------------------------------
-int bb_first_index(U64 bb)
+extern inline int bb_first_index(U64 bb)
 {
-    assert(bb);
+    assert(bb != 0);
     return __builtin_clzll(bb);
 }
 
 //-------------------------------------------------------------------------------------------------
 //  Return index of the last "1" bit of a bitboard: 0 to 63.
 //-------------------------------------------------------------------------------------------------
-int bb_last_index(U64 bb)
+extern inline int bb_last_index(U64 bb)
 {
-    assert(bb);
-    return 63 - __builtin_ctzll(bb);
+    assert(bb != 0);
+    return __builtin_ctzll(bb) ^ 63;
 }
 
 //-------------------------------------------------------------------------------------------------
 //  Number of "1" bits in the bitboard
 //-------------------------------------------------------------------------------------------------
-int bb_bit_count(U64 bb)
+extern inline int bb_bit_count(U64 bb)
 {
     return __builtin_popcountll(bb);
 }
+
 // Not necessary when using builtins functions.
 void init_first_index_table(void){}
 void init_last_index_table(void){}
@@ -63,29 +64,29 @@ void init_count_table(void){}
 //-------------------------------------------------------------------------------------------------
 //  Return index of the first "1" bit of a bitboard: 0 to 63.
 //-------------------------------------------------------------------------------------------------
-int bb_first_index(U64 bb)
+extern inline int bb_first_index(U64 bb)
 {
-    assert(bb);
+    assert(bb != 0);
     unsigned long idx;
     _BitScanReverse64(&idx, bb);
-    return 63 - (int)idx;
+    return (int)idx ^ 63;
 }
 
 //-------------------------------------------------------------------------------------------------
 //  Return index of the last "1" bit of a bitboard: 0 to 63.
 //-------------------------------------------------------------------------------------------------
-int bb_last_index(U64 bb)
+extern inline int bb_last_index(U64 bb)
 {
-    assert(bb);
+    assert(bb != 0);
     unsigned long idx;
     _BitScanForward64(&idx, bb);
-    return 63 - (int)idx;
+    return (int)idx ^ 63;
 }
 
 //-------------------------------------------------------------------------------------------------
 //  Number of "1" bits in the bitboard
 //-------------------------------------------------------------------------------------------------
-int bb_bit_count(U64 bb)
+extern inline int bb_bit_count(U64 bb)
 {
     return (int)_mm_popcnt_u64(bb);
 }
@@ -198,7 +199,7 @@ S8 get_last_index(U16 value)
 //-------------------------------------------------------------------------------------------------
 int bb_first_index(U64 bb)
 {
-    assert(bb);
+    assert(bb != 0);
     if (bb & (U64)0xFFFF000000000000) return first_index_table[0][(bb & (U64)0xFFFF000000000000) >> 48];
     if (bb & (U64)0x0000FFFF00000000) return first_index_table[1][(bb & (U64)0x0000FFFF00000000) >> 32];
     if (bb & (U64)0x00000000FFFF0000) return first_index_table[2][(bb & (U64)0x00000000FFFF0000) >> 16];
@@ -210,7 +211,7 @@ int bb_first_index(U64 bb)
 //-------------------------------------------------------------------------------------------------
 int bb_last_index(U64 bb)
 {
-    assert(bb);
+    assert(bb != 0);
     if (bb & (U64)0x000000000000FFFF) return last_index_table[3][bb & (U64)0x000000000000FFFF];
     if (bb & (U64)0x00000000FFFF0000) return last_index_table[2][(bb & (U64)0x00000000FFFF0000) >> 16];
     if (bb & (U64)0x0000FFFF00000000) return last_index_table[1][(bb & (U64)0x0000FFFF00000000) >> 32];
@@ -229,53 +230,34 @@ int bb_bit_count(U64 bb)
 }
 #endif
 
-U64     bb_square[64];           // bitboard for each board square
-U64     bb_clear[64];            // bitboard used to clear bits
-
-// Local functions
-void    init_square_bb(void);
-
 //-------------------------------------------------------------------------------------------------
 //  Initializations
 //-------------------------------------------------------------------------------------------------
 void bb_init(void)
 {
-    init_square_bb();
     init_first_index_table();
     init_last_index_table();
     init_count_table();
 }
 
 //-------------------------------------------------------------------------------------------------
-//  Initialize bitboard square. One for each square.
-//  Square A8 = 0 and square H1 = 63.
-//-------------------------------------------------------------------------------------------------
-void init_square_bb(void)
-{
-    for (int index = 0; index < 64; index++) {
-        bb_square[index] = (U64)1 << (63 - index);
-        bb_clear[index] = ~bb_square[index];
-    }
-}
-
-//-------------------------------------------------------------------------------------------------
 //  Return a bitboard for square index
 //  Square A8 = 0 and square H1 = 63.
 //-------------------------------------------------------------------------------------------------
-U64 square_bb(int index)
+extern inline U64 square_bb(int index)
 {
     assert(index >= 0 && index < 64);
-    return bb_square[index];
+    return (U64)0x8000000000000000 >> index;
 }
 
 //-------------------------------------------------------------------------------------------------
 //  Turn bit to 1 using index (0-63)
 //-------------------------------------------------------------------------------------------------
-void bb_set_bit(U64 *bb, int index)
+extern inline void bb_set_bit(U64 *bb, int index)
 {
     assert(index >= 0 && index < 64);
     assert(bb != NULL);
-    *bb |= square_bb(index);
+    *bb |= (U64)0x8000000000000000 >> index;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -292,7 +274,7 @@ void bb_set_bit_rf(U64 *bb, int rank, int file)
 //-------------------------------------------------------------------------------------------------
 //  Return TRUE if bit is 1
 //-------------------------------------------------------------------------------------------------
-int bb_is_one(U64 bb, int index)
+extern inline int bb_is_one(U64 bb, int index)
 {
     assert(index >= 0 && index < 64);
     return bb & square_bb(index) ? TRUE : FALSE;
@@ -301,20 +283,42 @@ int bb_is_one(U64 bb, int index)
 //-------------------------------------------------------------------------------------------------
 //  Turn bit to 0
 //-------------------------------------------------------------------------------------------------
-void bb_clear_bit(U64 *bb, int index)
+extern inline void bb_clear_bit(U64 *bb, int index)
 {
     assert(index >= 0 && index < 64);
     assert(bb != NULL);
-    *bb &= bb_clear[index];
+    *bb &= ~((U64)0x8000000000000000 >> index);
 }
 
 //-------------------------------------------------------------------------------------------------
 //  Return the color bitboard for square
 //-------------------------------------------------------------------------------------------------
-U64 square_color_bb(int index)
+extern inline U64 square_color_bb(int index)
 {
     assert(index >= 0 && index < 64);
     return square_bb(index) & BB_LIGHT_SQ ? BB_LIGHT_SQ : BB_DARK_SQ;
+}
+
+//-------------------------------------------------------------------------------------------------
+//  Return index of the first "1" bit of a bitboard: 0 to 63, and clear the bit.
+//-------------------------------------------------------------------------------------------------
+extern inline int bb_pop_first_index(U64 *bb)
+{
+    assert(bb != NULL && *bb != 0);
+    int index = bb_first_index(*bb);
+    *bb &= ~((U64)0x8000000000000000 >> index);
+    return index;
+}
+
+//-------------------------------------------------------------------------------------------------
+//  Return index of the last "1" bit of a bitboard: 0 to 63, and clear the bit.
+//-------------------------------------------------------------------------------------------------
+extern inline int bb_pop_last_index(U64 *bb)
+{
+    assert(bb != NULL && *bb != 0);
+    int index = bb_last_index(*bb);
+    *bb &= ~((U64)0x8000000000000000 >> index);
+    return index;
 }
 
 //End
