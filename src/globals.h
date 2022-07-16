@@ -698,9 +698,6 @@ int     eval_pst_king(int color, int pcsq);
 void    eval_pst_print(void);
 void    eval_tune(void);
 
-// Neural Network
-void    tnn_write_record(FILE *bin_file, char *fen, int eval);
-
 // Evaluation Terms
 // Material
 EXTERN int SCORE_PAWN;

@@ -37,6 +37,7 @@ void trans_table_test(char *fen, char *desc)
     settings.single_move_time = 10000; 
     settings.total_move_time = 0;
     settings.use_book = FALSE;
+    settings.max_nodes = 0;
 
     search_run(game, &settings);
 

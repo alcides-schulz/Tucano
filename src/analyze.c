@@ -118,6 +118,7 @@ void *analysis_start(void *game)
     settings.single_move_time = MAX_TIME;
     settings.total_move_time = MAX_TIME;
     settings.use_book = FALSE;
+    settings.max_nodes = 0;
 
     search_run((GAME *)game, &settings);
 

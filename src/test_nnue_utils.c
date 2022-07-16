@@ -72,8 +72,8 @@ void generate_nn_data(int positions_total, int max_depth, int max_nodes, char *o
     settings.use_book = FALSE;
     settings.max_nodes = max_nodes;
 
-    int nodes_limit = max_nodes * 2;
-    int nodes_increment = max_nodes / 10;
+    U64 nodes_limit = max_nodes * 2;
+    U64 nodes_increment = max_nodes / 10;
 
     FILE *output = fopen(output_filename, "w");
 
@@ -83,14 +83,18 @@ void generate_nn_data(int positions_total, int max_depth, int max_nodes, char *o
     int positions_count = 0;
     int game_count;
 
+    EVAL_TUNING = TRUE;
+
     for (game_count = 1; game_count <= INT_MAX; game_count++) {
 
-        settings.max_nodes += nodes_increment;
-        if (settings.max_nodes > nodes_limit) settings.max_nodes = max_nodes;
+        if (max_nodes > 0) {
+            settings.max_nodes += nodes_increment;
+            if (settings.max_nodes > nodes_limit) settings.max_nodes = max_nodes;
+        }
 
         new_game(game, FEN_NEW_GAME);
 
-        int random_moves_count = (rand() % 10) + 4;
+        int random_moves_count = (rand() % 10) + 10;
 
         for (int i = 0; i < random_moves_count; i++) {
             make_random_move_nn(game);
@@ -100,21 +104,11 @@ void generate_nn_data(int positions_total, int max_depth, int max_nodes, char *o
         while (get_game_result(game) == GR_NOT_FINISH) {
 
             settings.max_depth = max_depth;
-            //int queens = queen_count(&game->board, WHITE) + queen_count(&game->board, BLACK);
-            //settings.max_depth += (2 - MIN(2, queens)) / 2;
-            //int rooks = rook_count(&game->board, WHITE) + rook_count(&game->board, BLACK);
-            //settings.max_depth += (4 - MIN(4, rooks)) / 2;
-            //int knights = knight_count(&game->board, WHITE) + knight_count(&game->board, BLACK);
-            //settings.max_depth += (4 - MIN(4, knights)) / 2;
-            //int bishops = bishop_count(&game->board, WHITE) + bishop_count(&game->board, BLACK);
-            //settings.max_depth += (4 - MIN(4, bishops)) / 2;
-            //int pawns = pawn_count(&game->board, WHITE) + pawn_count(&game->board, BLACK);
-            //settings.max_depth += (16 - pawns) / 8;
 
             search_run(game, &settings);
             if (!game->search.best_move) break;
 
-            if (ABS(game->search.best_score) <= MAX_EVAL && move_is_quiet(game->search.best_move)) {
+            if (ABS(game->search.best_score) <= MAX_EVAL /*&& move_is_quiet(game->search.best_move)*/) {
                 util_get_board_fen(&game->board, nndd[nndd_count].fen);
                 util_get_move_string(game->search.best_move, nndd[nndd_count].move);
                 nndd[nndd_count].ply = get_history_ply(&game->board);
@@ -175,6 +169,7 @@ void generate_nn_data(int positions_total, int max_depth, int max_nodes, char *o
         int positions_per_second = positions_count / elapsed_seconds;
         printf("file: %s -> positions %d of %d (game %d, nodes=%"PRIu64", positions per second: %u)...\r",
             output_filename, positions_count, positions_total, game_count, settings.max_nodes, positions_per_second);
+        fflush(stdout);
 
         if (positions_count >= positions_total) break;
     }
@@ -191,17 +186,8 @@ void make_random_move_nn(GAME *game)
 {
     MOVE        move;
     MOVE_LIST   ml;
-    MOVE        move_list[10];
-    int         score_list[10];
+    MOVE        move_list[100];
     int         count = 0;
-    SETTINGS    settings;
-
-    settings.single_move_time = MAX_TIME;
-    settings.total_move_time = 0;
-    settings.moves_per_level = 0;
-    settings.max_depth = 4;
-    settings.post_flag = POST_NONE;
-    settings.use_book = FALSE;
 
     select_init(&ml, game, is_incheck(&game->board, side_on_move(&game->board)), MOVE_NONE, FALSE);
     while ((move = next_move(&ml)) != MOVE_NONE) {
@@ -210,37 +196,17 @@ void make_random_move_nn(GAME *game)
             undo_move(&game->board);
             continue;
         }
-        search_run(game, &settings);
-        undo_move(&game->board);
-
-        int score = ABS(game->search.best_score);
-
-        if (count < 10) {
-            score_list[count] = score;
+        if (count < 100) {
             move_list[count] = move;
             count++;
         }
-        else {
-            int max_score = score_list[0];
-            int max_index = 0;
-            for (int i = 1; i < 10; i++) {
-                if (score_list[i] > max_score) {
-                    max_score = score_list[i];
-                    max_index = i;
-                }
-            }
-            if (score < score_list[max_index]) {
-                score_list[max_index] = score;
-                move_list[max_index] = move;
-            }
-        }
+        undo_move(&game->board);
     }
 
     if (count) {
         int index = rand() % count;
         make_move(&game->board, move_list[index]);
     }
-
 }
 
 void generate_nn_files()
@@ -259,9 +225,9 @@ void generate_nn_files()
             continue;
         }
 #ifdef _MSC_VER
-        generate_nn_data(100000, 100, 10000, to_file);
+        generate_nn_data(100000, 7, 0, to_file);
 #else
-        generate_nn_data(100000000, 100, 10000, to_file);
+        generate_nn_data(100000000, 7, 0, to_file);
 #endif
         break;
     }

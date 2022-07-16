@@ -58,6 +58,7 @@ void *ponder_search(void *game)
     ponder_settings.max_depth = MAX_DEPTH;
     ponder_settings.post_flag = POST_XBOARD;
     ponder_settings.use_book = FALSE;
+    ponder_settings.max_nodes = 0;
 
     search_run((GAME *)game, &ponder_settings);
 
@@ -169,8 +170,9 @@ void *iterative_deepening(void *pv_game)
 
     select_init(&root, game, incheck, MOVE_NONE, FALSE);
     while ((move = next_move(&root)) != MOVE_NONE) {
-        if (is_pseudo_legal(&game->board, root.pins, move))
+        if (is_pseudo_legal(&game->board, root.pins, move)) {
             game->search.root_move_count++;
+        }
     }
 
     //  Start the iterative deepening
