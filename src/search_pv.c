@@ -52,7 +52,7 @@ int search_pv(GAME *game, UINT incheck, int alpha, int beta, int depth)
     if (game->search.abort) return 0;
 
     assert(ply >= 0 && ply <= MAX_PLY);
-    if (ply >= MAX_PLY) return evaluate(game, alpha, beta);
+    if (ply >= MAX_PLY) return tnn_eval_incremental(&game->board);
 
     //  Mate pruning.
     alpha = MAX(-MATE_VALUE + ply, alpha);
@@ -69,7 +69,7 @@ int search_pv(GAME *game, UINT incheck, int alpha, int beta, int depth)
         depth--;
     }
 
-    game->eval_hist[ply] = evaluate(game, alpha, beta);
+    game->eval_hist[ply] = tnn_eval_incremental(&game->board);
 
     //  Loop through move list
     select_init(&ml, game, incheck, trans_move, FALSE);
@@ -111,7 +111,7 @@ int search_pv(GAME *game, UINT incheck, int alpha, int beta, int depth)
                     // Futility pruning: eval + margin below beta.
                     if (depth < 10) {
                         int pruning_margin = depth * (50 + get_pruning_margin(&game->move_order, turn, move));
-                        if (evaluate(game, alpha, beta) + pruning_margin < alpha) {
+                        if (tnn_eval_incremental(&game->board) + pruning_margin < alpha) {
                             continue;
                         }
                     }

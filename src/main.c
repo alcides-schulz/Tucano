@@ -18,13 +18,9 @@
 #define EXTERN
 #include "globals.h"
 
-#ifdef TUCANNUE
-#include "nnue/nnue.h"
-#endif
-
 #define ENGINE "Tucano"
 #define AUTHOR "Alcides Schulz"
-#define VERSION "10.05"
+#define VERSION "10.06"
 
 void        develop_workbench(void);
 double      bench(int depth, int print);
@@ -54,12 +50,6 @@ int main(int argc, char *argv[])
     int         hash_size = 64; // Hash Table Size in MB
 
     printf("%s chess engine by %s - %s (type 'help' for information)\n", ENGINE, AUTHOR, VERSION);
-
-    EVAL_PRINTING = FALSE;
-    EVAL_TUNING = FALSE;
-    USE_EVAL_TABLE = TRUE;
-    USE_PAWN_TABLE = TRUE;
-    USE_NN_EVAL = FALSE;
 
     // Command line options
     for (int i = 0; i < argc; i++) {
@@ -111,7 +101,6 @@ int main(int argc, char *argv[])
     bb_init();
     bb_data_init();
     magic_init();
-    eval_param_init();
     book_init();
     tt_init(hash_size);
     threads_init(threads);
@@ -332,11 +321,6 @@ int main(int argc, char *argv[])
             print_current_moves(&main_game);
             continue;
         }
-        if (!strcmp(command, "eval")) {
-            //  Display current position evaluation information.
-            eval_print(&main_game);
-            continue;
-        }
         if (!strcmp(command, "perft")) {
             //  Display current position move count.
             perft_depth = 0;
@@ -462,14 +446,6 @@ int main(int argc, char *argv[])
             }
             sscanf(line, "evtest %s", epd_file);
             eval_test(epd_file);
-            continue;
-        }
-        if (!strcmp(command, "tune")) {
-            eval_tune();
-            continue;
-        }
-        if (!strcmp(command, "ppst")) {
-            eval_pst_print();
             continue;
         }
         if (!strcmp(command, "help")) {
@@ -655,10 +631,11 @@ int valid_hash_size(int hash_size) {
 //-------------------------------------------------------------------------------------------------
 
 void generate_nn_files();
+void tnn_main();
 
 void develop_workbench(void)
 {
-    generate_nn_files();
+    tnn_main();
 }
 
 //END

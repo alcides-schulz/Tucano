@@ -53,12 +53,12 @@ int search_zw(GAME *game, UINT incheck, int beta, int depth)
     if (depth <= 0) return quiesce(game, incheck, beta - 1, beta, 0);
 
     game->search.nodes++;
-	game->pv_line.pv_size[ply] = ply;
+    game->pv_line.pv_size[ply] = ply;
 
     if (ply > 0 && is_draw(&game->board)) return 0;
 
     assert(ply >= 0 && ply <= MAX_PLY);
-    if (ply >= MAX_PLY) return evaluate(game, beta - 1, beta);
+    if (ply >= MAX_PLY) return tnn_eval_incremental(&game->board);
 
     //  Mate pruning.
     alpha = beta - 1;
@@ -69,7 +69,7 @@ int search_zw(GAME *game, UINT incheck, int beta, int depth)
     // transposition table score or move hint
     TT_RECORD tt_record;
     tt_read(game->board.key, &tt_record);
-    if (tt_record.data && tt_record.info.depth >= depth && !EVAL_TUNING) {
+    if (tt_record.data && tt_record.info.depth >= depth) {
         score = score_from_tt(tt_record.info.score, ply);
         if (tt_record.info.flag == TT_EXACT) return score;
         if (score >= beta && tt_record.info.flag == TT_LOWER) return score;
@@ -110,10 +110,10 @@ int search_zw(GAME *game, UINT incheck, int beta, int depth)
     }
 #endif 
 
-    int eval_score = evaluate(game, beta - 1, beta);
+    int eval_score = tnn_eval_incremental(&game->board);
     game->eval_hist[ply] = eval_score;
     int improving = ply > 1 && game->eval_hist[ply] > game->eval_hist[ply - 2];
-    
+
     // Razoring
     if (!incheck && depth < RAZOR_DEPTH && !is_mate_score(beta)) {
         if (eval_score + RAZOR_MARGIN[depth] < beta && !has_pawn_on_rank7(&game->board, turn)) {
@@ -178,7 +178,7 @@ int search_zw(GAME *game, UINT incheck, int beta, int depth)
         int extensions = 0;
 
         gives_check = is_check(&game->board, move);
-        
+
         // extension if move puts opponent in check
         if (gives_check && (depth < 4 || see_move(&game->board, move) >= 0)) {
             extensions = 1;
@@ -218,7 +218,7 @@ int search_zw(GAME *game, UINT incheck, int beta, int depth)
         if (!game->search.abort && score >= beta && reductions > 0) {
             score = -search_zw(game, gives_check, 1 - beta, depth - 1);
         }
-        
+
         undo_move(&game->board);
         if (game->search.abort) return 0;
 
@@ -245,13 +245,11 @@ int search_zw(GAME *game, UINT incheck, int beta, int depth)
         return (incheck ? -MATE_VALUE + ply : 0);
     }
 
-    if (!EVAL_TUNING) {
-        tt_record.info.move = MOVE_NONE;
-        tt_record.info.depth = (S8)depth;
-        tt_record.info.flag = TT_UPPER;
-        tt_record.info.score = score_to_tt(best_score, ply);
-        tt_save(game->board.key, &tt_record);
-    }
+    tt_record.info.move = MOVE_NONE;
+    tt_record.info.depth = (S8)depth;
+    tt_record.info.flag = TT_UPPER;
+    tt_record.info.score = score_to_tt(best_score, ply);
+    tt_save(game->board.key, &tt_record);
 
     return best_score;
 }

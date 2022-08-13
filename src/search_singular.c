@@ -53,7 +53,7 @@ int search_singular(GAME *game, UINT incheck, int beta, int depth, MOVE exclude_
     if (ply > 0 && is_draw(&game->board)) return 0;
 
     assert(ply >= 0 && ply <= MAX_PLY);
-    if (ply >= MAX_PLY) return evaluate(game, beta - 1, beta);
+    if (ply >= MAX_PLY) return tnn_eval_incremental(&game->board);
 
     //  Mate pruning.
     alpha = beta - 1;
@@ -90,7 +90,7 @@ int search_singular(GAME *game, UINT incheck, int beta, int depth, MOVE exclude_
 
                 if (!is_counter_move(&game->move_order, flip_color(turn), get_last_move_made(&game->board), move)) {
 
-                    if (eval_score == -MAX_SCORE) eval_score = evaluate(game, beta - 1, beta);
+                    if (eval_score == -MAX_SCORE) eval_score = tnn_eval_incremental(&game->board);
 
                     // Futility pruning: eval + margin below beta. Uses beta cutoff history.
                     if (!incheck && depth < 10) {

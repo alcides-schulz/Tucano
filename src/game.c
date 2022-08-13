@@ -30,11 +30,7 @@ void new_game(GAME *game, char *fen)
     memset(&game->search, 0, sizeof(SEARCH));
     memset(&game->pv_line, 0, sizeof(PV_LINE));
     memset(&game->move_order, 0, sizeof(MOVE_ORDER));
-    if (!EVAL_TUNING) {
-        memset(&game->eval_table, 0, sizeof(game->eval_table));
-        memset(&game->pawn_table, 0, sizeof(game->pawn_table));
-        tt_clear();
-    }
+    tt_clear();
     game->is_main_thread = TRUE;
 }
 

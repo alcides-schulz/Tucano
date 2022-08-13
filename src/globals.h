@@ -351,47 +351,6 @@ typedef struct s_search
     int     root_move_search;       // number of move searched at root node, used by xboard analysis
 }   SEARCH;
 
-//  Pawn evaluation table: cache for already evaluated pawn structure
-typedef struct s_pawn_table
-{
-    U64     bb_passers[COLORS];
-    U64     key;
-    S32     pawn_eval[COLORS];
-}   PAWN_TABLE;
-
-//  Evaluation table: cache for already evaluated positions
-typedef struct s_eval_table
-{
-    U64     key;
-    S32     score;
-}   EVAL_TABLE;
-
-#define PAWN_TABLE_SIZE 16384
-#define EVAL_TABLE_SIZE 65536
-
-typedef struct s_eval_values
-{
-    int     phase;
-    int     draw_adjust;
-    int     material[COLORS];
-    int     pawn[COLORS];
-    int     king[COLORS];
-    int     passed[COLORS];
-    int     pieces[COLORS];
-    int     mobility[COLORS];
-    int     flag_king_safety[COLORS];
-    U64     bb_passers[COLORS];
-    int     king_attack_count[COLORS];
-    int     king_attack_value[COLORS];
-    U64     king_attack_area[COLORS];
-    U64     king_attacked_squares[COLORS];
-    int     king_defend_count[COLORS];
-    int     non_mating_material[COLORS];
-    U64     pawn_attacks[COLORS];
-    U64     undefended[COLORS];
-    U64     mobility_target[COLORS];
-}   EVALUATION;
-
 // To verify game results
 #define GR_NOT_FINISH   0
 #define GR_WHITE_WIN    1
@@ -439,6 +398,8 @@ typedef struct s_board
     U8          fifty_move_rule;
     U8          ep_square;
     MOVE_HIST   history[MAX_HIST];
+    S16         nn_hidden_value[512];
+    S16         nn_history[MAX_HIST][512];
 }   BOARD;
 
 //  Game Data
@@ -447,8 +408,6 @@ typedef struct s_game {
     BOARD       board;
     PV_LINE     pv_line;
     MOVE_ORDER  move_order;
-    PAWN_TABLE  pawn_table[PAWN_TABLE_SIZE];
-    EVAL_TABLE  eval_table[EVAL_TABLE_SIZE];
     int         eval_hist[MAX_PLY];
     int         is_main_thread;
     THREAD_ID   thread_handle;
@@ -681,113 +640,7 @@ void    util_get_board_fen(BOARD *board, char *fen);
 void    util_get_board_chars(BOARD *board, char b[64]);
 char    piece_letter(int piece);
 char    promo_letter(int piece);
-void    eval_param_init(void);
 void    util_draw_board(BOARD *board);
-
-// Evaluation
-int     evaluate(GAME *game, int alpha, int beta);
-void    clear_eval_table(GAME *game);
-void    eval_print(GAME *game);
-void    eval_print_values(EVALUATION *eval_values);
-int     eval_pst_pawn(int color, int pcsq);
-int     eval_pst_knight(int color, int pcsq);
-int     eval_pst_bishop(int color, int pcsq);
-int     eval_pst_rook(int color, int pcsq);
-int     eval_pst_queen(int color, int pcsq);
-int     eval_pst_king(int color, int pcsq);
-void    eval_pst_print(void);
-void    eval_tune(void);
-
-// Evaluation Terms
-// Material
-EXTERN int SCORE_PAWN;
-EXTERN int SCORE_KNIGHT;
-EXTERN int SCORE_BISHOP;
-EXTERN int SCORE_ROOK;
-EXTERN int SCORE_QUEEN;
-EXTERN int B_BISHOP_PAIR;
-EXTERN int B_TEMPO;
-
-// King
-EXTERN int B_PAWN_PROXIMITY;
-EXTERN int P_PAWN_SHIELD;
-EXTERN int P_PAWN_STORM;
-
-// Pawn
-EXTERN int B_CANDIDATE;
-EXTERN int B_CONNECTED[6];
-EXTERN int B_CONNECTED_PASSER[6];
-EXTERN int P_DOUBLED;
-EXTERN int P_ISOLATED;
-EXTERN int P_ISOLATED_OPEN;
-EXTERN int P_WEAK;
-EXTERN int B_PAWN_SPACE;
-
-// Passed Pawns
-EXTERN int B_PASSED_RANK3;
-EXTERN int B_PASSED_RANK4;
-EXTERN int B_PASSED_RANK5;
-EXTERN int B_PASSED_RANK6;
-EXTERN int B_PASSED_RANK7;
-EXTERN int B_UNBLOCKED_RANK3;
-EXTERN int B_UNBLOCKED_RANK4;
-EXTERN int B_UNBLOCKED_RANK5;
-EXTERN int B_UNBLOCKED_RANK6;
-EXTERN int B_UNBLOCKED_RANK7;
-EXTERN int P_KING_FAR_MYC;
-EXTERN int B_KING_FAR_OPP;
-
-// Pieces
-EXTERN int B_ROOK_SEMI_OPEN;
-EXTERN int B_ROOK_FULL_OPEN;
-EXTERN int P_PAWN_BISHOP_SQ;
-
-// Mobility
-EXTERN int B_QUEEN_MOBILITY;
-EXTERN int B_ROOK_MOBILITY;
-EXTERN int B_BISHOP_MOBILITY;
-EXTERN int B_KNIGHT_MOBILITY;
-
-// King Attack
-EXTERN int KING_ATTACK_KNIGHT;
-EXTERN int KING_ATTACK_BISHOP;
-EXTERN int KING_ATTACK_ROOK;
-EXTERN int KING_ATTACK_QUEEN;
-EXTERN int KING_ATTACK_MULTI;
-EXTERN int KING_ATTACK_EGPCT;
-EXTERN int B_KING_DEFENDER;
-EXTERN int B_KING_ATTACK;
-
-// Threats
-EXTERN int P_PAWN_ATK_KING;
-EXTERN int P_PAWN_ATK_KNIGHT;
-EXTERN int P_PAWN_ATK_BISHOP;
-EXTERN int P_PAWN_ATK_ROOK;
-EXTERN int P_PAWN_ATK_QUEEN;
-EXTERN int B_THREAT_PAWN;
-EXTERN int B_THREAT_KNIGHT;
-EXTERN int B_THREAT_BISHOP;
-EXTERN int B_THREAT_ROOK;
-EXTERN int B_THREAT_QUEEN;
-
-EXTERN int B_CHECK_THREAT_KNIGHT;
-EXTERN int B_CHECK_THREAT_BISHOP;
-EXTERN int B_CHECK_THREAT_ROOK;
-EXTERN int B_CHECK_THREAT_QUEEN;
-
-// PST's
-EXTERN int PST_P_RANK;
-EXTERN int PST_P_FILE[4];
-EXTERN int PST_N_RANK[8];
-EXTERN int PST_N_FILE[4];
-EXTERN int PST_B_RANK[8];
-EXTERN int PST_B_FILE[4];
-EXTERN int PST_R_RANK[8];
-EXTERN int PST_R_FILE[4];
-EXTERN int PST_Q_RANK[8];
-EXTERN int PST_Q_FILE[4];
-EXTERN int PST_K_RANK[8];
-EXTERN int PST_K_FILE[4];
 
 // PGN utils
 #define PGN_STRING_SIZE 16384
@@ -839,12 +692,6 @@ void    epd(char *file_name, SETTINGS *settings);
 void    epd_search(char *file, SETTINGS *settings);
 void    eval_test(char *file_name);
 
-// Feature configuration: used for tests/tuning.
-EXTERN  int EVAL_PRINTING;
-EXTERN  int EVAL_TUNING;
-EXTERN  int USE_EVAL_TABLE;
-EXTERN  int USE_PAWN_TABLE;
-
 #ifndef NDEBUG
 // Assert functions.
 int     valid_material(BOARD *board);
@@ -872,7 +719,12 @@ U32 egtb_probe_wdl(BOARD *board, int depth, int ply);
 
 #endif
 
-EXTERN int USE_NN_EVAL;
-#define TUCANO_EVAL_FILE "tucano_nn01.bin"
+// Neural Network
+S16 tnn_index(int piece_color, int piece_type, int square);
+void tnn_fen2index(char *fen, S16 index[]);
+void tnn_init_hidden_value(BOARD *board);
+void tnn_set_piece(BOARD *board, int piece_color, int piece_type, int square);
+void tnn_unset_piece(BOARD *board, int piece_color, int piece_type, int square);
+int tnn_eval_incremental(BOARD *board);
 
 //End

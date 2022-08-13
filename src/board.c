@@ -33,6 +33,8 @@ void set_fen(BOARD *board, char *fen)
 
     memset(board, 0, sizeof(BOARD));
 
+    tnn_init_hidden_value(board);
+
     for (i = 0; i < 64; i++) {
 		board->state[WHITE].square[i] = NO_PIECE;
 		board->state[BLACK].square[i] = NO_PIECE;
@@ -77,9 +79,8 @@ void set_fen(BOARD *board, char *fen)
 
     // White or black to play
     while (fen[i] && fen[++i] == ' ');
-    if (fen[i] == 'w') {
+    if (fen[i] == 'w') 
         board->side_on_move = WHITE;
-    }
     if (fen[i] == 'b')  {
         board->side_on_move = BLACK;
         board->key ^= zk_color();
@@ -104,9 +105,8 @@ void set_fen(BOARD *board, char *fen)
 
     // En-passant square
     board->ep_square = 0;
-    if (fen[i] && fen[++i] == '-') {
+    if (fen[i] && fen[++i] == '-')
         i++;
-    }
     else  {
         if (fen[i] >= 'a' && fen[i] <= 'h' && fen[i+1] >= '1' && fen[i+1] <= '8')
             board->ep_square = (U8)((('8' - fen[i+1]) * 8) + (fen[i] - 'a'));
@@ -116,19 +116,18 @@ void set_fen(BOARD *board, char *fen)
         board->key ^= zk_ep(board->ep_square);
 
     // 50 move count
-    while (fen[i] && fen[i] == ' ') i++;
+    while (fen[i] && fen[i] == ' ')
+        i++;
 
     board->fifty_move_rule = 0;
     while (fen[i] && fen[i] != ' ')  {
-        if (fen[i] >= '0' && fen[i] <= '9') {
+        if (fen[i] >= '0' && fen[i] <= '9')
             board->fifty_move_rule = board->fifty_move_rule * 10 + (fen[i] - '0');
-        }
         i++;
     }
 
-    if (board->fifty_move_rule <= 0 || board->fifty_move_rule > 100) {
+    if (board->fifty_move_rule <= 0 || board->fifty_move_rule > 100)
         board->fifty_move_rule = 0;
-    }
 
     // Setup additional state data.
     board->ply = 0;
@@ -180,6 +179,8 @@ void make_move(BOARD *board, MOVE move)
     board->history[board->histply].board_key        = board->key;
     board->history[board->histply].pawn_key         = board->pawn_key;
     board->history[board->histply].fifty_move_rule  = board->fifty_move_rule;
+    
+    memcpy(board->nn_history[board->histply], board->nn_hidden_value, sizeof(board->nn_hidden_value));
 
     // Key
     board->key ^= zk_color();
@@ -299,6 +300,8 @@ void undo_move(BOARD *board)
     board->key                       = board->history[board->histply].board_key;
     board->pawn_key                  = board->history[board->histply].pawn_key;
     board->fifty_move_rule           = board->history[board->histply].fifty_move_rule;
+
+    memcpy(board->nn_hidden_value, board->nn_history[board->histply], sizeof(board->nn_hidden_value));
 
     //  basic move information
     int mvpc = unpack_piece(move);
@@ -445,6 +448,8 @@ void move_piece(BOARD *board, int color, int type, int frsq, int tosq)
         board->pawn_key ^= zk_square(color, PAWN, frsq);
         board->pawn_key ^= zk_square(color, PAWN, tosq);
     }
+    tnn_unset_piece(board, color, type, frsq);
+    tnn_set_piece(board, color, type, tosq);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -460,6 +465,7 @@ void set_piece(BOARD *board, int color, int type, int tosq)
     board->key ^= zk_square(color, type, tosq);
     if (type == PAWN) board->pawn_key ^= zk_square(color, PAWN, tosq);
     board->state[color].count[type]++;
+    tnn_set_piece(board, color, type, tosq);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -475,6 +481,7 @@ void remove_piece(BOARD *board, int color, int type, int frsq)
     board->key ^= zk_square(color, type, frsq);
     if (type == PAWN) board->pawn_key ^= zk_square(color, PAWN, frsq);
     board->state[color].count[type]--;
+    tnn_unset_piece(board, color, type, frsq);
 }
 
 //-------------------------------------------------------------------------------------------------

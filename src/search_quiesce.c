@@ -37,15 +37,15 @@ int quiesce(GAME *game, UINT incheck, int alpha, int beta, int depth)
     assert(alpha <= beta);
 
     check_time(game);
-	if (game->search.abort) return 0;
+    if (game->search.abort) return 0;
 
-	game->pv_line.pv_size[ply] = ply;
-	game->search.nodes++;
+    game->pv_line.pv_size[ply] = ply;
+    game->search.nodes++;
 
     if (ply > 0 && is_draw(&game->board)) return 0;
 
-	assert(ply >= 0 && ply <= MAX_PLY);
-    if (ply >= MAX_PLY) return evaluate(game, alpha, beta);
+    assert(ply >= 0 && ply <= MAX_PLY);
+    if (ply >= MAX_PLY) return tnn_eval_incremental(&game->board);
 
     //  Mate pruning.
     alpha = MAX(-MATE_VALUE + ply, alpha);
@@ -55,7 +55,7 @@ int quiesce(GAME *game, UINT incheck, int alpha, int beta, int depth)
     // transposition table score or move hint
     TT_RECORD tt_record;
     tt_read(game->board.key, &tt_record);
-    if (tt_record.data && !EVAL_TUNING) {
+    if (tt_record.data) {
         score = score_from_tt(tt_record.info.score, game->board.ply);
         if (tt_record.info.flag == TT_EXACT) return score;
         if (score >= beta && tt_record.info.flag == TT_LOWER) return score;
@@ -64,7 +64,7 @@ int quiesce(GAME *game, UINT incheck, int alpha, int beta, int depth)
     MOVE trans_move = tt_record.info.move;
 
     if (!incheck) {
-        best_score = evaluate(game, alpha, beta);
+        best_score = tnn_eval_incremental(&game->board);
         if (best_score >= beta) return best_score;
         if (best_score > alpha) alpha = best_score;
     }
@@ -76,7 +76,7 @@ int quiesce(GAME *game, UINT incheck, int alpha, int beta, int depth)
         assert(is_valid(&game->board, move));
 
         //  Skip moves that are not going to improve the position.
-        if (!incheck && unpack_type(move) == MT_CAPPC && !EVAL_TUNING) {
+        if (!incheck && unpack_type(move) == MT_CAPPC) {
 
             // Skip captures that will not improve alpha (delta pruning)
             if (best_score + MAX(100, 400 + depth * 10) + piece_value(unpack_capture(move)) <= alpha) {
@@ -102,21 +102,19 @@ int quiesce(GAME *game, UINT incheck, int alpha, int beta, int depth)
 
         //  Search new position.
         score = -quiesce(game, gives_check, -beta, -alpha, depth - 1);
-        
+
         undo_move(&game->board);
         if (game->search.abort) return 0;
 
         //  Score verification
         if (score > best_score) {
-            if (score > alpha)  {
+            if (score > alpha) {
                 if (score >= beta) {
-                    if (!EVAL_TUNING) {
-                        tt_record.info.move = move;
-                        tt_record.info.depth = 0;
-                        tt_record.info.flag = TT_LOWER;
-                        tt_record.info.score = score_to_tt(score, ply);
-                        tt_save(game->board.key, &tt_record);
-                    }
+                    tt_record.info.move = move;
+                    tt_record.info.depth = 0;
+                    tt_record.info.flag = TT_LOWER;
+                    tt_record.info.score = score_to_tt(score, ply);
+                    tt_save(game->board.key, &tt_record);
                     return score;
                 }
                 update_pv(&game->pv_line, ply, move);
@@ -132,21 +130,19 @@ int quiesce(GAME *game, UINT incheck, int alpha, int beta, int depth)
         return -MATE_VALUE + ply;
     }
 
-    if (!EVAL_TUNING) {
-        if (best_move != MOVE_NONE) {
-            tt_record.info.move = best_move;
-            tt_record.info.depth = 0;
-            tt_record.info.flag = TT_EXACT;
-            tt_record.info.score = score_to_tt(best_score, ply);
-        }
-        else {
-            tt_record.info.move = MOVE_NONE;
-            tt_record.info.depth = 0;
-            tt_record.info.flag = TT_UPPER;
-            tt_record.info.score = score_to_tt(best_score, ply);
-        }
-        tt_save(game->board.key, &tt_record);
+    if (best_move != MOVE_NONE) {
+        tt_record.info.move = best_move;
+        tt_record.info.depth = 0;
+        tt_record.info.flag = TT_EXACT;
+        tt_record.info.score = score_to_tt(best_score, ply);
     }
+    else {
+        tt_record.info.move = MOVE_NONE;
+        tt_record.info.depth = 0;
+        tt_record.info.flag = TT_UPPER;
+        tt_record.info.score = score_to_tt(best_score, ply);
+    }
+    tt_save(game->board.key, &tt_record);
 
     return best_score;
 }

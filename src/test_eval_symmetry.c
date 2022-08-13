@@ -70,14 +70,14 @@ void eval_test(char *file)
         fen[50] = '\0';
         printf("position %3d %-50s   ", count, fen);
         
-        eval_normal = evaluate(game, -MAX_SCORE, MAX_SCORE);
+        eval_normal = tnn_eval_incremental(&game->board);
 
         flip_ranks(&game->board);
-        eval_ranks = evaluate(game, -MAX_SCORE, MAX_SCORE);
+        eval_ranks = tnn_eval_incremental(&game->board);
         if (eval_normal == eval_ranks) correct_ranks++;
 
         flip_files(&game->board);
-        eval_files = evaluate(game, -MAX_SCORE, MAX_SCORE);
+        eval_files = tnn_eval_incremental(&game->board);
         if (eval_normal == eval_files) correct_files++;
 
         printf("Eval: %4d FlipRanks: %4d FlipFiles: %4d\n", eval_normal, eval_ranks, eval_files);
