@@ -12,22 +12,8 @@ Tucano can be downloaded from github: https://github.com/alcides-schulz/Tucano
 
 Neural Network Evaluation
 -------------------------
-Starting with version 10 release, Tucano uses a neural network evaluation, which increases the engine strength.
-This network was trained on about 1.5 billion positions using Tucano's evaluation at depth 8 and Nodchip trainer's code (https://github.com/nodchip/Stockfish).
-The neural network access code is from Daniel Shawn nnue library (https://github.com/dshawul/nnue-probe).
-In order to use neural network you need to use an evaluation file, currently tucano_nn01.bin, that can be found in the Tucano’s github release section.
-
-When running tucano, it will try to load the file from the same folder where tucano executable is.
-You can load a different file by using a new command line parameter, e.g.: tucano -eval_file tucano_nn01.bin.
-Also, you can send the file name through the new UCI option "name EvalFile type string".
-
-It is important to make sure tucano can locate the eval file. 
-To validate if the file is loaded you can start tucano on your system and see if it shows the message below:
- 
-        Tucano chess engine by Alcides Schulz - 10.00 (type 'help' for information)
-
-        Eval file 'tucano_nn01.bin' loaded !
-            hash table: 64 MB, threads: 1
+Starting with version 10 release, Tucano uses a neural network evaluation, which increases the engine strength. This network architecture is based on stockfish neural network.
+From version 10.06 and later, the network has been changed and use a new structure of 768x128x1. Also includes its own network trainer. The weights are embeeded in the file eval_nn.h.
 
 It is recommend to run with the neural network evaluation, othwerwise the performance will not be much better than previous version 9.
 
@@ -71,12 +57,11 @@ Tucano supports the following uci options:
     
 Command Line options
 --------------------
-tucano -hash N -threads N -syzygy_path F -eval_file E
+tucano -hash N -threads N -syzygy_path F
 
     -hash indicates the size of hash table, default = 64 MB, minimum: 8 MB, maximum: 65536 MB.
     -threads indicates how many threads to use during search, minimum: 1, maximum: 256. Depends on how many cores your computer have.
     -syzygy_path indicates the folder of syzygy endgame tablebase.
-    -eval_file indicates the location of neural network file used by evaluation.
    
 Signature
 ---------
@@ -95,7 +80,6 @@ Start tucano and type the command "speed", you should see the following report:
 
         Tucano chess engine by Alcides Schulz - 10.00 (type 'help' for information)
 
-        Eval file 'D:\ChessProg\tucano\tucano_nn01.bin' loaded !
            hash table: 64 MB, threads: 1
 
         speed
@@ -119,27 +103,21 @@ Here are the commands used for compilation:
 Windows (compiled using mingW version 7.2.0)
 
         AVX2
-        gcc -o tucano_avx2.exe -DEGTB_SYZYGY -DTUCANNUE -O3 -Isrc -flto -m64 -mtune=generic -s -static -Wall -Wfatal-errors -DUSE_AVX2 -mavx2 -DUSE_SSE41 -msse4.1 -DUSE_SSSE3 -mssse3 -DUSE_SSE2 -msse2 -DUSE_SSE -msse src\*.c src\nnue\*.cpp src\fathom\tbprobe.c
+        gcc -o tucano_avx2.exe -DEGTB_SYZYGY -DTNNAVX2 -O3 -Isrc -flto -m64 -mtune=generic -s -static -Wall -Wfatal-errors -mavx2 -msse4.1 -mssse3 -msse2 -msse src\*.c src\fathom\tbprobe.c
         
         SSE4.1
-        gcc -o tucano_sse4.exe -DEGTB_SYZYGY -DTUCANNUE -O3 -Isrc -flto -m64 -mtune=generic -s -static -Wall -Wfatal-errors -DUSE_SSE41 -msse4.1 -DUSE_SSSE3 -mssse3 -DUSE_SSE2 -msse2 -DUSE_SSE -msse src\*.c src\nnue\*.cpp src\fathom\tbprobe.c
-        
-        SSE3
-        gcc -o tucano_sse4.exe -DEGTB_SYZYGY -DTUCANNUE -O3 -Isrc -flto -m64 -mtune=generic -s -static -Wall -Wfatal-errors -DUSE_SSSE3 -mssse3 -DUSE_SSE2 -msse2 -DUSE_SSE -msse src\*.c src\nnue\*.cpp src\fathom\tbprobe.c
-        
-        SSE2
-        gcc -o tucano_sse4.exe -DEGTB_SYZYGY -DTUCANNUE -O3 -Isrc -flto -m64 -mtune=generic -s -static -Wall -Wfatal-errors -DUSE_SSE2 -msse2 -DUSE_SSE -msse src\*.c src\nnue\*.cpp src\fathom\tbprobe.c
+        gcc -o tucano_sse4.exe -DEGTB_SYZYGY -DTNNSSE4 -O3 -Isrc -flto -m64 -mtune=generic -s -static -Wall -Wfatal-errors -msse4.1 -mssse3 -msse2 -msse src\*.c src\fathom\tbprobe.c
         
         OLD
-        gcc -o tucano_old.exe -DEGTB_SYZYGY -DTUCANNUE -O3 -Isrc -flto -m64 -mtune=generic -s -static -Wall -Wfatal-errors src\*.c src\nnue\*.cpp src\fathom\tbprobe.c
+        gcc -o tucano_old.exe -DEGTB_SYZYGY -O3 -Isrc -flto -m64 -mtune=generic -s -static -Wall -Wfatal-errors src\*.c src\fathom\tbprobe.c
 
 
 Linux and ARM V8 (using src/makefile):
     
     cd src
     make <architeture>
-          <architecture>: avx2, sse4, sse3, sse2, old
+          <architecture>: avx2, sse4, old
 
-Note: It is recommend to use AVX2 or the higher SSE in order to have a good performance with neural network evaluation. 
+Note: It is recommend to use AVX2 or SSE in order to have a good performance with neural network evaluation. 
 
 //END
