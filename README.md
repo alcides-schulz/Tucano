@@ -55,6 +55,8 @@ Tucano supports the following uci options:
     option name Ponder type check default false
     option name EvalFile type string default <empty>
     
+    Note: since version 10.06 it won't use an external evaluation file, "EvalFile" parameter is ignored.
+    
 Command Line options
 --------------------
 tucano -hash N -threads N -syzygy_path F
