@@ -58,7 +58,7 @@ int search_zw(GAME *game, UINT incheck, int beta, int depth)
     if (ply > 0 && is_draw(&game->board)) return 0;
 
     assert(ply >= 0 && ply <= MAX_PLY);
-    if (ply >= MAX_PLY) return tnn_eval_incremental(&game->board);
+    if (ply >= MAX_PLY) return tnn_eval(&game->board);
 
     //  Mate pruning.
     alpha = beta - 1;
@@ -110,7 +110,7 @@ int search_zw(GAME *game, UINT incheck, int beta, int depth)
     }
 #endif 
 
-    int eval_score = tnn_eval_incremental(&game->board);
+    int eval_score = tnn_eval(&game->board);
     game->eval_hist[ply] = eval_score;
     int improving = ply > 1 && game->eval_hist[ply] > game->eval_hist[ply - 2];
 

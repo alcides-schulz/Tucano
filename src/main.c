@@ -20,7 +20,7 @@
 
 #define ENGINE "Tucano"
 #define AUTHOR "Alcides Schulz"
-#define VERSION "10.06"
+#define VERSION "10.07"
 
 void        develop_workbench(void);
 double      bench(int depth, int print);
@@ -635,7 +635,7 @@ void tnn_main();
 
 void develop_workbench(void)
 {
-    tnn_main();
+    generate_nn_files();
 }
 
 //END

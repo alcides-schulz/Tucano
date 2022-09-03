@@ -530,7 +530,7 @@ void tnn_train(int epoch_total, int batch_size)
 
     tnn_prepare_files();
 
-    float lowest_error = 0.0;
+    double lowest_error = 0.0;
     double total_batch_error = 0;
     double total_batch_records = 0;
 

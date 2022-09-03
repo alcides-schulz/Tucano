@@ -47,7 +47,7 @@ static const char SQUARE_LABEL[64][3] =
 //-------------------------------------------------------------------------------------------------
 char piece_letter(int piece)
 {
-    assert(piece > 0 && piece < NUM_PIECES);
+    assert(piece >= 0 && piece < NUM_PIECES);
     return PIECE_LETTER[piece];
 }
 
@@ -503,6 +503,39 @@ void util_get_board_chars(BOARD *board, char board_string[64])
     }
 }
 
+//-------------------------------------------------------------------------------------------------
+//  Save board in pgn format
+//-------------------------------------------------------------------------------------------------
+void save_board_pgn(GAME *game, char *file_name, int book_moves)
+{
+    FILE *pgn_file = fopen(file_name, "w");
+    if (pgn_file == NULL) {
+        printf("cannot open file: %s\n", file_name);
+        return;
+    }
+    char move_string[100];
+
+    int move_number = 0;
+    for (int i = 0; i < game->board.histply; i++) {
+        util_get_move_string(game->board.history[i].move, move_string);
+        if (i % 2 == 0) {
+            move_number++;
+            fprintf(pgn_file, "%d. %s ", move_number, move_string);
+        }
+        else {
+            fprintf(pgn_file, "%s ", move_string);
+        }
+        if (i < book_moves) fprintf(pgn_file, "{book} ");
+    }
+    int game_result = get_game_result(game);
+    switch (game_result) {
+    case GR_WHITE_WIN: fprintf(pgn_file, "1-0"); break;
+    case GR_BLACK_WIN: fprintf(pgn_file, "0-1"); break;
+    case GR_NOT_FINISH: break;
+    default: fprintf(pgn_file, "1/2-1/2"); break;
+    }
+    fprintf(pgn_file, "\n");
+    fclose(pgn_file);
+}
+
 //END
-
-

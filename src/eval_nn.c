@@ -17,6 +17,7 @@ You can find the GNU General Public License at http://www.gnu.org/licenses/
 
 #include "globals.h"
 #include "eval_nn.h"
+//#include "tucanno0012.h"
 
 char *tnn_type_lookup[2] = { "PNBRQK", "pnbrqk" };
 void tnn_fen2index(char *fen, S16 index[]);
@@ -147,6 +148,11 @@ int tnn_eval_incremental(BOARD *board)
 }
 
 #endif
+
+int tnn_eval(BOARD *board)
+{
+    return tnn_eval_incremental(board);
+}
 
 void tnn_fen2index(char *fen, S16 index[])
 {

@@ -33,7 +33,6 @@ typedef struct s_nndd
     int     ply;
     int     side;
     int     depth;
-    U64     nodes;
 }   NNDD;
 
 NNDD    nndd[1024];
@@ -44,7 +43,7 @@ NNDD    nndd[1024];
 //      *.tnn -> format for tucano nn trainer.
 //      *.plain or other -> plain format compatible with nodchip nnue trainer
 //-------------------------------------------------------------------------------------------------
-void generate_nn_data(int positions_total, int max_depth, int max_nodes, char *output_filename)
+void generate_nn_data(int positions_total, int max_depth, char *output_filename, int save_pgn, int save_positions)
 {
     GAME        *game;
     SETTINGS    settings;
@@ -66,10 +65,7 @@ void generate_nn_data(int positions_total, int max_depth, int max_nodes, char *o
     settings.max_depth = max_depth;
     settings.post_flag = POST_NONE;
     settings.use_book = FALSE;
-    settings.max_nodes = max_nodes;
-
-    U64 nodes_limit = max_nodes * 2;
-    U64 nodes_increment = max_nodes / 10;
+    settings.max_nodes = 0;
 
     FILE *output = fopen(output_filename, "w");
 
@@ -79,12 +75,12 @@ void generate_nn_data(int positions_total, int max_depth, int max_nodes, char *o
     int positions_count = 0;
     int game_count;
 
-    for (game_count = 1; game_count <= INT_MAX; game_count++) {
+    FILE *debug_positions = NULL;
+    if (save_positions) {
+        debug_positions = fopen("d:/temp/positions.txt", "w");
+    }
 
-        if (max_nodes > 0) {
-            settings.max_nodes += nodes_increment;
-            if (settings.max_nodes > nodes_limit) settings.max_nodes = max_nodes;
-        }
+    for (game_count = 1; game_count <= INT_MAX; game_count++) {
 
         new_game(game, FEN_NEW_GAME);
 
@@ -94,30 +90,38 @@ void generate_nn_data(int positions_total, int max_depth, int max_nodes, char *o
             make_random_move_nn(game);
         }
 
+        if (save_positions) {
+            char fen[100];
+            util_get_board_fen(&game->board, fen);
+            fprintf(debug_positions, "%s\n", fen);
+            fflush(debug_positions);
+        }
+
         int nndd_count = 0;
         while (get_game_result(game) == GR_NOT_FINISH) {
-
-            settings.max_depth = max_depth;
-
+            
             search_run(game, &settings);
             if (!game->search.best_move) break;
 
-            if (ABS(game->search.best_score) <= MAX_EVAL /*&& move_is_quiet(game->search.best_move)*/) {
-                util_get_board_fen(&game->board, nndd[nndd_count].fen);
-                util_get_move_string(game->search.best_move, nndd[nndd_count].move);
-                nndd[nndd_count].ply = get_history_ply(&game->board);
-                nndd[nndd_count].side = side_on_move(&game->board);
-                nndd[nndd_count].score = game->search.best_score;
-                nndd[nndd_count].depth = settings.max_depth;
-                nndd[nndd_count].nodes = game->search.nodes;
-                nndd_count++;
-            }
+            util_get_board_fen(&game->board, nndd[nndd_count].fen);
+            util_get_move_string(game->search.best_move, nndd[nndd_count].move);
+            nndd[nndd_count].ply = get_history_ply(&game->board);
+            nndd[nndd_count].side = side_on_move(&game->board);
+            nndd[nndd_count].score = game->search.best_score;
+            nndd[nndd_count].depth = settings.max_depth;
+            nndd_count++;
 
             make_move(&game->board, game->search.best_move);
         }
 
         int game_result = get_game_result(game);
         if (game_result == GR_NOT_FINISH) continue;
+        
+        if (save_pgn) {
+            char pgn_name[1024];
+            sprintf(pgn_name, "d:/temp/gg/game%04d.pgn", game_count);
+            save_board_pgn(game, pgn_name, random_moves_count);
+        }
 
         for (int i = 0; i < nndd_count; i++) {
             if (tnn_format) {
@@ -130,7 +134,7 @@ void generate_nn_data(int positions_total, int max_depth, int max_nodes, char *o
                 default: fprintf(output, "[1/2]"); break;
                 }
                 fprintf(output, ";depth=%d", nndd[i].depth);
-                fprintf(output, ";nodes=%"PRIu64"", nndd[i].nodes);
+                fprintf(output, ";move=%s", nndd[i].move);
                 fprintf(output, "\n");
             }
             else { // NNUE plain format
@@ -157,6 +161,7 @@ void generate_nn_data(int positions_total, int max_depth, int max_nodes, char *o
         }
 
         fflush(output);
+        if (debug_positions) fclose(debug_positions);
 
         UINT elapsed_seconds = (util_get_time() - start_time) / 1000;
         elapsed_seconds = MAX(1, elapsed_seconds);
@@ -180,8 +185,18 @@ void make_random_move_nn(GAME *game)
 {
     MOVE        move;
     MOVE_LIST   ml;
-    MOVE        move_list[100];
+    MOVE        move_list[10];
+    int         score_list[10];
     int         count = 0;
+    SETTINGS    settings;
+
+    settings.single_move_time = MAX_TIME;
+    settings.total_move_time = 0;
+    settings.moves_per_level = 0;
+    settings.max_depth = 4;
+    settings.post_flag = POST_NONE;
+    settings.use_book = FALSE;
+    settings.max_nodes = 0;
 
     select_init(&ml, game, is_incheck(&game->board, side_on_move(&game->board)), MOVE_NONE, FALSE);
     while ((move = next_move(&ml)) != MOVE_NONE) {
@@ -190,11 +205,31 @@ void make_random_move_nn(GAME *game)
             undo_move(&game->board);
             continue;
         }
-        if (count < 100) {
+        search_run(game, &settings);
+
+        undo_move(&game->board);
+
+        int score = ABS(game->search.best_score);
+
+        if (count < 10) {
+            score_list[count] = score;
             move_list[count] = move;
             count++;
         }
-        undo_move(&game->board);
+        else {
+            int max_score = score_list[0];
+            int max_index = 0;
+            for (int i = 1; i < 10; i++) {
+                if (score_list[i] > max_score) {
+                    max_score = score_list[i];
+                    max_index = i;
+                }
+            }
+            if (score < score_list[max_index]) {
+                score_list[max_index] = score;
+                move_list[max_index] = move;
+            }
+        }
     }
 
     if (count) {
@@ -219,9 +254,9 @@ void generate_nn_files()
             continue;
         }
 #ifdef _MSC_VER
-        generate_nn_data(100000, 7, 0, to_file);
+        generate_nn_data(100000, 7, to_file, FALSE, FALSE);
 #else
-        generate_nn_data(100000000, 7, 0, to_file);
+        generate_nn_data(100000000, 9, to_file, FALSE, FALSE);
 #endif
         break;
     }

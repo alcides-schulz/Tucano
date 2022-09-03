@@ -338,13 +338,14 @@ void extract_games(char *input_pgn)
             printf("game %3d: %s vs %s: %s                  \r", pgn_file.game_number, pgn_game.white, pgn_game.black, pgn_game.result);
         }
 
-        if (strstr(pgn_game.result, "1-0") == NULL) continue;
+        if (strstr(pgn_game.result, "1/2-1/2") != NULL) continue;
 
         new_game(game, pgn_game.initial_fen);
 
         int valid_game = TRUE;
-        int max_difference = 0;
+        int total_diff = 0;
         int move_count = 0;
+        int white_win = strstr(pgn_game.result, "1-0") != NULL;
 
         while (pgn_next_move(&pgn_game, &pgn_move)) {
 
@@ -354,22 +355,30 @@ void extract_games(char *input_pgn)
                 valid_game = FALSE;
                 printf("%s\n", pgn_game.string);
                 printf("PGN_MOVE: [%s]\n", pgn_move.string);
-                board_print(&game->board, "err");
-                break;
+                board_print(&game->board, NULL);
+                continue;
             }
 
             make_move(&game->board, move);
             move_count++;
 
-            int diff = material_value(&game->board, BLACK) - material_value(&game->board, WHITE);
-            if (diff > 0) max_difference += diff / 2;
+            int diff = 0;
+            if (move_count < 40) {
+                if (white_win) {
+                    diff = material_value(&game->board, BLACK) - material_value(&game->board, WHITE);
+                }
+                else {
+                    diff = material_value(&game->board, WHITE) - material_value(&game->board, BLACK);
+                }
+                if (diff > 0) total_diff += diff;
+            }
         }
         if (!valid_game) continue;
         
-        if (max_difference <= 0) continue;
+        if (total_diff <= 0) continue;
 
         char output_name[1024];
-        sprintf(output_name, "d:/temp/games/%05d.%05d.pgn", max_difference, game_count);
+        sprintf(output_name, "d:/temp/games/%05d.%05d.pgn", ABS(total_diff), game_count);
         FILE *out_file = fopen(output_name, "w");
         if (!out_file) {
             fprintf(stderr, "cannot create file: %s\n", output_name);

@@ -641,6 +641,7 @@ void    util_get_board_chars(BOARD *board, char b[64]);
 char    piece_letter(int piece);
 char    promo_letter(int piece);
 void    util_draw_board(BOARD *board);
+void    save_board_pgn(GAME *game, char *file_name, int book_moves);
 
 // PGN utils
 #define PGN_STRING_SIZE 16384
@@ -725,6 +726,6 @@ void tnn_fen2index(char *fen, S16 index[]);
 void tnn_init_hidden_value(BOARD *board);
 void tnn_set_piece(BOARD *board, int piece_color, int piece_type, int square);
 void tnn_unset_piece(BOARD *board, int piece_color, int piece_type, int square);
-int tnn_eval_incremental(BOARD *board);
+int tnn_eval(BOARD *board);
 
 //End

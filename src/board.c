@@ -282,8 +282,10 @@ void undo_move(BOARD *board)
 {
     if (board->histply == 0) return; // no move to undo
 
-    board->ply--;
+    if (board->ply > 0) board->ply--;
     board->histply--;
+
+    assert(board->ply >= 0 && board->ply < MAX_PLY);
 
     // Get last move made
     MOVE move = board->history[board->histply].move;
