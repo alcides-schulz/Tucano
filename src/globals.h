@@ -726,6 +726,6 @@ void tnn_fen2index(char *fen, S16 index[]);
 void tnn_init_hidden_value(BOARD *board);
 void tnn_set_piece(BOARD *board, int piece_color, int piece_type, int square);
 void tnn_unset_piece(BOARD *board, int piece_color, int piece_type, int square);
-int tnn_eval(BOARD *board);
+int tnn_eval(GAME *game);
 
 //End

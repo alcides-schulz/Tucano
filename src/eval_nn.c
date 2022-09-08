@@ -149,9 +149,9 @@ int tnn_eval_incremental(BOARD *board)
 
 #endif
 
-int tnn_eval(BOARD *board)
+int tnn_eval(GAME *game)
 {
-    return tnn_eval_incremental(board);
+    return tnn_eval_incremental(&game->board);
 }
 
 void tnn_fen2index(char *fen, S16 index[])
