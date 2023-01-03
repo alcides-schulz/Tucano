@@ -20,12 +20,13 @@
 
 #define ENGINE "Tucano"
 #define AUTHOR "Alcides Schulz"
-#define VERSION "10.08"
+#define VERSION "10.09"
 
 void        develop_workbench(void);
 double      bench(int depth, int print);
 void        speed_test(void);
 void        settings_init(void);
+void        nn_menu();
 
 char        line[MAX_READ];
 char        command[MAX_READ] = { '\0' };
@@ -74,26 +75,6 @@ int main(int argc, char *argv[])
 #endif
     }
 
-#ifdef TUCANNUE
-    // Try to load the eval file if located in the same folder as tucano
-    if (!USE_NN_EVAL) {
-        char nnue_file[1000];
-        if (strlen(argv[0]) < 1000) {
-            strcpy(nnue_file, argv[0]);
-            char *last_slash = strrchr(nnue_file, '\\'); // windows
-            if (last_slash == NULL) {
-                last_slash = strrchr(nnue_file, '/'); // linux
-            }
-            if (last_slash != NULL) {
-                strcpy(last_slash + 1, TUCANO_EVAL_FILE);
-            }
-            else {
-                strcpy(nnue_file, TUCANO_EVAL_FILE);
-            }
-            USE_NN_EVAL = nnue_init(nnue_file);
-        }
-    }
-#endif
     printf("   hash table: %d MB, threads: %d\n", hash_size, threads);
 
     // Initializations
@@ -448,6 +429,10 @@ int main(int argc, char *argv[])
             eval_test(epd_file);
             continue;
         }
+        if (!strcmp(command, "nn")) {
+            nn_menu();
+            continue;
+        }
         if (!strcmp(command, "help")) {
             printf("Tucano supports XBoard/Winboard or UCI protocols.\n\n");
 #if defined(__GNUC__)
@@ -463,7 +448,7 @@ int main(int argc, char *argv[])
             printf("epd <filename>: locate best move for epd positions in the file\n");
             printf("     perft <n>: show perft move count from current position.\n");
             printf("                other perft commands: perftx, perfty, perftz\n");
-            printf("          tune: evaluation tuning menu\n");
+            printf("            nn: neural network menu\n");
             printf("          ppst: print current pst values\n");
             printf("\n");
             printf("\n");
@@ -626,16 +611,36 @@ int valid_hash_size(int hash_size) {
     return hash_size;
 }
 
+void tnn_generate_menu();
+void tnn_prepare_menu();
+void tnn_training_menu();
+
+void nn_menu(void) 
+{
+    char resp[100];
+
+    while (TRUE) {
+        printf("NN menu\n\n");
+        printf("\t1. Generate training data\n");
+        printf("\t2. Prepare data\n");
+        printf("\t3. Train network\n");
+        printf("\tx. Exit\n\n");
+        printf("\t--> ");
+        fgets(resp, 100, stdin);
+        printf("\n");
+        if (!strncmp(resp, "1", 1)) tnn_generate_menu();
+        if (!strncmp(resp, "2", 1)) tnn_prepare_menu();
+        if (!strncmp(resp, "3", 1)) tnn_training_menu();
+        if (!strncmp(resp, "x", 1)) break;
+    }
+}
+
 //-------------------------------------------------------------------------------------------------
 //  Used for development tests.
 //-------------------------------------------------------------------------------------------------
-
-void generate_nn_files();
-void tnn_main();
-
 void develop_workbench(void)
 {
-    generate_nn_files();
+
 }
 
 //END

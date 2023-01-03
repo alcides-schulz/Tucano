@@ -17,7 +17,6 @@ You can find the GNU General Public License at http://www.gnu.org/licenses/
 
 #include "globals.h"
 #include "eval_nn.h"
-//#include "tucanno0012.h"
 
 char *tnn_type_lookup[2] = { "PNBRQK", "pnbrqk" };
 void tnn_fen2index(char *fen, S16 index[]);
@@ -57,7 +56,7 @@ int tnn_eval_full(BOARD *board)
     for (int i = 0; i < TNN_HIDDEN_SIZE; i++) {
         output_value += MAX(0, hidden_value[i]) * TNN_HIDDEN_WEIGHT[i];
     }
-    return (int)(output_value / 64 / 64);
+    return (int)(output_value / NN_QUANTIZATION / NN_QUANTIZATION);
 }
 
 void tnn_init_hidden_value(BOARD *board)
@@ -106,7 +105,7 @@ int tnn_eval_incremental(BOARD *board) {
     const __m128i result3 = _mm_add_epi32(result2, _mm_srli_si128(result2, 4));
     
     int output_value = TNN_HIDDEN_BIAS + _mm_cvtsi128_si32(result3);
-    int score = (output_value / 64 / 64);
+    int score = (output_value / NN_QUANTIZATION / NN_QUANTIZATION);
     return side_on_move(board) == WHITE ? score : -score;
 }
 
@@ -131,7 +130,7 @@ int tnn_eval_incremental(BOARD *board)
     const __m128i result2 = _mm_add_epi32(result1, _mm_srli_si128(result1, 4));
 
     int output_value = TNN_HIDDEN_BIAS + _mm_cvtsi128_si32(result2);
-    int score = (output_value / 64 / 64);
+    int score = (output_value / NN_QUANTIZATION / NN_QUANTIZATION);
     return side_on_move(board) == WHITE ? score : -score;
 }
 
@@ -143,7 +142,7 @@ int tnn_eval_incremental(BOARD *board)
     for (int i = 0; i < TNN_HIDDEN_SIZE; i++) {
         output_value += MAX(0, board->nn_hidden_value[i]) * TNN_HIDDEN_WEIGHT[i];
     }
-    int score = (int)(output_value / 64 / 64);
+    int score = (int)(output_value / NN_QUANTIZATION / NN_QUANTIZATION);
     return side_on_move(board) == WHITE ? score : -score ;
 }
 

@@ -721,6 +721,8 @@ U32 egtb_probe_wdl(BOARD *board, int depth, int ply);
 #endif
 
 // Neural Network
+#define NN_QUANTIZATION 64
+
 S16 tnn_index(int piece_color, int piece_type, int square);
 void tnn_fen2index(char *fen, S16 index[]);
 void tnn_init_hidden_value(BOARD *board);
