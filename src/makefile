@@ -1,7 +1,7 @@
 # Tucano makefile (linux, ARMV8)
 
 CC = gcc
-CFLAGS = -O3 -DEGTB_SYZYGY -Wall -Wextra -march=native -flto 
+CFLAGS = -O3 -DEGTB_SYZYGY -DPOSIX_MADV_RANDOM -Wall -Wextra -march=native -flto 
 LFLAGS = -lpthread -lm
 EXE = tucano
 
