@@ -84,7 +84,7 @@ void generate_nn_data(int positions_total, int max_depth, char *output_filename,
 
         new_game(game, FEN_NEW_GAME);
 
-        int random_moves_count = (rand() % 10) + 10;
+        int random_moves_count = (rand() % 16) + 4;
 
         for (int i = 0; i < random_moves_count; i++) {
             make_random_move_nn(game);
@@ -187,18 +187,8 @@ void make_random_move_nn(GAME *game)
 {
     MOVE        move;
     MOVE_LIST   ml;
-    MOVE        move_list[10];
-    int         score_list[10];
+    MOVE        move_list[100];
     int         count = 0;
-    SETTINGS    settings;
-
-    settings.single_move_time = MAX_TIME;
-    settings.total_move_time = 0;
-    settings.moves_per_level = 0;
-    settings.max_depth = 4;
-    settings.post_flag = POST_NONE;
-    settings.use_book = FALSE;
-    settings.max_nodes = 0;
 
     select_init(&ml, game, is_incheck(&game->board, side_on_move(&game->board)), MOVE_NONE, FALSE);
     while ((move = next_move(&ml)) != MOVE_NONE) {
@@ -207,30 +197,10 @@ void make_random_move_nn(GAME *game)
             undo_move(&game->board);
             continue;
         }
-        search_run(game, &settings);
-
         undo_move(&game->board);
 
-        int score = ABS(game->search.best_score);
-
-        if (count < 10) {
-            score_list[count] = score;
-            move_list[count] = move;
-            count++;
-        }
-        else {
-            int max_score = score_list[0];
-            int max_index = 0;
-            for (int i = 1; i < 10; i++) {
-                if (score_list[i] > max_score) {
-                    max_score = score_list[i];
-                    max_index = i;
-                }
-            }
-            if (score < score_list[max_index]) {
-                score_list[max_index] = score;
-                move_list[max_index] = move;
-            }
+        if (count < 100) {
+            move_list[count++] = move;
         }
     }
 

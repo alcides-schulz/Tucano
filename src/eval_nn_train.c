@@ -17,15 +17,9 @@ You can find the GNU General Public License at http://www.gnu.org/licenses/
 
 #include "globals.h"
 
-//#define TNN_USE_PROC_FILE
-
 //-------------------------------------------------------------------------------------------------
 //  NN training
 //-------------------------------------------------------------------------------------------------
-
-#define TNN_INDEX    32
-#define TNN_INPUT    (6 * 64 * 2)
-#define TNN_HIDDEN   512
 
 #define MAX_FILES    100
 
@@ -46,32 +40,20 @@ double LEARN_MIN = 0.00000001f;
 #ifdef _MSC_VER
 #define TNN_POS_PER_FILE 50000
 #define VALID_COUNT 100000
-#ifdef TNN_USE_PROC_FILE
-#define TNN_DATA_SOURCE "d:/temp/tnn/d%03d.proc"
-#define TNN_DATA_VALID  "d:/temp/tnn/valid.proc"
-#else
 #define TNN_DATA_SOURCE "d:/temp/tnn/d%03d.tnn"
 #define TNN_DATA_VALID  "d:/temp/tnn/valid.tnn"
-#endif
 #define TNN_EXPORT_NAME "d:/temp/tnn/tucanno%04.8f-%04d.%s"
 #define TNN_THREAD_MAX 5
 #define TNN_TEMP_SOURCE "d:/temp/tnn/temp/d%03d.tnn"
-#define TNN_EVAL_MAX 6000
 #define TNN_RESUME_FILE "d:/temp/tucanno.bin"
 #else
 #define TNN_POS_PER_FILE 50000000
 #define VALID_COUNT 100000000
-#ifdef TNN_USE_PROC_FILE
-#define TNN_DATA_SOURCE "/home/alcides/mynet/data/d%03d.proc"
-#define TNN_DATA_VALID  "/home/alcides/mynet/data/valid.proc"
-#else
 #define TNN_DATA_SOURCE "/home/alcides/mynet/data/d%03d.tnn"
 #define TNN_DATA_VALID  "/home/alcides/mynet/data/valid.tnn"
-#endif
 #define TNN_EXPORT_NAME "/home/alcides/mynet1/export/tucanno%04.8f-%04d.%s"
 #define TNN_THREAD_MAX 8
 #define TNN_TEMP_SOURCE "/home/alcides/mynet/data/temp/d%03d.tnn"
-#define TNN_EVAL_MAX 6000
 #define TNN_RESUME_FILE "/home/alcides/mynet1/tucanno.bin"
 #endif
 
@@ -82,21 +64,21 @@ typedef struct s_grad {
 }   TGRAD;
 
 typedef struct s_gradient {
-    TGRAD   grad_input_weight[TNN_INPUT][TNN_HIDDEN];
-    TGRAD   grad_input_bias[TNN_HIDDEN];
-    TGRAD   grad_hidden_weight[TNN_HIDDEN];
+    TGRAD   grad_input_weight[TNN_INPUT_SIZE][TNN_HIDDEN_SIZE];
+    TGRAD   grad_input_bias[TNN_HIDDEN_SIZE];
+    TGRAD   grad_hidden_weight[TNN_HIDDEN_SIZE];
     TGRAD   grad_hidden_bias;
 }   GRADIENT;
 
 typedef struct s_nn {
-    double  input_weight[TNN_INPUT][TNN_HIDDEN];
-    double  input_bias[TNN_HIDDEN];
-    double  hidden_weight[TNN_HIDDEN];
+    double  input_weight[TNN_INPUT_SIZE][TNN_HIDDEN_SIZE];
+    double  input_bias[TNN_HIDDEN_SIZE];
+    double  hidden_weight[TNN_HIDDEN_SIZE];
     double  hidden_bias;
 }   TNN;
 
 typedef struct s_record {
-    S16     input[TNN_INDEX];
+    S16     input[TNN_INDEX_SIZE];
     S16     eval;
     S16     result;
 }   TSAMPLE;
@@ -109,9 +91,9 @@ typedef struct s_batch_thread
     int         start_index;
     int         end_index;
     double      total_error;
-    double      grad_input_weight[TNN_INPUT][TNN_HIDDEN];
-    double      grad_input_bias[TNN_HIDDEN];
-    double      grad_hidden_weight[TNN_HIDDEN];
+    double      grad_input_weight[TNN_INPUT_SIZE][TNN_HIDDEN_SIZE];
+    double      grad_input_bias[TNN_HIDDEN_SIZE];
+    double      grad_hidden_weight[TNN_HIDDEN_SIZE];
     double      grad_hidden_bias;
 }   BATCH_THREAD;
 
@@ -120,6 +102,33 @@ BATCH_THREAD    batch_thread[TNN_THREAD_MAX];
 TNN             network;
 int             data_file_list[MAX_FILES];
 int             data_file_count = 0;
+
+// https://phoxis.org/2013/05/04/generating-random-numbers-from-normal-distribution-in-c/
+float tnn_gaussian(float mu, float sigma)
+{
+    float U1, U2, W, mult;
+    static float X1, X2;
+    static int call = 0;
+
+    if (call == 1) {
+        call = !call;
+        return (mu + sigma * (float)X2);
+    }
+
+    do {
+        U1 = -1 + ((float)rand() / RAND_MAX) * 2;
+        U2 = -1 + ((float)rand() / RAND_MAX) * 2;
+        W = powf(U1, 2) + powf(U2, 2);
+    } while (W >= 1 || W == 0);
+
+    mult = sqrtf((-2 * logf(W)) / W);
+    X1 = U1 * mult;
+    X2 = U2 * mult;
+
+    call = !call;
+
+    return (mu + sigma * (float)X1);
+}
 
 double sigmoid(double value)
 {
@@ -139,19 +148,17 @@ double tnn_rand(double low, double high)
 void tnn_init_weight(TNN *nn)
 {
     memset(nn, 0, sizeof(TNN));
-    double min = -1;
-    double max = 1;
 
-    for (int i = 0; i < TNN_INPUT; i++) {
-        for (int j = 0; j < TNN_HIDDEN; j++) {
-            nn->input_weight[i][j] = tnn_rand(min, max);
+    for (int i = 0; i < TNN_INPUT_SIZE; i++) {
+        for (int j = 0; j < TNN_HIDDEN_SIZE; j++) {
+            nn->input_weight[i][j] = tnn_gaussian(0, sqrtf(1.0 / TNN_INDEX_SIZE));
         }
     }
-    for (int i = 0; i < TNN_HIDDEN; i++) {
-        nn->input_bias[i] = 0;//tnn_rand(min, max);
-        nn->hidden_weight[i] = tnn_rand(min, max);
+    for (int i = 0; i < TNN_HIDDEN_SIZE; i++) {
+        nn->input_bias[i] = 0;
+        nn->hidden_weight[i] = tnn_gaussian(0, sqrtf(1.0 / TNN_HIDDEN_SIZE));
     }
-    nn->hidden_bias = 0;//tnn_rand(min, max);
+    nn->hidden_bias = 0;
 }
 
 void tnn_load_from_bin(TNN *nn, char *file_name)
@@ -271,34 +278,31 @@ void tnn_export_h(TNN *nn, double average_error, int epoch)
     fprintf(export_file, "//------------------------------------------------------------------------------------\n");
     fprintf(export_file, "// Tucano Neural Network (epoch: %d)\n", epoch);
     fprintf(export_file, "//------------------------------------------------------------------------------------\n\n");
-    fprintf(export_file, "#define TNN_INDEX_SIZE %d\n", TNN_INDEX);
-    fprintf(export_file, "#define TNN_INPUT_SIZE %d\n", TNN_INPUT);
-    fprintf(export_file, "#define TNN_HIDDEN_SIZE %d\n", TNN_HIDDEN);
     fprintf(export_file, "\n");
     
     // input weight
     fprintf(export_file, "static S16 TNN_INPUT_WEIGHT[TNN_INPUT_SIZE][TNN_HIDDEN_SIZE] = {\n");
-    for (int i = 0; i < TNN_INPUT; i++) {
+    for (int i = 0; i < TNN_INPUT_SIZE; i++) {
         fprintf(export_file, "    {");
-        for (int j = 0; j < TNN_HIDDEN; j++) {
+        for (int j = 0; j < TNN_HIDDEN_SIZE; j++) {
             if (j > 0) fprintf(export_file, ",");
             fprintf(export_file, "%d", tnn_get_export_value(nn->input_weight[i][j]));
         }
         fprintf(export_file, "}");
-        if (i != TNN_INPUT - 1) fprintf(export_file, ",");
+        if (i != TNN_INPUT_SIZE - 1) fprintf(export_file, ",");
         fprintf(export_file, "\n");
     }
     fprintf(export_file, "};\n");
     // input bias
     fprintf(export_file, "static S16 TNN_INPUT_BIAS[TNN_HIDDEN_SIZE] = {");
-    for (int i = 0; i < TNN_HIDDEN; i++) {
+    for (int i = 0; i < TNN_HIDDEN_SIZE; i++) {
         if (i > 0) fprintf(export_file, ",");
         fprintf(export_file, "%d", tnn_get_export_value(nn->input_bias[i]));
     }
     fprintf(export_file, "};\n");
     // hidden weight
     fprintf(export_file, "static S16 TNN_HIDDEN_WEIGHT[TNN_HIDDEN_SIZE] = {");
-    for (int i = 0; i < TNN_HIDDEN; i++) {
+    for (int i = 0; i < TNN_HIDDEN_SIZE; i++) {
         if (i > 0) fprintf(export_file, ",");
         fprintf(export_file, "%d", tnn_get_export_value(nn->hidden_weight[i]));
     }
@@ -311,16 +315,16 @@ void tnn_export_h(TNN *nn, double average_error, int epoch)
 
 double tnn_forward_propagate(TNN *nn, S16 input_index[], double hidden_neuron[])
 {
-    for (int i = 0; i < TNN_HIDDEN; i++) {
+    for (int i = 0; i < TNN_HIDDEN_SIZE; i++) {
         hidden_neuron[i] = nn->input_bias[i];
     }
-    for (int i = 0; i < TNN_INDEX && input_index[i] != -1; i++) {
-        for (int j = 0; j < TNN_HIDDEN; j++) {
+    for (int i = 0; i < TNN_INDEX_SIZE && input_index[i] != -1; i++) {
+        for (int j = 0; j < TNN_HIDDEN_SIZE; j++) {
             hidden_neuron[j] += nn->input_weight[input_index[i]][j];
         }
     }
     double output_value = nn->hidden_bias;
-    for (int i = 0; i < TNN_HIDDEN; i++) {
+    for (int i = 0; i < TNN_HIDDEN_SIZE; i++) {
         hidden_neuron[i] = MAX(0, hidden_neuron[i]);
         output_value += hidden_neuron[i] * nn->hidden_weight[i];
     }
@@ -341,12 +345,12 @@ void tnn_update_gradient(double* value, TGRAD* grad) {
 
 void tnn_apply_gradients(TNN *nn, GRADIENT *grad)
 {
-    for (int i = 0; i < TNN_INPUT; i++) {
-        for (int j = 0; j < TNN_HIDDEN; j++) {
+    for (int i = 0; i < TNN_INPUT_SIZE; i++) {
+        for (int j = 0; j < TNN_HIDDEN_SIZE; j++) {
             tnn_update_gradient(&nn->input_weight[i][j], &grad->grad_input_weight[i][j]);
         }
     }
-    for (int i = 0; i < TNN_HIDDEN; i++) {
+    for (int i = 0; i < TNN_HIDDEN_SIZE; i++) {
         tnn_update_gradient(&nn->input_bias[i], &grad->grad_input_bias[i]);
         tnn_update_gradient(&nn->hidden_weight[i], &grad->grad_hidden_weight[i]);
     }
@@ -370,39 +374,7 @@ void tnn_line2record(char *line, TSAMPLE *record)
     //getchar();
 }
 
-#ifdef TNN_USE_PROC_FILE
-
-#define TNN_READ_COUNT 10000
-
-size_t tnn_load_proc_file(int file_number, size_t max_records, TSAMPLE *record)
-{
-    char file_name[1000];
-    size_t record_count = 0;
-
-    sprintf(file_name, TNN_DATA_SOURCE, file_number);
-    FILE *file = fopen(file_name, "rb");
-    if (file == NULL) return 0;
-
-    int interval = (int)max_records / 10;
-    size_t read_count = MIN(TNN_READ_COUNT, max_records);
-    while (record_count + read_count <= max_records) {
-        read_count = fread(&record[record_count], sizeof(TSAMPLE), read_count, file);
-        if (read_count == 0) break;
-        record_count += read_count;
-        read_count = MIN(TNN_READ_COUNT, max_records - record_count);
-        if (record_count % interval == 0) {
-            printf("loading %s, %d records...\r", file_name, (int)record_count);
-            fflush(stdout);
-        }
-    }
-    printf("\n");
-
-    fclose(file);
-
-    return record_count;
-}
-#else
-size_t tnn_load_tnn_file(int file_number, size_t max_records, TSAMPLE *record)
+size_t tnn_load_samples(int file_number, size_t max_records, TSAMPLE *record)
 {
     char file_name[1000];
     size_t record_count = 0;
@@ -428,16 +400,6 @@ size_t tnn_load_tnn_file(int file_number, size_t max_records, TSAMPLE *record)
 
     return record_count;
 }
-#endif
-
-size_t tnn_load(int file_number, size_t max_records, TSAMPLE *record)
-{
-#ifdef TNN_USE_PROC_FILE
-    return tnn_load_proc_file(file_number, max_records, record);
-#else
-    return tnn_load_tnn_file(file_number, max_records, record);
-#endif
-}
 
 double tnn_error(double estimate, TSAMPLE *record)
 {
@@ -450,41 +412,13 @@ double tnn_error(double estimate, TSAMPLE *record)
     return cost;
 }
 
-#ifdef TNN_USE_PROC_FILE
-double tnn_validate()
-{
-    int record_count = 0;
-    double cost_total = 0;
-    TSAMPLE record;
-    double hidden_neuron[TNN_HIDDEN];
-
-    FILE *file = fopen(TNN_DATA_VALID, "rb");
-    if (file == NULL) return 0;
-
-    printf("validation file %s, %d positions, ", TNN_DATA_VALID, VALID_COUNT);
-
-    while (fread(&record, sizeof(TSAMPLE), 1, file) == 1 && record_count < VALID_COUNT) {
-        double estimate = tnn_forward_propagate(&network, record.input, hidden_neuron);
-        cost_total += tnn_error(estimate, &record);
-        record_count++;
-    }
-    fclose(file);
-
-    record_count = MAX(1, record_count);
-    double average_error = cost_total / record_count;
-
-    printf("average error: %.8f\n", average_error);
-
-    return (double)average_error;
-}
-#else
 double tnn_validate()
 {
     char line[1024];
     int record_count = 0;
     double cost_total = 0;
     TSAMPLE record;
-    double hidden_neuron[TNN_HIDDEN];
+    double hidden_neuron[TNN_HIDDEN_SIZE];
 
     FILE *file = fopen(TNN_DATA_VALID, "r");
     if (file == NULL) return 0;
@@ -507,7 +441,6 @@ double tnn_validate()
 
     return (double)average_error;
 }
-#endif
 
 void *tnn_batch(void *data)
 {
@@ -515,7 +448,7 @@ void *tnn_batch(void *data)
 
     //printf("thread: %d start: %d end: %d\n", batch->thread_number, batch->start_index, batch->end_index);
 
-    double hidden_neuron[TNN_HIDDEN];
+    double hidden_neuron[TNN_HIDDEN_SIZE];
 
     for (int rec_num = batch->start_index; rec_num < batch->end_index; rec_num++) {
         TSAMPLE *current = &batch->record[rec_num];
@@ -535,22 +468,22 @@ void *tnn_batch(void *data)
 
         double output_loss = sigmoid_prime * error_gradient;
 
-        double hidden_losses[TNN_HIDDEN];
-        for (int i = 0; i < TNN_HIDDEN; i++) {
+        double hidden_losses[TNN_HIDDEN_SIZE];
+        for (int i = 0; i < TNN_HIDDEN_SIZE; i++) {
             hidden_losses[i] = output_loss * network.hidden_weight[i] * relu_derivative(hidden_neuron[i]);
         }
 
         batch->grad_hidden_bias += output_loss;
-        for (int i = 0; i < TNN_HIDDEN; i++) {
+        for (int i = 0; i < TNN_HIDDEN_SIZE; i++) {
             batch->grad_hidden_weight[i] += hidden_neuron[i] * output_loss;
         }
 
-        for (int i = 0; i < TNN_HIDDEN; i++) {
+        for (int i = 0; i < TNN_HIDDEN_SIZE; i++) {
             batch->grad_input_bias[i] += hidden_losses[i];
         }
 
-        for (int i = 0; i < TNN_INDEX && current->input[i] != -1; i++) {
-            for (int j = 0; j < TNN_HIDDEN; j++) {
+        for (int i = 0; i < TNN_INDEX_SIZE && current->input[i] != -1; i++) {
+            for (int j = 0; j < TNN_HIDDEN_SIZE; j++) {
                 batch->grad_input_weight[current->input[i]][j] += hidden_losses[j];
             }
         }
@@ -615,8 +548,8 @@ void tnn_train(int epoch_total, int batch_size)
 
     double lowest_error = 0.0;
 
-    printf("\nlearn rate: %.8f decay rate: %.8f threads: %d data files: %d max eval: %d\n\n", 
-        LEARN_RATE, DECAY_RATE, TNN_THREAD_MAX, data_file_count, TNN_EVAL_MAX);
+    printf("\nlearn rate: %.8f decay rate: %.8f threads: %d data files: %d\n\n", 
+        LEARN_RATE, DECAY_RATE, TNN_THREAD_MAX, data_file_count);
 
     for (int epoch = 1; epoch <= epoch_total; epoch++) {
         size_t record_total = 0;
@@ -633,7 +566,7 @@ void tnn_train(int epoch_total, int batch_size)
             double total_data_file_records = 0;
 
             if (data_file_index > 0) printf("\n");
-            record_count = tnn_load(data_file_list[data_file_index], TNN_POS_PER_FILE, record_list);
+            record_count = tnn_load_samples(data_file_list[data_file_index], TNN_POS_PER_FILE, record_list);
             if (record_count == 0) continue;
 
             printf("shuffling data...\r"); fflush(stdout);
@@ -662,12 +595,12 @@ void tnn_train(int epoch_total, int batch_size)
                 for (int t = 0; t < TNN_THREAD_MAX; t++) {
                     THREAD_WAIT(batch_thread[t].id);
                     
-                    for (int i = 0; i < TNN_INPUT; i++) {
-                        for (int j = 0; j < TNN_HIDDEN; j++) {
+                    for (int i = 0; i < TNN_INPUT_SIZE; i++) {
+                        for (int j = 0; j < TNN_HIDDEN_SIZE; j++) {
                             gradient.grad_input_weight[i][j].g += batch_thread[t].grad_input_weight[i][j];
                         }
                     }
-                    for (int i = 0; i < TNN_HIDDEN; i++) {
+                    for (int i = 0; i < TNN_HIDDEN_SIZE; i++) {
                         gradient.grad_input_bias[i].g += batch_thread[t].grad_input_bias[i];
                         gradient.grad_hidden_weight[i].g += batch_thread[t].grad_hidden_weight[i];
                     }
@@ -730,9 +663,7 @@ void tnn_prepare_data(int lines_per_file)
     int     target_file_count = 0;
     int     target_line_count = lines_per_file + 1;
     char    line[1000];
-#ifdef TNN_USE_PROC_FILE
     TSAMPLE sample;
-#endif
     
     printf("preparing data from %s to %s (lines per file: %d)\n", TNN_TEMP_SOURCE, TNN_DATA_SOURCE, lines_per_file);
 
@@ -742,19 +673,15 @@ void tnn_prepare_data(int lines_per_file)
         if (!source_file) continue;
         printf("  reading file '%s'\n", source_name);
         while (fgets(line, 1000, source_file) != NULL) {
-#ifdef TNN_USE_PROC_FILE
+            
             tnn_line2record(line, &sample);
-            if (is_mate_score(sample.eval)) sample.eval /= 5;
-#endif
+            if (ABS(sample.eval) > 300) continue;
+
             if (target_line_count >= lines_per_file) {
                 if (target_file) fclose(target_file);
                 target_file_count++;
                 sprintf(target_name, TNN_DATA_SOURCE, target_file_count);
-#if defined(TNN_USE_PROC_FILE)
-                target_file = fopen(target_name, "wb");
-#else
                 target_file = fopen(target_name, "w");
-#endif
                 if (!target_file) {
                     printf("error creating file: %s\n", target_name);
                     exit(-1);
@@ -762,13 +689,7 @@ void tnn_prepare_data(int lines_per_file)
                 target_line_count = 0;
                 printf("    saving lines to '%s'\n", target_name);
             }
-#ifdef TNN_USE_PROC_FILE
-            if (fwrite(&sample, sizeof(TSAMPLE), 1, target_file) != 1) {
-                fprintf(stderr, "**** Error writing file %d\n", target_file_count);
-            }
-#else
             fprintf(target_file, "%s", line);
-#endif
             target_line_count++;
         }
         fclose(source_file);

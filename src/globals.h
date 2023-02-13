@@ -275,15 +275,10 @@ typedef struct s_pv_line {
 }   PV_LINE;
 
 
-// Eval score definitions.
-// Instead of using two variables for opening and endgame values, 
-// we use the macro MAKE_SCORE to combine both into one variable. 
-// Didn't measure if there's any advantage, it is just a matter
-// of preference to avoid handling two variables for each eval term.
-// Stockfish and Gull are two engines that uses the same mechanism.
-#define MAKE_SCORE(op, eg)  ((int)((unsigned int)(op) << 16) + (eg))
-#define OPENING(s) ((((s) + 32768) & ~0xffff) / 0x10000)
-#define ENDGAME(s) (((unsigned)(s) & 0x7fffu) - (int)((unsigned)(s) & 0x8000u))
+// Neural Network Definitions
+#define TNN_INDEX_SIZE  32
+#define TNN_INPUT_SIZE  (6 * 64 * 2)
+#define TNN_HIDDEN_SIZE 512
 
 // Piece Values
 #define VALUE_PAWN      180
@@ -292,10 +287,6 @@ typedef struct s_pv_line {
 #define VALUE_ROOK      1000
 #define VALUE_QUEEN     2000
 #define VALUE_KING      0
-
-#define OP      0
-#define EG      1
-#define PHASES  2
 
 enum e_squares
 {
@@ -398,8 +389,8 @@ typedef struct s_board
     U8          fifty_move_rule;
     U8          ep_square;
     MOVE_HIST   history[MAX_HIST];
-    S16         nn_hidden_value[512];
-    S16         nn_history[MAX_HIST][512];
+    S16         nn_hidden_value[TNN_HIDDEN_SIZE];
+    S16         nn_history[MAX_HIST][TNN_HIDDEN_SIZE];
 }   BOARD;
 
 //  Game Data

@@ -93,13 +93,13 @@ int search_pv(GAME *game, UINT incheck, int alpha, int beta, int depth)
         }
 
         // singular move extension
-        if (/*improving &&*/ ply > 0 && tt_record.data && move == trans_move && tt_record.info.flag >= TT_LOWER && depth >= 8 && !extensions) {
-            score = score_from_tt(tt_record.info.score, game->board.ply);
-            if (tt_record.info.depth >= depth - 3 && !is_mate_score(score)) {
+        if (ply > 0 && tt_record.data && move == trans_move && tt_record.info.flag >= TT_LOWER && depth >= 8 && !extensions) {
+            int trans_score = score_from_tt(tt_record.info.score, game->board.ply);
+            if (tt_record.info.depth >= depth - 3 && !is_mate_score(trans_score)) {
                 int reduced_beta = score - 4 * depth;
-                score = search_singular(game, incheck, reduced_beta, depth / 2, move);
+                int singular_score = search_singular(game, incheck, reduced_beta, depth / 2, move);
                 if (game->search.abort) return 0;
-                if (score < reduced_beta) {
+                if (singular_score < reduced_beta) {
                     extensions = 1;
                 }
             }
