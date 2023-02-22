@@ -96,7 +96,7 @@ int search_pv(GAME *game, UINT incheck, int alpha, int beta, int depth)
         if (ply > 0 && tt_record.data && move == trans_move && tt_record.info.flag >= TT_LOWER && depth >= 8 && !extensions) {
             int trans_score = score_from_tt(tt_record.info.score, game->board.ply);
             if (tt_record.info.depth >= depth - 3 && !is_mate_score(trans_score)) {
-                int reduced_beta = score - 4 * depth;
+                int reduced_beta = trans_score - 4 * depth;
                 int singular_score = search_singular(game, incheck, reduced_beta, depth / 2, move);
                 if (game->search.abort) return 0;
                 if (singular_score < reduced_beta) {

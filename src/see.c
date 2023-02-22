@@ -41,9 +41,9 @@ int see_move(BOARD *board, MOVE move)
 {
     int     gain_loss[32] = { 0 };
     int     capture = unpack_piece(move);
-    U64     occup = occupied_bb(board);
+    U64     occupied = occupied_bb(board);
 
-    bb_clear_bit(&occup, unpack_from(move));
+    bb_clear_bit(&occupied, unpack_from(move));
 
     switch (unpack_type(move)) {
     case MT_CAPPC:
@@ -59,7 +59,7 @@ int see_move(BOARD *board, MOVE move)
         break;
     case MT_EPCAP:
         gain_loss[0] = piece_value_see(PAWN);
-        bb_clear_bit(&occup, unpack_ep_pawn_square(move));
+        bb_clear_bit(&occupied, unpack_ep_pawn_square(move));
         break;
     }
 
@@ -71,13 +71,15 @@ int see_move(BOARD *board, MOVE move)
     int index = 0;
 
     while (TRUE) {
-        int attacker_type = get_lowest_attacker(board, target_square, &occup, attacker_side);
+        int attacker_type = get_lowest_attacker(board, target_square, &occupied, attacker_side);
         
         if (attacker_type == NO_PIECE) break;
 
-        if (attacker_type == KING)
-            if (is_target_attacked(board, target_square, occup, flip_color(attacker_side))) 
+        if (attacker_type == KING) {
+            if (is_target_attacked(board, target_square, occupied, flip_color(attacker_side))) {
                 break;
+            }
+        }
         
         index++;
         gain_loss[index] = piece_value_see(capture) - gain_loss[index - 1];
@@ -86,8 +88,9 @@ int see_move(BOARD *board, MOVE move)
             gain_loss[index] += piece_value_see(QUEEN) - piece_value_see(PAWN);
             capture = QUEEN;
         }
-        else
+        else {
             capture = attacker_type;
+        }
 
         attacker_side = flip_color(attacker_side);
     }
@@ -122,53 +125,51 @@ int get_piece_value_see(int target_rank, int piece_type)
     return piece_value_see(piece_type);
 }
 
-int is_target_attacked(BOARD *board, int target_square, U64 occup, int color)
+int is_target_attacked(BOARD *board, int target_square, U64 occupied, int color)
 {
-    if (pawn_attack_bb(color, target_square) & occup & pawn_bb(board, color)) return TRUE;
-    if (knight_moves_bb(target_square) & occup & knight_bb(board, color)) return TRUE;
-    U64 ba = bb_bishop_attacks(target_square, occup);
-    if (ba & queen_bishop_bb(board, color) & occup) return TRUE;
-    U64 ra = bb_rook_attacks(target_square, occup);
-    if (ra & queen_rook_bb(board, color) & occup) return TRUE;
-    if (king_moves_bb(target_square) & king_bb(board, color) & occup) return TRUE;
+    if (pawn_attack_bb(color, target_square) & occupied & pawn_bb(board, color)) return TRUE;
+    if (knight_moves_bb(target_square) & occupied & knight_bb(board, color)) return TRUE;
+    if (bb_bishop_attacks(target_square, occupied) & queen_bishop_bb(board, color) & occupied) return TRUE;
+    if (bb_rook_attacks(target_square, occupied) & queen_rook_bb(board, color) & occupied) return TRUE;
+    if (king_moves_bb(target_square) & king_bb(board, color) & occupied) return TRUE;
     return FALSE;
 }
 
-int get_lowest_attacker(BOARD *board, int target_square, U64 *occup, int color)
+int get_lowest_attacker(BOARD *board, int target_square, U64 *occupied, int color)
 {
-    U64     temp;
+    U64     attacks;
 
-    temp = pawn_attack_bb(color, target_square) & (*occup) & pawn_bb(board, color);
-    if (temp) {
-        (*occup) &= ~square_bb(bb_first_index(temp));
+    attacks = pawn_attack_bb(color, target_square) & (*occupied) & pawn_bb(board, color);
+    if (attacks) {
+        bb_clear_bit(occupied, bb_first_index(attacks));
         return PAWN;
     }
-    temp = knight_moves_bb(target_square) & (*occup) & knight_bb(board, color);
-    if (temp) {
-        (*occup) &= ~square_bb(bb_first_index(temp));
+    attacks = knight_moves_bb(target_square) & (*occupied) & knight_bb(board, color);
+    if (attacks) {
+        bb_clear_bit(occupied, bb_first_index(attacks));
         return KNIGHT;
     }
-    U64 ba = bb_bishop_attacks(target_square, (*occup));
-    temp = ba & bishop_bb(board, color) & (*occup);
-    if (temp) {
-        (*occup) &= ~square_bb(bb_first_index(temp));
+    U64 diagonal_attacks = bb_bishop_attacks(target_square, (*occupied));
+    attacks = diagonal_attacks & bishop_bb(board, color) & (*occupied);
+    if (attacks) {
+        bb_clear_bit(occupied, bb_first_index(attacks));
         return BISHOP;
     }
-    U64 ra = bb_rook_attacks(target_square, (*occup));
-    temp = ra & rook_bb(board, color) & (*occup);
-    if (temp) {
-        (*occup) &= ~square_bb(bb_first_index(temp));
+    U64 rankfile_attacks = bb_rook_attacks(target_square, (*occupied));
+    attacks = rankfile_attacks & rook_bb(board, color) & (*occupied);
+    if (attacks) {
+        bb_clear_bit(occupied, bb_first_index(attacks));
         return ROOK;
     }
-    temp = (ra | ba) & (queen_bb(board, color) & (*occup));
-    if (temp) {
-        (*occup) &= ~square_bb(bb_first_index(temp));
+    attacks = (rankfile_attacks | diagonal_attacks) & (queen_bb(board, color) & (*occupied));
+    if (attacks) {
+        bb_clear_bit(occupied, bb_first_index(attacks));
         return QUEEN;
 
     }
-    temp = king_moves_bb(target_square) & king_bb(board, color) & (*occup);
-    if (temp) {
-        (*occup) &= ~square_bb(bb_first_index(temp));
+    attacks = king_moves_bb(target_square) & king_bb(board, color) & (*occupied);
+    if (attacks) {
+        bb_clear_bit(occupied, bb_first_index(attacks));
         return KING;
     }
     return NO_PIECE;
