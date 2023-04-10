@@ -43,11 +43,13 @@ NNDD    nndd[1024];
 //      *.tnn -> format for tucano nn trainer.
 //      *.plain or other -> plain format compatible with nodchip nnue trainer
 //-------------------------------------------------------------------------------------------------
-void generate_nn_data(int positions_total, int max_depth, char *output_filename, int save_pgn, int save_positions)
+void generate_nn_data(int fen_total, int max_depth, char *output_filename, int log_pgn, int log_fen)
 {
     GAME        *game;
     SETTINGS    settings;
     int         tnn_format = FALSE;
+
+    printf("max depth: %d output filename: %s\n\n", max_depth, output_filename);
 
     game = (GAME *)malloc(sizeof(GAME));
     if (game == NULL) {
@@ -72,12 +74,12 @@ void generate_nn_data(int positions_total, int max_depth, char *output_filename,
     tt_init(TRANS_SIZE_GEN);
 
     UINT start_time = util_get_time();
-    int positions_count = 0;
+    int fen_count = 0;
     int game_count;
 
-    FILE *debug_positions = NULL;
-    if (save_positions) {
-        debug_positions = fopen("d:/temp/positions.txt", "w");
+    FILE *fen_file = NULL;
+    if (log_fen) {
+        fen_file = fopen("d:/temp/fen.txt", "w");
     }
 
     for (game_count = 1; game_count <= INT_MAX; game_count++) {
@@ -90,11 +92,11 @@ void generate_nn_data(int positions_total, int max_depth, char *output_filename,
             make_random_move_nn(game);
         }
 
-        if (save_positions) {
+        if (log_fen) {
             char fen[100];
             util_get_board_fen(&game->board, fen);
-            fprintf(debug_positions, "%s\n", fen);
-            fflush(debug_positions);
+            fprintf(fen_file, "%s\n", fen);
+            fflush(fen_file);
         }
 
         int nndd_count = 0;
@@ -119,7 +121,7 @@ void generate_nn_data(int positions_total, int max_depth, char *output_filename,
         int game_result = get_game_result(game);
         if (game_result == GR_NOT_FINISH) continue;
         
-        if (save_pgn) {
+        if (log_pgn) {
             char pgn_name[1024];
             sprintf(pgn_name, "d:/temp/gg/game%04d.pgn", game_count);
             save_board_pgn(game, pgn_name, random_moves_count);
@@ -158,30 +160,36 @@ void generate_nn_data(int positions_total, int max_depth, char *output_filename,
                 fprintf(output, "e\n");
             }
             fflush(output);
-            positions_count++;
-            if (positions_count >= positions_total) break;
+            fen_count++;
+            if (fen_count >= fen_total) break;
         }
 
         fflush(output);
-        if (debug_positions) fclose(debug_positions);
+        if (fen_file) fclose(fen_file);
 
-        UINT elapsed_seconds = (util_get_time() - start_time) / 1000;
-        elapsed_seconds = MAX(1, elapsed_seconds);
-        int positions_per_second = positions_count / elapsed_seconds;
-        printf("file: %s -> positions %d of %d (game %d, nodes=%"PRIu64", positions per second: %u)...\r",
-            output_filename, positions_count, positions_total, game_count, settings.max_nodes, positions_per_second);
-        fflush(stdout);
+        if (game_count % 10 == 0) {
+            UINT elapsed_seconds = (util_get_time() - start_time) / 1000;
+            elapsed_seconds = MAX(1, elapsed_seconds);
+            int fen_per_sec = fen_count / elapsed_seconds;
+            int fen_per_day = fen_per_sec * 3600 * 24;
+            printf("file: %s -> %d of %d (game %d, fen/sec: %u, fen/day: %d)...\r",
+                output_filename, fen_count, fen_total, game_count, fen_per_sec, fen_per_day);
+            fflush(stdout);
+        }
 
-        if (positions_count >= positions_total) break;
+        if (fen_count >= fen_total) break;
     }
     printf("\n");
 
     fclose(output);
     free(game);
+    if (log_fen) {
+        fclose(fen_file);
+    }
 }
 
 //-------------------------------------------------------------------------------------------------
-//  Make a random move. E.g. in auto play mode randomize the game opening.
+//  Make a random move.
 //-------------------------------------------------------------------------------------------------
 void make_random_move_nn(GAME *game)
 {
@@ -229,13 +237,13 @@ void generate_nn_files(char *to_file_mask, int total_positions, int max_depth)
 void tnn_generate_menu()
 {
 #ifdef _MSC_VER
-    char *to_file_mask = "d:/temp/d%03d.tnn";
-    int total_positions = 100000;
-    int max_depth = 6;
+    char *to_file_mask = "d:/temp/data/d%03d.tnn";
+    int total_positions = 1000000;
+    int max_depth = 4;
 #else
     char *to_file_mask = "./data/d%03d.tnn";
     int total_positions = 100000000;
-    int max_depth = 9;
+    int max_depth = 8;
 #endif
     char resp[100];
 

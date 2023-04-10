@@ -339,13 +339,15 @@ void extract_games(char *input_pgn)
         }
 
         if (strstr(pgn_game.result, "1/2-1/2") != NULL) continue;
-
-        new_game(game, pgn_game.initial_fen);
+        if (strstr(pgn_game.result, "0-1") != NULL) continue;
 
         int valid_game = TRUE;
         int total_diff = 0;
         int move_count = 0;
+
         int white_win = strstr(pgn_game.result, "1-0") != NULL;
+
+        new_game(game, pgn_game.initial_fen);
 
         while (pgn_next_move(&pgn_game, &pgn_move)) {
 
@@ -363,7 +365,7 @@ void extract_games(char *input_pgn)
             move_count++;
 
             int diff = 0;
-            if (move_count < 40) {
+            if (move_count < 80) {
                 if (white_win) {
                     diff = material_value(&game->board, BLACK) - material_value(&game->board, WHITE);
                 }

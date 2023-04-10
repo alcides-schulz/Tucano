@@ -138,7 +138,7 @@ int tnn_eval_incremental(BOARD *board)
 
 int tnn_eval_incremental(BOARD *board)
 {
-    S32 output_value = TNN_HIDDEN_BIAS;
+    int output_value = TNN_HIDDEN_BIAS;
     for (int i = 0; i < TNN_HIDDEN_SIZE; i++) {
         output_value += MAX(0, board->nn_hidden_value[i]) * TNN_HIDDEN_WEIGHT[i];
     }
