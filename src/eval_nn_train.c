@@ -33,28 +33,29 @@ const double GRAD_EPSILON = 1e-8f;
 const double SIGMOID_SCALE = 4.0f / 1024.0f;
 
 double LEARN_RATE = 0.01f;
-double DECAY_RATE = 0.90f;
+double DECAY_RATE = 0.50f;
 double LEARN_MIN = 0.0001f;
 
-// Settings when running on my windows and linux development environments.
+// Settings when running on my dev environment (visual studio)
 #ifdef _MSC_VER
-#define TNN_POS_PER_FILE 50000
+#define TNN_POS_PER_FILE 100000
 #define VALID_COUNT 100000
-#define TNN_DATA_SOURCE "d:/temp/tnn/d%03d.tnn"
-#define TNN_DATA_VALID  "d:/temp/tnn/valid.tnn"
-#define TNN_EXPORT_NAME "d:/temp/tnn/tucanno%04.8f-%04d.%s"
-#define TNN_THREAD_MAX 5
-#define TNN_TEMP_SOURCE "d:/temp/tnn/temp/d%03d.tnn"
-#define TNN_RESUME_FILE "d:/temp/tnn/tucanno.bin"
+#define TNN_DATA_SOURCE "d:/temp/data/d%04d.tnn"
+#define TNN_DATA_VALID  "d:/temp/data/valid.tnn"
+#define TNN_EXPORT_NAME "d:/temp/data/export/tucanno%04.8f-%04d.%s"
+#define TNN_THREAD_MAX 1
+#define TNN_TEMP_SOURCE "d:/temp/data/temp/d%04d.tnn"
+#define TNN_RESUME_FILE "d:/temp/data/tucanno.bin"
 #else
+// Settings when running on "production"
 #define TNN_POS_PER_FILE 50000000
-#define VALID_COUNT 100000000
-#define TNN_DATA_SOURCE "/home/alcides/mynet/data/d%03d.tnn"
-#define TNN_DATA_VALID  "/home/alcides/mynet/data/valid.tnn"
-#define TNN_EXPORT_NAME "/home/alcides/mynet1/export/tucanno%04.8f-%04d.%s"
-#define TNN_THREAD_MAX 8
-#define TNN_TEMP_SOURCE "/home/alcides/mynet/data/temp/d%03d.tnn"
-#define TNN_RESUME_FILE "/home/alcides/mynet1/tucanno.bin"
+#define VALID_COUNT      50000000
+#define TNN_DATA_SOURCE "./data/d%04d.tnn"
+#define TNN_DATA_VALID  "./data/valid.tnn"
+#define TNN_EXPORT_NAME "./export/tucanno%04.8f-%04d.%s"
+#define TNN_THREAD_MAX 16
+#define TNN_TEMP_SOURCE "./data/temp/d%04d.tnn"
+#define TNN_RESUME_FILE "./tucanno.bin"
 #endif
 
 typedef struct s_grad {
@@ -392,7 +393,7 @@ size_t tnn_load_samples(int file_number, size_t max_records, TSAMPLE *record)
     int interval = (int)max_records / 10;
     while (fgets(line, 1024, file) != NULL && record_count < max_records) {
         tnn_line2record(line, &record[record_count]);
-        if (is_mate_score(record[record_count].eval)) record[record_count].eval /= 5;
+        if (ABS(record[record_count].eval) > 6000) continue;
         record_count++;
         if (record_count % interval == 0) {
             printf("loading %s, %d records...\r", file_name, (int)record_count);
@@ -447,7 +448,7 @@ double tnn_validate()
     return (double)average_error;
 }
 
-void *tnn_batch(void *data)
+void *tnn_calculate_gradients(void *data)
 {
     BATCH_THREAD *batch = (BATCH_THREAD *)data;
 
@@ -533,6 +534,20 @@ void tnn_shuffle_files()
     }
 }
 
+void tnn_add_gradients(GRADIENT *main, BATCH_THREAD *batch)
+{
+    for (int i = 0; i < TNN_INPUT_SIZE; i++) {
+        for (int j = 0; j < TNN_HIDDEN_SIZE; j++) {
+            main->grad_input_weight[i][j].g += batch->grad_input_weight[i][j];
+        }
+    }
+    for (int i = 0; i < TNN_HIDDEN_SIZE; i++) {
+        main->grad_input_bias[i].g += batch->grad_input_bias[i];
+        main->grad_hidden_weight[i].g += batch->grad_hidden_weight[i];
+    }
+    main->grad_hidden_bias.g += batch->grad_hidden_bias;
+}
+
 void tnn_train(int epoch_total, int batch_size, int resume, char *resume_file)
 {
     if (resume) {
@@ -594,22 +609,13 @@ void tnn_train(int epoch_total, int batch_size, int resume, char *resume_file)
                     batch_thread[t].record = record_list;
                     batch_thread[t].start_index = start_index + t * records_per_thread;
                     batch_thread[t].end_index = start_index + t * records_per_thread + records_per_thread;
-                    THREAD_CREATE(batch_thread[t].id, tnn_batch, &batch_thread[t]);
+                    THREAD_CREATE(batch_thread[t].id, tnn_calculate_gradients, &batch_thread[t]);
                 }
 
                 for (int t = 0; t < TNN_THREAD_MAX; t++) {
                     THREAD_WAIT(batch_thread[t].id);
                     
-                    for (int i = 0; i < TNN_INPUT_SIZE; i++) {
-                        for (int j = 0; j < TNN_HIDDEN_SIZE; j++) {
-                            gradient.grad_input_weight[i][j].g += batch_thread[t].grad_input_weight[i][j];
-                        }
-                    }
-                    for (int i = 0; i < TNN_HIDDEN_SIZE; i++) {
-                        gradient.grad_input_bias[i].g += batch_thread[t].grad_input_bias[i];
-                        gradient.grad_hidden_weight[i].g += batch_thread[t].grad_hidden_weight[i];
-                    }
-                    gradient.grad_hidden_bias.g += batch_thread[t].grad_hidden_bias;
+                    tnn_add_gradients(&gradient, &batch_thread[t]);
 
                     total_train_error += batch_thread[t].total_error;
                     total_train_records += records_per_thread;
@@ -621,19 +627,22 @@ void tnn_train(int epoch_total, int batch_size, int resume, char *resume_file)
                         epoch, data_file_index + 1, batch_num + 1, (int)batch_count, partial_train_error, LEARN_RATE, DECAY_RATE);
                     fflush(stdout);
                 }
+
                 tnn_apply_gradients(&network, &gradient);
             }
             printf("\n");
         }
-        printf("\n");
+        printf("\n\n");
 
+        printf("------------------------------------------------------------------------------------------------------------\n");
         double training_error = total_train_error / total_train_records;
-
         double validate_error = tnn_validate();
-        tnn_export_h(&network, validate_error, epoch);
-        if (epoch % 10 == 0) tnn_export_bin(&network, validate_error, epoch);
         
-        printf("training error: %.8f validate error: %.8f lowest error: %.8f\n", training_error, validate_error, lowest_error);
+        tnn_export_h(&network, validate_error, epoch);
+        if (epoch % 5 == 0) tnn_export_bin(&network, validate_error, epoch);
+        
+        printf("epoch: %d training error: %.8f validate error: %.8f lowest error: %.8f\n", 
+            epoch, training_error, validate_error, lowest_error);
         printf("learn rate: %.8f decay rate: %.8f min learn rate: %.8f\n", LEARN_RATE, DECAY_RATE, LEARN_MIN);
         if (epoch == 1) {
             lowest_error = validate_error;
@@ -646,7 +655,6 @@ void tnn_train(int epoch_total, int batch_size, int resume, char *resume_file)
         if (validate_error < lowest_error) {
             lowest_error = validate_error;
         }
-
         unsigned elapsed = util_get_time() - start_time;
         printf("time per epoch: %d seconds\n", (int)(elapsed / 1000));
         printf("------------------------------------------------------------------------------------------------------------\n\n");
@@ -662,6 +670,7 @@ void tnn_prepare_data(int lines_per_file)
     int     target_file_count = 0;
     int     target_line_count = lines_per_file + 1;
     char    line[1000];
+    char    prev[1000] = { 0 };
     TSAMPLE sample;
     
     printf("preparing data from %s to %s (lines per file: %d)\n", TNN_TEMP_SOURCE, TNN_DATA_SOURCE, lines_per_file);
@@ -673,8 +682,10 @@ void tnn_prepare_data(int lines_per_file)
         printf("  reading file '%s'\n", source_name);
         while (fgets(line, 1000, source_file) != NULL) {
             
+            if (!strcmp(line, prev)) continue;
+            strcpy(prev, line);
+            
             tnn_line2record(line, &sample);
-            if (ABS(sample.eval) > MAX_EVAL) continue;
 
             if (target_line_count >= lines_per_file) {
                 if (target_file) fclose(target_file);
@@ -728,7 +739,6 @@ void tnn_verify_data(void)
     int count = 0;
     while (fgets(line, 1000, source_file) != NULL) {
         tnn_line2record(line, &source_sample);
-        if (is_mate_score(source_sample.eval)) source_sample.eval /= 5;
         if (fread(&target_sample, sizeof(TSAMPLE), 1, target_file) != 1) break;
         count++;
         if (strncmp((const char *)&source_sample, (const char *)&target_sample, sizeof(TSAMPLE))) {
@@ -776,11 +786,11 @@ void tnn_training_menu()
 {
     char resp[100];
 #ifdef _MSC_VER
-    int epoch_total = 100;
+    int epoch_total = 1;
     int batch_size = 1000;
 #else
     int epoch_total = 1000;
-    int batch_size = 20000;
+    int batch_size = 16384;
 #endif
     int can_resume = tnn_resume_file_exists(TNN_RESUME_FILE);
 

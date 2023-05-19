@@ -17,7 +17,7 @@ You can find the GNU General Public License at http://www.gnu.org/licenses/
 
 #include "globals.h"
 
-#define TRANS_SIZE_GEN 16
+#define TRANS_SIZE_GEN 8
 
 //-------------------------------------------------------------------------------------------------
 //  Couple of utilities used to generate nn data.
@@ -48,8 +48,6 @@ void generate_nn_data(int fen_total, int max_depth, char *output_filename, int l
     GAME        *game;
     SETTINGS    settings;
     int         tnn_format = FALSE;
-
-    printf("max depth: %d output filename: %s\n\n", max_depth, output_filename);
 
     game = (GAME *)malloc(sizeof(GAME));
     if (game == NULL) {
@@ -101,7 +99,7 @@ void generate_nn_data(int fen_total, int max_depth, char *output_filename, int l
 
         int nndd_count = 0;
         while (get_game_result(game) == GR_NOT_FINISH) {
-            
+
             search_run(game, &settings);
             if (!game->search.best_move) break;
 
@@ -237,13 +235,13 @@ void generate_nn_files(char *to_file_mask, int total_positions, int max_depth)
 void tnn_generate_menu()
 {
 #ifdef _MSC_VER
-    char *to_file_mask = "d:/temp/data/d%03d.tnn";
-    int total_positions = 1000000;
+    char *to_file_mask = "d:/temp/data/d%04d.tnn";
+    int total_positions = 100000;
     int max_depth = 4;
 #else
-    char *to_file_mask = "./data/d%03d.tnn";
+    char *to_file_mask = "./data/d%04d.tnn";
     int total_positions = 100000000;
-    int max_depth = 8;
+    int max_depth = 7;
 #endif
     char resp[100];
 

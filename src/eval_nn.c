@@ -162,6 +162,7 @@ void tnn_fen2index(char *fen, S16 index[])
     int square = 0;
     int input_index = 0;
     int piece_count = 0;
+    char *sfen = fen;
 
     for (int i = 0; fen[i] && fen[i] != ' '; i++) {
         if (fen[i] == '/') continue;
@@ -176,9 +177,8 @@ void tnn_fen2index(char *fen, S16 index[])
                 piece_count++;
                 int piece_type = (int)(piece - type);
                 if (input_index == TNN_INDEX_SIZE) {
-                    printf("error: input_index(%d) equals max size of %d\n", input_index, TNN_INDEX_SIZE);
-                    getchar();
-                    exit(-1);
+                    printf("error: input_index(%d) equals max size of %d: %s\n", input_index, TNN_INDEX_SIZE, sfen);
+                    break;
                 }
                 index[input_index++] = tnn_index(color, piece_type, square);
                 square += 1;
