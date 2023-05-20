@@ -99,6 +99,7 @@ void search_run(GAME *game, SETTINGS *settings)
 
     // Prepare search data
     set_ply(&game->board, 0);
+    init_seldepth(&game->board);
     memset(&game->pv_line, 0, sizeof(PV_LINE));
     memset(&game->move_order, 0, sizeof(MOVE_ORDER));
     tt_age();

@@ -264,6 +264,9 @@ void make_move(BOARD *board, MOVE move)
 
     board->ply++;
     board->histply++;
+    if (board->ply > board->selective_depth) {
+        board->selective_depth = board->ply;
+    }
 
     board->key ^= zk_ks(board->side_on_move, board->state[board->side_on_move].can_castle_ks);
     board->key ^= zk_qs(board->side_on_move, board->state[board->side_on_move].can_castle_qs);
@@ -848,6 +851,11 @@ U16 get_ply(BOARD *board)
 U16 get_history_ply(BOARD *board)
 {
     return board->histply;
+}
+
+void init_seldepth(BOARD *board)
+{
+    board->selective_depth = 0;
 }
 
 //-------------------------------------------------------------------------------------------------
