@@ -385,6 +385,7 @@ typedef struct s_board
     U64         pawn_key;
     U16         ply;
     U16         histply;
+    U16         selective_depth;
     U8          side_on_move;
     U8          fifty_move_rule;
     U8          ep_square;
@@ -612,6 +613,7 @@ U16     get_ply(BOARD *board);
 int     get_played_moves(BOARD *board, char *line, size_t max_chars);
 int     get_history_moves(BOARD *board, MOVE move[], int max_moves);
 U16     get_history_ply(BOARD *board);
+void    init_seldepth(BOARD *board);
 int     get_played_moves_count(BOARD *board, int color);
 void    move_piece(BOARD *board, int color, int type, int frsq, int tosq);
 void    set_piece(BOARD *board, int color, int type, int tosq);

@@ -267,6 +267,7 @@ void post_info(GAME *game, int score, int depth)
         }
         printf("info ");
         printf("depth %d ", depth);
+        printf("seldepth %d ", MAX(game->board.selective_depth, depth));
         printf("score %s %d ", score_type, uci_score);
         printf("time %d ", elapsed_milliseconds);
         printf("nodes %" PRIu64 " ", total_node_count);
