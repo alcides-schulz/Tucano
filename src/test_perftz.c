@@ -32,6 +32,9 @@ void perftz(void)
         return;
     }
 
+    printf("\nperftz: count number of moves for special cases");
+    printf("\n-----------------------------------------------\n\n");
+
     printf("\nAvoid illegal ep:\n");
     perftz_pos(game, "3k4/3p4/8/K1P4r/8/8/8/8 b - - 0 1", 6, 1134888);
     perftz_pos(game, "8/8/8/8/k1p4R/8/3P4/3K4 w - - 0 1", 6, 1134888);

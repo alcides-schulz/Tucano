@@ -299,6 +299,8 @@ void perfty(void)
 
         set_fen(&game->board, perfty_pos[p]);
 
+        printf("Depth  Expected      Found\n");
+
         for (int d = 0; d < 6; d++) {
             U64 nodes = perfty_nodes(game, d + 1);
             //printf("   %d %10llu %10llu", d, perfty_count[p][d], nodes);

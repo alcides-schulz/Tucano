@@ -34,7 +34,7 @@ const double SIGMOID_SCALE = 4.0f / 1024.0f;
 
 double LEARN_RATE = 0.01f;
 double DECAY_RATE = 0.50f;
-double LEARN_MIN = 0.0001f;
+double LEARN_MIN = 0.00000001f;
 
 // Settings when running on my dev environment (visual studio)
 #ifdef _MSC_VER
@@ -49,7 +49,7 @@ double LEARN_MIN = 0.0001f;
 #else
 // Settings when running on "production"
 #define TNN_POS_PER_FILE 50000000
-#define VALID_COUNT      50000000
+#define VALID_COUNT      100000000
 #define TNN_DATA_SOURCE "./data/d%04d.tnn"
 #define TNN_DATA_VALID  "./data/valid.tnn"
 #define TNN_EXPORT_NAME "./export/tucanno%04.8f-%04d.%s"
@@ -393,7 +393,6 @@ size_t tnn_load_samples(int file_number, size_t max_records, TSAMPLE *record)
     int interval = (int)max_records / 10;
     while (fgets(line, 1024, file) != NULL && record_count < max_records) {
         tnn_line2record(line, &record[record_count]);
-        if (ABS(record[record_count].eval) > 6000) continue;
         record_count++;
         if (record_count % interval == 0) {
             printf("loading %s, %d records...\r", file_name, (int)record_count);
@@ -670,7 +669,6 @@ void tnn_prepare_data(int lines_per_file)
     int     target_file_count = 0;
     int     target_line_count = lines_per_file + 1;
     char    line[1000];
-    char    prev[1000] = { 0 };
     TSAMPLE sample;
     
     printf("preparing data from %s to %s (lines per file: %d)\n", TNN_TEMP_SOURCE, TNN_DATA_SOURCE, lines_per_file);
@@ -681,11 +679,9 @@ void tnn_prepare_data(int lines_per_file)
         if (!source_file) continue;
         printf("  reading file '%s'\n", source_name);
         while (fgets(line, 1000, source_file) != NULL) {
-            
-            if (!strcmp(line, prev)) continue;
-            strcpy(prev, line);
-            
+           
             tnn_line2record(line, &sample);
+            if (ABS(sample.eval) > MAX_EVAL) continue;
 
             if (target_line_count >= lines_per_file) {
                 if (target_file) fclose(target_file);

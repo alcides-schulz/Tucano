@@ -20,7 +20,7 @@
 
 #define ENGINE "Tucano"
 #define AUTHOR "Alcides Schulz"
-#define VERSION "10.12"
+#define VERSION "10.13"
 
 void        develop_workbench(void);
 double      bench(int depth, int print);
@@ -332,14 +332,6 @@ int main(int argc, char *argv[])
             develop_workbench();
             continue;
         }
-#ifdef TUCANNUE
-        if (!strcmp(command, "nnue")) {
-            char nnue_file[1000];
-            sscanf(line, "nnue %s\n", nnue_file);
-            USE_NN_EVAL = nnue_init(nnue_file);
-            continue;
-        }
-#endif
         if (!strcmp(command, "auto")) {
             // auto play mode, used for testings.
             int auto_play_count = 1;
@@ -444,12 +436,12 @@ int main(int argc, char *argv[])
 #endif
             printf("Other commands that can be used:\n\n");
             printf("             d: display current board\n");
-            printf("          eval: print evaluation score for current position\n");
             printf("epd <filename>: locate best move for epd positions in the file\n");
+            printf("                file should contains epd's and best moves in the format:\n");
+            printf("                8/2Q5/2p5/p7/Pk6/2q5/4K3/8 w - - 0 53 bm Qe7;\n");
             printf("     perft <n>: show perft move count from current position.\n");
             printf("                other perft commands: perftx, perfty, perftz\n");
             printf("            nn: neural network menu\n");
-            printf("          ppst: print current pst values\n");
             printf("\n");
             printf("\n");
             printf("Command line options:\n\n");
