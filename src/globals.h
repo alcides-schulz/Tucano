@@ -385,12 +385,16 @@ typedef struct s_board
     U64         pawn_key;
     U16         ply;
     U16         histply;
-    U16         selective_depth;
     U8          side_on_move;
     U8          fifty_move_rule;
     U8          ep_square;
+    U16         selective_depth;
     MOVE_HIST   history[MAX_HIST];
+#ifdef __GNUC__
+    S16         nn_hidden_value[TNN_HIDDEN_SIZE] __attribute__((aligned(16)));
+#else
     S16         nn_hidden_value[TNN_HIDDEN_SIZE];
+#endif
     S16         nn_history[MAX_HIST][TNN_HIDDEN_SIZE];
 }   BOARD;
 

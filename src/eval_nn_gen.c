@@ -48,6 +48,7 @@ void generate_nn_data(int fen_total, int max_depth, char *output_filename, int l
     GAME        *game;
     SETTINGS    settings;
     int         tnn_format = FALSE;
+    int         plain_format = FALSE;
 
     game = (GAME *)malloc(sizeof(GAME));
     if (game == NULL) {
@@ -57,6 +58,14 @@ void generate_nn_data(int fen_total, int max_depth, char *output_filename, int l
 
     if (strlen(output_filename) > 4 && !strcmp(&output_filename[strlen(output_filename) - 4], ".tnn")) {
         tnn_format = TRUE;
+    }
+    if (strlen(output_filename) > 6 && !strcmp(&output_filename[strlen(output_filename) - 6], ".plain")) {
+        plain_format = TRUE;
+    }
+
+    if (tnn_format == FALSE && plain_format == FALSE) {
+        printf("generation file extension should be .tnn or .plain, cannot generate for %s\n", output_filename);
+        return;
     }
 
     settings.single_move_time = MAX_TIME;
@@ -103,14 +112,22 @@ void generate_nn_data(int fen_total, int max_depth, char *output_filename, int l
             search_run(game, &settings);
             if (!game->search.best_move) break;
 
-            if (move_is_quiet(game->search.best_move) && !is_incheck(&game->board, side_on_move(&game->board))) {
+            if (!is_valid(&game->board, game->search.best_move)) {
                 util_get_board_fen(&game->board, nndd[nndd_count].fen);
                 util_get_move_string(game->search.best_move, nndd[nndd_count].move);
-                nndd[nndd_count].ply = get_history_ply(&game->board);
-                nndd[nndd_count].side = side_on_move(&game->board);
-                nndd[nndd_count].score = game->search.best_score;
-                nndd[nndd_count].depth = settings.max_depth;
-                nndd_count++;
+                printf("\ninvalid move: [%s] fen: [%s]\n", nndd[nndd_count].move, nndd[nndd_count].fen);
+                break;
+            }
+            else {
+                if (!move_is_en_passant(game->search.best_move)) {
+                    util_get_board_fen(&game->board, nndd[nndd_count].fen);
+                    util_get_move_string(game->search.best_move, nndd[nndd_count].move);
+                    nndd[nndd_count].ply = get_history_ply(&game->board);
+                    nndd[nndd_count].side = side_on_move(&game->board);
+                    nndd[nndd_count].score = game->search.best_score;
+                    nndd[nndd_count].depth = settings.max_depth;
+                    nndd_count++;
+                }
             }
 
             make_move(&game->board, game->search.best_move);
@@ -139,13 +156,21 @@ void generate_nn_data(int fen_total, int max_depth, char *output_filename, int l
                 fprintf(output, ";move=%s", nndd[i].move);
                 fprintf(output, "\n");
             }
-            else { // NNUE plain format
-                //fen r1bqkbnr/4pp1p/nppp2p1/p7/Q1P2P2/2NPP3/PP4PP/R1B1KBNR b - -f3
-                //move c8d7
-                //score 134
-                //ply 13
-                //result 0
-                //e
+            if (plain_format) { // NNUE plain format
+            /*
+                fen rnb1k2r/p4ppp/1qp1pn2/1p1pN3/1b1P1B1P/P3P3/1PPN1PP1/R2QKB1R w KQkq - 1 9
+                move a3b4
+                score 1340
+                ply 16
+                result 1
+                e
+                fen rnb1k2r/p4ppp/1qp1pn2/1p1pN3/1P1P1B1P/4P3/1PPN1PP1/R2QKB1R b KQkq - 0 9
+                move a7a5
+                score -1346
+                ply 17
+                result -1
+                e
+            */
                 fprintf(output, "fen %s\n", nndd[i].fen);
                 fprintf(output, "move %s\n", nndd[i].move);
                 fprintf(output, "score %d\n", nndd[i].score);
@@ -235,11 +260,13 @@ void generate_nn_files(char *to_file_mask, int total_positions, int max_depth)
 void tnn_generate_menu()
 {
 #ifdef _MSC_VER
-    char *to_file_mask = "d:/temp/data/d%04d.tnn";
+    char *to_file_mask_tnn = "d:/temp/data/d%04d.tnn";
+    char *to_file_mask_plain = "d:/temp/data/d%04d.plain";
     int total_positions = 100000;
     int max_depth = 4;
 #else
-    char *to_file_mask = "./data/d%04d.tnn";
+    char *to_file_mask_tnn = "./data/d%04d.tnn";
+    char *to_file_mask_plain = "./data/d%04d.plain";
     int total_positions = 100000000;
     int max_depth = 7;
 #endif
@@ -249,17 +276,20 @@ void tnn_generate_menu()
         printf("NN data generation menu\n\n");
         
         printf("Settings:\n");
-        printf("\tTo file mask...: %s\n", to_file_mask);
-        printf("\tTotal positions: %d\n", total_positions);
-        printf("\tMax depth......: %d\n", max_depth);
+        printf("\t.tnn file mask..: %s\n", to_file_mask_tnn);
+        printf("\t.plain file mask: %s\n", to_file_mask_plain);
+        printf("\tTotal positions.: %d\n", total_positions);
+        printf("\tMax depth.......: %d\n", max_depth);
         printf("\n");
 
-        printf("\t1. Generate training data\n");
+        printf("\t1. Generate training data .tnn\n");
+        printf("\t2. Generate training data .plain (stockfish trainer)\n");
         printf("\tx. Exit\n\n");
         printf("\t--> ");
         fgets(resp, 100, stdin);
         printf("\n");
-        if (!strncmp(resp, "1", 1)) generate_nn_files(to_file_mask, total_positions, max_depth);
+        if (!strncmp(resp, "1", 1)) generate_nn_files(to_file_mask_tnn, total_positions, max_depth);
+        if (!strncmp(resp, "2", 1)) generate_nn_files(to_file_mask_plain, total_positions, max_depth);
         if (!strncmp(resp, "x", 1)) break;
     }
 }

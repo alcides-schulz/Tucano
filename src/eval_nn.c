@@ -21,10 +21,6 @@ You can find the GNU General Public License at http://www.gnu.org/licenses/
 char *tnn_type_lookup[2] = { "PNBRQK", "pnbrqk" };
 void tnn_fen2index(char *fen, S16 index[]);
 
-// Intrinsics compilation for modern cpus, can be defined in the makefile or compile command
-//#define TNNAVX2
-//#define TNNSSE4
-
 S16 tnn_index(int piece_color, int piece_type, int square)
 {
     int piece_index = 0;
@@ -188,23 +184,6 @@ void tnn_fen2index(char *fen, S16 index[])
         }
     }
 
-    // test
-    //printf("%s\n", fen);
-    //U64 bb[12] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-    ////for (int i = 0; i < 32 && index[i] != -1; i++) {
-    ////    int i1 = index[i] / 64;
-    ////    int i2 = index[i] % 64;
-    ////    printf("i: %d index[i]: %d i1: %d i2: %d\n", i, index[i], i1, i2);
-    ////    bb_set_bit(&bb[i1], i2);
-    ////}
-    //new_game(&temp, fen);
-    //for (int i = 0; i < 6; i++) {
-    //    board_print(&temp.board, NULL);
-    //    printf("type: %c\n", tnn_type[0][i]);
-    //    bb_print("1", bb[i]);
-    //    bb_print("2", bb[i + 6]);
-    //    getchar();
-    //}
 }
 
 // EOF

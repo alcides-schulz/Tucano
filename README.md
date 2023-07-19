@@ -3,8 +3,7 @@ Tucano Chess Engine ![alt text](image/tucano.bmp "Tucano")
 
 This is my chess engine Tucano (Toucan in english). It is the name of a colorful bird with an oversized bill, and is popular in my country Brazil. 
 I'm an IT professional that likes chess and programming, so I combined both with the development of the development of a chess engine. 
-I used the information available on the internet, specially, other engines source code, such as Fruit, Crafty, Stockfish, Rodent, Olithink, Sungorus, Tscp, Ethereal, Demolito and Xiphos.
-Thanks to all developers that made this knowledge available.
+I used the information available on the internet, specially, other engines source code, such as Fruit, Crafty, Stockfish, Rodent, Olithink, Sungorus, Tscp, Ethereal, Demolito and Xiphos. Thanks to all developers that made this knowledge available!
 The main source of information for development of chess engines can is the Chess Programming Wiki Pages (https://www.chessprogramming.org/Main_Page).
 In case of any question please send me an email (alcides_schulz@hotmail.com) or stop by talkchess.com.
 
@@ -13,7 +12,7 @@ Tucano can be downloaded from github: https://github.com/alcides-schulz/Tucano
 Neural Network Evaluation
 -------------------------
 Starting with version 10 release, Tucano uses a neural network evaluation, which increases the engine strength. This network architecture is based on stockfish neural network.
-From version 10.06 and later, the network has been changed and use a new structure of 768x512x1 neurons. Also includes its own network trainer. The weights are embeeded in the file eval_nn.h.
+From version 10.06 and later, including official release 11.00, the network has been changed and use a new structure of 768x512x1 neurons. Also includes its own network trainer. The weights are embeeded in the file eval_nn.h.
 
 It is recommended to run with the neural network evaluation, othwerwise the performance will not be much better than previous version 9.
 
@@ -71,6 +70,7 @@ If you compile tucano you can use the command "bench" to get a signature. Just s
 Signature is a number generated after searching a couple of positions to indicate you have the correct compilation. 
 If you don't get the correct signature it means that something is wrong with the compilation process and the program may not perform correctly.
 
+    11.00:  5203395
     10.00:  5734637 (with nn eval file loaded)
      9.00: 21898211
      8.00: 32406478
@@ -80,7 +80,7 @@ If you don't get the correct signature it means that something is wrong with the
 The release will come with executables for different plataforms, try to use the one that providers the most nodes per seconds. 
 Start tucano and type the command "speed", you should see the following report:
 
-        Tucano chess engine by Alcides Schulz - 10.00 (type 'help' for information)
+        Tucano chess engine by Alcides Schulz - 11.00 (type 'help' for information)
 
            hash table: 64 MB, threads: 1
 
@@ -91,7 +91,7 @@ Start tucano and type the command "speed", you should see the following report:
         running speed test 4 of 5...
         running speed test 5 of 5...
 
-        Speed test: nodes per second average = 1376k
+        Speed test: nodes per second average = 2232k
 
 
 Compilation
@@ -120,6 +120,6 @@ Linux and ARM V8 (using src/makefile):
     make <architeture>
           <architecture>: avx2, sse4, old
 
-Note: It is recommend to use AVX2 or SSE in order to have a good performance with neural network evaluation. 
+Note: It is recommend to use AVX2 or SSE4 in order to have a good performance with neural network evaluation. The OLD version is basic and doesn't have the performance benefits of avx2 and sse4 architectures but can work for old plataforms.
 
 //END

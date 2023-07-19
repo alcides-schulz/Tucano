@@ -364,7 +364,7 @@ void tnn_apply_gradients(TNN *nn, GRADIENT *grad)
 }
 
 
-//rnbqkb2/pppppppr/5n1p/4N3/8/3P4/PPPQPPPP/RNB1KB1R b - -;score=-4;[1/2]
+//rnbqkb2/pppppppr/5n1p/4N3/8/3P4/PPPQPPPP/RNB1KB1R b - -;score=-4;[1/2];move=e2e4
 void tnn_line2record(char *line, TSAMPLE *record)
 {
     tnn_fen2index(line, record->input);
@@ -681,7 +681,6 @@ void tnn_prepare_data(int lines_per_file)
         while (fgets(line, 1000, source_file) != NULL) {
            
             tnn_line2record(line, &sample);
-            if (ABS(sample.eval) > MAX_EVAL) continue;
 
             if (target_line_count >= lines_per_file) {
                 if (target_file) fclose(target_file);
@@ -760,7 +759,7 @@ void tnn_prepare_menu()
         printf("\tTarget file mask.....: %s\n", TNN_DATA_SOURCE);
         printf("\n");
 
-        printf("\t1. Prepare data files\n");
+        printf("\t1. Prepare .tnn data files (tucano training)\n");
         printf("\tx. Exit\n\n");
         printf("\t--> ");
         fgets(resp, 100, stdin);
