@@ -86,7 +86,7 @@ size_t nnue_file_size(FD fd)
 const void *nnue_map_file(FD fd, map_t *map)
 {
 #ifndef _WIN32
-    *map = file_size(fd);
+    *map = nnue_file_size(fd);
     void *data = mmap(NULL, *map, PROT_READ, MAP_SHARED, fd, 0);
 #ifdef MADV_RANDOM
     madvise(data, *map, MADV_RANDOM);
