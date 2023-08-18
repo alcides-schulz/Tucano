@@ -22,6 +22,12 @@
 #include <string.h>
 #include <stdio.h>
 #include <ctype.h>
+#ifdef _WIN32
+#  include <windows.h>
+#else
+#  include <unistd.h>
+#  include <sys/mman.h>
+#endif
 
 /*
 #if !defined(USE_AVX512)
