@@ -632,6 +632,8 @@ void nn_menu(void)
 //-------------------------------------------------------------------------------------------------
 void develop_workbench(void)
 {
+    //printf("nnue_init: %d\n", nnue_init("tucano_nn01.bin", &nnue_param));
+    nnue_test();
 }
 
 //END

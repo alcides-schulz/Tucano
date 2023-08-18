@@ -228,7 +228,6 @@ MOVE    pack_capture(int moving_piece, int captured_piece, int from_square, int 
 MOVE    pack_en_passant_capture(int from_square, int to_square, int pawn_square);
 MOVE    pack_promotion(int from_square, int to_square, int prom_piece);
 MOVE    pack_capture_promotion(int captured_piece, int from_square, int to_square, int prom_piece);
-MOVE    pack_null_move(void);
 
 int     unpack_from(MOVE move);
 int     unpack_to(MOVE move);
@@ -726,5 +725,146 @@ void tnn_init_hidden_value(BOARD *board);
 void tnn_set_piece(BOARD *board, int piece_color, int piece_type, int square);
 void tnn_unset_piece(BOARD *board, int piece_color, int piece_type, int square);
 int tnn_eval(GAME *game);
+
+// NNUE Constants and defines
+#ifdef _WIN32
+typedef HANDLE FD;
+#define FD_ERR INVALID_HANDLE_VALUE
+typedef HANDLE map_t;
+#else /* Unix */
+typedef int FD;
+#define FD_ERR -1
+typedef size_t map_t;
+#endif
+
+static const uint32_t NNUE_VERSION = 0x7AF32F16u;
+
+/**
+* Internal piece representation
+*     wking=1, wqueen=2, wrook=3, wbishop= 4, wknight= 5, wpawn= 6,
+*     bking=7, bqueen=8, brook=9, bbishop=10, bknight=11, bpawn=12
+*/
+enum colors {
+    white, black
+};
+enum pieces {
+    blank = 0, wking, wqueen, wrook, wbishop, wknight, wpawn,
+    bking, bqueen, brook, bbishop, bknight, bpawn
+};
+enum {
+    FV_SCALE = 16,
+    SHIFT = 6
+};
+enum {
+    PS_W_PAWN = 1,
+    PS_B_PAWN = 1 * 64 + 1,
+    PS_W_KNIGHT = 2 * 64 + 1,
+    PS_B_KNIGHT = 3 * 64 + 1,
+    PS_W_BISHOP = 4 * 64 + 1,
+    PS_B_BISHOP = 5 * 64 + 1,
+    PS_W_ROOK = 6 * 64 + 1,
+    PS_B_ROOK = 7 * 64 + 1,
+    PS_W_QUEEN = 8 * 64 + 1,
+    PS_B_QUEEN = 9 * 64 + 1,
+    PS_END = 10 * 64 + 1
+};
+
+enum {
+    kHalfDimensions = 256,
+    FtInDims = 64 * PS_END, // 64 * 641
+    FtOutDims = kHalfDimensions * 2
+};
+
+enum {
+    TRANSFORMER_START = 3 * 4 + 177,
+    NETWORK_START = TRANSFORMER_START + 4 + 2 * 256 + 2 * 256 * 64 * 641
+};
+#define NNUE_KING(c)    ( (c) ? bking : wking )
+#define NNUE_IS_KING(p) ( ((p) == wking) || ((p) == bking) )
+
+// Input feature converter
+typedef int8_t clipped_t;
+typedef int8_t weight_t;
+
+// Align options for MSC and GCC compilers
+#ifdef _MSC_VER
+#define ALIGN64 __declspec(align(64))
+#define ALIGN8 __declspec(align(8))
+#pragma warning (disable : 4324)
+#else
+#define ALIGN64 __attribute__((aligned(64)))
+#define ALIGN8 __attribute__((aligned(8)))
+#endif
+
+typedef struct s_nnue_value {
+#ifdef _MSC_VER
+#define ALIGN64 __declspec(align(64))
+#pragma warning (disable : 4324)
+    int16_t             ft_biases[kHalfDimensions];
+    int16_t             ft_weights[kHalfDimensions * FtInDims];
+    ALIGN64 weight_t    hidden1_weights[32 * 512];
+    ALIGN64 weight_t    hidden2_weights[32 * 32];
+    ALIGN64 weight_t    output_weights[1 * 32];
+    ALIGN64 int32_t     hidden1_biases[32];
+    ALIGN64 int32_t     hidden2_biases[32];
+    int32_t         output_biases[1];
+#else
+    // using align options for GCC
+    int16_t         ft_biases[kHalfDimensions];
+    int16_t         ft_weights[kHalfDimensions * FtInDims];
+    weight_t        hidden1_weights[32 * 512] ALIGN64;
+    weight_t        hidden2_weights[32 * 32] ALIGN64;
+    weight_t        output_weights[1 * 32] ALIGN64;
+    int32_t         hidden1_biases[32] ALIGN64;
+    int32_t         hidden2_biases[32] ALIGN64;
+    int32_t         output_biases[1];
+#endif
+}   NNUE_PARAM;
+
+EXTERN NNUE_PARAM   nnue_param;
+
+/**
+* nnue data structure
+*/
+
+typedef struct s_dirty_piece {
+    int dirtyNum;
+    int pc[3];
+    int from[3];
+    int to[3];
+} DirtyPiece;
+
+typedef struct s_accumulator {
+    int16_t accumulation[2][256];
+    int computedAccumulation;
+} Accumulator;
+
+typedef struct s_nnue_data {
+    Accumulator accumulator;
+    DirtyPiece dirtyPiece;
+} NNUEdata;
+
+typedef struct {
+    size_t size;
+    unsigned values[30];
+} IndexList;
+
+/**
+* position data structure passed to core subroutines
+*/
+typedef struct s_nnue_position {
+    int player;
+    int* pieces;
+    int* squares;
+    NNUEdata* nnue[3];
+} Position;
+
+#define clamp(a, b, c) ((a) < (b) ? (b) : (a) > (c) ? (c) : (a))
+
+//  nnue global functions
+int nnue_init(const char* eval_file_name, NNUE_PARAM *p_nnue_param);
+int nnue_eval_full(GAME *game);
+int nnue_evaluate(int player, int* pieces, int* squares);
+void nnue_test(void);
 
 //End
