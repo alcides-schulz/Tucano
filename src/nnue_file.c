@@ -138,9 +138,8 @@ int nnue_verify_net(const void *file_data, size_t size)
     return TRUE;
 }
 
-unsigned nnue_weight_index(unsigned r, unsigned c, unsigned dims)
+unsigned nnue_weight_index(unsigned r, unsigned c)
 {
-    (void)dims;
     return c * 32 + r;
 }
 
@@ -148,7 +147,7 @@ const char *nnue_read_hidden_weights(weight_t *w, unsigned dims, const char *d)
 {
     for (unsigned r = 0; r < 32; r++) {
         for (unsigned c = 0; c < dims; c++) {
-            w[nnue_weight_index(r, c, dims)] = *d++;
+            w[nnue_weight_index(r, c)] = *d++;
         }
     }
     return d;
@@ -166,10 +165,10 @@ void nnue_init_weights(const void *file_data, NNUE_PARAM *p_nnue_param)
 {
     const char *d = (const char *)file_data + TRANSFORMER_START + 4;
     // Read transformer
-    for (unsigned i = 0; i < kHalfDimensions; i++, d += 2) {
+    for (unsigned i = 0; i < KHALF_DIMENSIONS; i++, d += 2) {
         p_nnue_param->ft_biases[i] = nnue_read_u16(d);
     }
-    for (unsigned i = 0; i < kHalfDimensions * FtInDims; i++, d += 2) {
+    for (unsigned i = 0; i < KHALF_DIMENSIONS * FT_IN_DIMS; i++, d += 2) {
         p_nnue_param->ft_weights[i] = nnue_read_u16(d);
     }
     // Read network

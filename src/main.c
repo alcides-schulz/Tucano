@@ -26,7 +26,6 @@ void        develop_workbench(void);
 double      bench(int depth, int print);
 void        speed_test(void);
 void        settings_init(void);
-void        nn_menu();
 
 char        line[MAX_READ];
 char        command[MAX_READ] = { '\0' };
@@ -74,6 +73,23 @@ int main(int argc, char *argv[])
         }
 #endif
     }
+        char nnue_file[1000];
+        if (strlen(argv[0]) < 1000) {
+            strcpy(nnue_file, argv[0]);
+            char *last_slash = strrchr(nnue_file, '\\'); // windows
+            if (last_slash == NULL) {
+                last_slash = strrchr(nnue_file, '/'); // linux
+            }
+            if (last_slash != NULL) {
+                strcpy(last_slash + 1, TUCANO_EVAL_FILE);
+            }
+            else {
+                strcpy(nnue_file, TUCANO_EVAL_FILE);
+            }
+            if (!nnue_init(nnue_file, &nnue_param)) {
+                printf("could not load nnue file: %s\n", TUCANO_EVAL_FILE);
+            }
+        }
 
     printf("   hash table: %d MB, threads: %d\n", hash_size, threads);
 
@@ -421,10 +437,6 @@ int main(int argc, char *argv[])
             eval_test(epd_file);
             continue;
         }
-        if (!strcmp(command, "nn")) {
-            nn_menu();
-            continue;
-        }
         if (!strcmp(command, "help")) {
             printf("Tucano supports XBoard/Winboard or UCI protocols.\n\n");
 #if defined(__GNUC__)
@@ -441,7 +453,6 @@ int main(int argc, char *argv[])
             printf("                8/2Q5/2p5/p7/Pk6/2q5/4K3/8 w - - 0 53 bm Qe7;\n");
             printf("     perft <n>: show perft move count from current position.\n");
             printf("                other perft commands: perftx, perfty, perftz\n");
-            printf("            nn: neural network menu\n");
             printf("\n");
             printf("\n");
             printf("Command line options:\n\n");
@@ -601,30 +612,6 @@ int valid_hash_size(int hash_size) {
     if (hash_size < MIN_HASH_SIZE) hash_size = MIN_HASH_SIZE;
     if (hash_size > MAX_HASH_SIZE) hash_size = MAX_HASH_SIZE;
     return hash_size;
-}
-
-void tnn_generate_menu();
-void tnn_prepare_menu();
-void tnn_training_menu();
-
-void nn_menu(void) 
-{
-    char resp[100];
-
-    while (TRUE) {
-        printf("NN menu\n\n");
-        printf("\t1. Generate training data\n");
-        printf("\t2. Prepare data\n");
-        printf("\t3. Train network\n");
-        printf("\tx. Exit\n\n");
-        printf("\t--> ");
-        fgets(resp, 100, stdin);
-        printf("\n");
-        if (!strncmp(resp, "1", 1)) tnn_generate_menu();
-        if (!strncmp(resp, "2", 1)) tnn_prepare_menu();
-        if (!strncmp(resp, "3", 1)) tnn_training_menu();
-        if (!strncmp(resp, "x", 1)) break;
-    }
 }
 
 //-------------------------------------------------------------------------------------------------

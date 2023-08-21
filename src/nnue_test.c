@@ -22,7 +22,7 @@ GAME nnue_game;
 void nnue_test_fen(char *fen)
 {
     new_game(&nnue_game, fen);
-    printf("nnue_eval: %5d fen: %s\n", nnue_eval_full(&nnue_game), fen);       
+    printf("nnue_eval: %5d fen: %s\n", evaluate(&nnue_game), fen);       
 }
 
 void nnue_test_fens()

@@ -25,19 +25,7 @@
 // Comment next line to use "assert" functions. "assert" functions are helpfull during debug.
 #define NDEBUG
 
-// Basic integer type definition. Copied from stockfish.
-// This is necessary to keep the several tables with the same size in 32 and 64 bits systems.
 #if defined(_MSC_VER)
-
-// MSVC does not support <inttypes.h>
-typedef   signed __int8    int8_t;
-typedef unsigned __int8   uint8_t;
-typedef   signed __int16  int16_t;
-typedef unsigned __int16 uint16_t;
-typedef   signed __int32  int32_t;
-typedef unsigned __int32 uint32_t;
-typedef   signed __int64  int64_t;
-typedef unsigned __int64 uint64_t;
 
 #pragma warning (disable : 4706)
 #pragma warning (disable : 4711)
@@ -47,10 +35,6 @@ typedef unsigned __int64 uint64_t;
 #pragma warning (disable : 4710)
 #pragma warning (disable : 4668)
 #pragma warning (disable : 4214)
-
-#else
-
-#include <inttypes.h>
 
 #endif
 
@@ -95,7 +79,10 @@ typedef HANDLE THREAD_ID;
 #define EXTERN extern
 #endif
 
-// Type definitions.
+// nnue
+#include "nnue_defs.h"
+
+// Type definitions
 typedef uint64_t        U64; // this is the bitboard
 typedef int32_t         S32;
 typedef uint32_t        U32;
@@ -389,13 +376,16 @@ typedef struct s_board
     U8          ep_square;
     U16         selective_depth;
     MOVE_HIST   history[MAX_HIST];
-#ifdef __GNUC__
-    S16         nn_hidden_value[TNN_HIDDEN_SIZE] __attribute__((aligned(16)));
-#else
-    S16         nn_hidden_value[TNN_HIDDEN_SIZE];
-#endif
-    S16         nn_history[MAX_HIST][TNN_HIDDEN_SIZE];
+    NNUE_DATA   nnue_data[MAX_HIST];
 }   BOARD;
+
+typedef struct s_eval_table
+{
+    U64     key;
+    S32     score;
+}   EVAL_TABLE;
+
+#define EVAL_TABLE_SIZE 65536
 
 //  Game Data
 typedef struct s_game {
@@ -403,6 +393,7 @@ typedef struct s_game {
     BOARD       board;
     PV_LINE     pv_line;
     MOVE_ORDER  move_order;
+    EVAL_TABLE  eval_table[EVAL_TABLE_SIZE];
     int         eval_hist[MAX_PLY];
     int         is_main_thread;
     THREAD_ID   thread_handle;
@@ -486,6 +477,7 @@ void    auto_play(int total_games, SETTINGS *settings);
 void    new_game(GAME *game, char *fen);
 int     valid_threads(int threads);
 int     valid_hash_size(int hash_size);
+int     get_game_result(GAME *game);
 
 // Interface protocols. Communication between engine and GUI.
 void uci_loop(char *engine_name, char *engine_version, char *engine_author);
@@ -552,8 +544,6 @@ int     score_from_tt(int score, int ply);
 int     see_move(BOARD *board, MOVE move);
 int     piece_value_see(int piece);
 
-int     get_game_result(GAME *game);
-
 // transposition table
 void    tt_age(void);
 void    tt_init(size_t size_mb);
@@ -563,6 +553,9 @@ void    tt_read(U64 key, TT_RECORD *record);
 
 // Analyze Mode
 void    analyze_mode(GAME *game);
+
+// Evaluation
+int evaluate(GAME *game);
 
 // Board
 void    new_game(GAME *game, char *fen);
@@ -620,6 +613,7 @@ void    init_seldepth(BOARD *board);
 int     get_played_moves_count(BOARD *board, int color);
 void    move_piece(BOARD *board, int color, int type, int frsq, int tosq);
 void    set_piece(BOARD *board, int color, int type, int tosq);
+void    init_piece(BOARD *board, int color, int type, int tosq);
 void    remove_piece(BOARD *board, int color, int type, int frsq);
 void    move_piece_undo(BOARD *board, int color, int type, int frsq, int tosq);
 void    set_piece_undo(BOARD *board, int color, int type, int index);
@@ -715,156 +709,5 @@ int     pawn_is_candidate(BOARD *board, int pcsq, int color);
 U32 egtb_probe_wdl(BOARD *board, int depth, int ply);
 
 #endif
-
-// Neural Network
-#define NN_QUANTIZATION 64
-
-S16 tnn_index(int piece_color, int piece_type, int square);
-void tnn_fen2index(char *fen, S16 index[]);
-void tnn_init_hidden_value(BOARD *board);
-void tnn_set_piece(BOARD *board, int piece_color, int piece_type, int square);
-void tnn_unset_piece(BOARD *board, int piece_color, int piece_type, int square);
-int tnn_eval(GAME *game);
-
-// NNUE Constants and defines
-#ifdef _WIN32
-typedef HANDLE FD;
-#define FD_ERR INVALID_HANDLE_VALUE
-typedef HANDLE map_t;
-#else /* Unix */
-typedef int FD;
-#define FD_ERR -1
-typedef size_t map_t;
-#endif
-
-static const uint32_t NNUE_VERSION = 0x7AF32F16u;
-
-/**
-* Internal piece representation
-*     wking=1, wqueen=2, wrook=3, wbishop= 4, wknight= 5, wpawn= 6,
-*     bking=7, bqueen=8, brook=9, bbishop=10, bknight=11, bpawn=12
-*/
-enum colors {
-    white, black
-};
-enum pieces {
-    blank = 0, wking, wqueen, wrook, wbishop, wknight, wpawn,
-    bking, bqueen, brook, bbishop, bknight, bpawn
-};
-enum {
-    FV_SCALE = 16,
-    SHIFT = 6
-};
-enum {
-    PS_W_PAWN = 1,
-    PS_B_PAWN = 1 * 64 + 1,
-    PS_W_KNIGHT = 2 * 64 + 1,
-    PS_B_KNIGHT = 3 * 64 + 1,
-    PS_W_BISHOP = 4 * 64 + 1,
-    PS_B_BISHOP = 5 * 64 + 1,
-    PS_W_ROOK = 6 * 64 + 1,
-    PS_B_ROOK = 7 * 64 + 1,
-    PS_W_QUEEN = 8 * 64 + 1,
-    PS_B_QUEEN = 9 * 64 + 1,
-    PS_END = 10 * 64 + 1
-};
-
-enum {
-    kHalfDimensions = 256,
-    FtInDims = 64 * PS_END, // 64 * 641
-    FtOutDims = kHalfDimensions * 2
-};
-
-enum {
-    TRANSFORMER_START = 3 * 4 + 177,
-    NETWORK_START = TRANSFORMER_START + 4 + 2 * 256 + 2 * 256 * 64 * 641
-};
-#define NNUE_KING(c)    ( (c) ? bking : wking )
-#define NNUE_IS_KING(p) ( ((p) == wking) || ((p) == bking) )
-
-// Input feature converter
-typedef int8_t clipped_t;
-typedef int8_t weight_t;
-
-// Align options for MSC and GCC compilers
-#ifdef _MSC_VER
-#define ALIGN64 __declspec(align(64))
-#define ALIGN8 __declspec(align(8))
-#pragma warning (disable : 4324)
-#else
-#define ALIGN64 __attribute__((aligned(64)))
-#define ALIGN8 __attribute__((aligned(8)))
-#endif
-
-typedef struct s_nnue_value {
-#ifdef _MSC_VER
-#define ALIGN64 __declspec(align(64))
-#pragma warning (disable : 4324)
-    int16_t             ft_biases[kHalfDimensions];
-    int16_t             ft_weights[kHalfDimensions * FtInDims];
-    ALIGN64 weight_t    hidden1_weights[32 * 512];
-    ALIGN64 weight_t    hidden2_weights[32 * 32];
-    ALIGN64 weight_t    output_weights[1 * 32];
-    ALIGN64 int32_t     hidden1_biases[32];
-    ALIGN64 int32_t     hidden2_biases[32];
-    int32_t         output_biases[1];
-#else
-    // using align options for GCC
-    int16_t         ft_biases[kHalfDimensions];
-    int16_t         ft_weights[kHalfDimensions * FtInDims];
-    weight_t        hidden1_weights[32 * 512] ALIGN64;
-    weight_t        hidden2_weights[32 * 32] ALIGN64;
-    weight_t        output_weights[1 * 32] ALIGN64;
-    int32_t         hidden1_biases[32] ALIGN64;
-    int32_t         hidden2_biases[32] ALIGN64;
-    int32_t         output_biases[1];
-#endif
-}   NNUE_PARAM;
-
-EXTERN NNUE_PARAM   nnue_param;
-
-/**
-* nnue data structure
-*/
-
-typedef struct s_dirty_piece {
-    int dirtyNum;
-    int pc[3];
-    int from[3];
-    int to[3];
-} DirtyPiece;
-
-typedef struct s_accumulator {
-    int16_t accumulation[2][256];
-    int computedAccumulation;
-} Accumulator;
-
-typedef struct s_nnue_data {
-    Accumulator accumulator;
-    DirtyPiece dirtyPiece;
-} NNUEdata;
-
-typedef struct {
-    size_t size;
-    unsigned values[30];
-} IndexList;
-
-/**
-* position data structure passed to core subroutines
-*/
-typedef struct s_nnue_position {
-    int player;
-    int* pieces;
-    int* squares;
-    NNUEdata* nnue[3];
-} Position;
-
-#define clamp(a, b, c) ((a) < (b) ? (b) : (a) > (c) ? (c) : (a))
-
-//  nnue global functions
-int nnue_init(const char* eval_file_name, NNUE_PARAM *p_nnue_param);
-int nnue_eval_full(GAME *game);
-int nnue_evaluate(int player, int* pieces, int* squares);
-void nnue_test(void);
 
 //End

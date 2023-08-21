@@ -45,7 +45,7 @@ int quiesce(GAME *game, UINT incheck, int alpha, int beta, int depth)
     if (ply > 0 && is_draw(&game->board)) return 0;
 
     assert(ply >= 0 && ply <= MAX_PLY);
-    if (ply >= MAX_PLY) return tnn_eval(game);
+    if (ply >= MAX_PLY) return evaluate(game);
 
     //  Mate pruning.
     alpha = MAX(-MATE_VALUE + ply, alpha);
@@ -64,7 +64,7 @@ int quiesce(GAME *game, UINT incheck, int alpha, int beta, int depth)
     MOVE trans_move = tt_record.info.move;
 
     if (!incheck) {
-        best_score = tnn_eval(game);
+        best_score = evaluate(game);
         if (best_score >= beta) return best_score;
         if (best_score > alpha) alpha = best_score;
     }

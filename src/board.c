@@ -33,8 +33,6 @@ void set_fen(BOARD *board, char *fen)
 
     memset(board, 0, sizeof(BOARD));
 
-    tnn_init_hidden_value(board);
-
     for (i = 0; i < 64; i++) {
 		board->state[WHITE].square[i] = NO_PIECE;
 		board->state[BLACK].square[i] = NO_PIECE;
@@ -53,18 +51,18 @@ void set_fen(BOARD *board, char *fen)
         }
         inc = 1;
         switch (fen[i])  {
-            case 'r': set_piece(board, BLACK, ROOK, r * 8 + f);   break;
-            case 'n': set_piece(board, BLACK, KNIGHT, r * 8 + f); break;
-            case 'b': set_piece(board, BLACK, BISHOP, r * 8 + f); break;
-            case 'q': set_piece(board, BLACK, QUEEN, r * 8 + f);  break;
-            case 'k': set_piece(board, BLACK, KING, r * 8 + f);   break;
-            case 'p': set_piece(board, BLACK, PAWN, r * 8 + f);   break;
-            case 'R': set_piece(board, WHITE, ROOK, r * 8 + f);   break;
-            case 'N': set_piece(board, WHITE, KNIGHT, r * 8 + f); break;
-            case 'B': set_piece(board, WHITE, BISHOP, r * 8 + f); break;
-            case 'Q': set_piece(board, WHITE, QUEEN, r * 8 + f);  break;
-            case 'K': set_piece(board, WHITE, KING, r * 8 + f);   break;
-            case 'P': set_piece(board, WHITE, PAWN, r * 8 + f);   break;
+            case 'r': init_piece(board, BLACK, ROOK, r * 8 + f);   break;
+            case 'n': init_piece(board, BLACK, KNIGHT, r * 8 + f); break;
+            case 'b': init_piece(board, BLACK, BISHOP, r * 8 + f); break;
+            case 'q': init_piece(board, BLACK, QUEEN, r * 8 + f);  break;
+            case 'k': init_piece(board, BLACK, KING, r * 8 + f);   break;
+            case 'p': init_piece(board, BLACK, PAWN, r * 8 + f);   break;
+            case 'R': init_piece(board, WHITE, ROOK, r * 8 + f);   break;
+            case 'N': init_piece(board, WHITE, KNIGHT, r * 8 + f); break;
+            case 'B': init_piece(board, WHITE, BISHOP, r * 8 + f); break;
+            case 'Q': init_piece(board, WHITE, QUEEN, r * 8 + f);  break;
+            case 'K': init_piece(board, WHITE, KING, r * 8 + f);   break;
+            case 'P': init_piece(board, WHITE, PAWN, r * 8 + f);   break;
             default: 
                 if (fen[i] >= '1' && fen[i] <= '8') inc = fen[i] - '0'; 
                 break;
@@ -179,8 +177,9 @@ void make_move(BOARD *board, MOVE move)
     board->history[board->histply].board_key        = board->key;
     board->history[board->histply].pawn_key         = board->pawn_key;
     board->history[board->histply].fifty_move_rule  = board->fifty_move_rule;
-    
-    memcpy(board->nn_history[board->histply], board->nn_hidden_value, sizeof(board->nn_hidden_value));
+
+    board->nnue_data[board->histply + 1].accumulator.computed = FALSE;
+    board->nnue_data[board->histply + 1].dirty_piece.count = 0;
 
     // Key
     board->key ^= zk_color();
@@ -306,8 +305,6 @@ void undo_move(BOARD *board)
     board->pawn_key                  = board->history[board->histply].pawn_key;
     board->fifty_move_rule           = board->history[board->histply].fifty_move_rule;
 
-    memcpy(board->nn_hidden_value, board->nn_history[board->histply], sizeof(board->nn_hidden_value));
-
     //  basic move information
     int mvpc = unpack_piece(move);
     int frsq = unpack_from(move);
@@ -356,7 +353,7 @@ void undo_move(BOARD *board)
             move_piece_undo(board, BLACK, ROOK, D8, A8);
             break;
         case MT_NULL:
-            break;
+break;
     }
 
     assert(board_state_is_ok(board));
@@ -367,11 +364,11 @@ void undo_move(BOARD *board)
 //-------------------------------------------------------------------------------------------------
 int material_value(BOARD *board, int color)
 {
-    return (board->state[color].count[QUEEN]  * VALUE_QUEEN) +
-           (board->state[color].count[ROOK]   * VALUE_ROOK) +
-           (board->state[color].count[KNIGHT] * VALUE_KNIGHT) +
-           (board->state[color].count[BISHOP] * VALUE_BISHOP) +
-           (board->state[color].count[PAWN]   * VALUE_PAWN);
+    return (board->state[color].count[QUEEN] * VALUE_QUEEN) +
+        (board->state[color].count[ROOK] * VALUE_ROOK) +
+        (board->state[color].count[KNIGHT] * VALUE_KNIGHT) +
+        (board->state[color].count[BISHOP] * VALUE_BISHOP) +
+        (board->state[color].count[PAWN] * VALUE_PAWN);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -379,10 +376,10 @@ int material_value(BOARD *board, int color)
 //-------------------------------------------------------------------------------------------------
 int pieces_count(BOARD *board, int color)
 {
-    return board->state[color].count[QUEEN]  +
-           board->state[color].count[ROOK]   +
-           board->state[color].count[KNIGHT] +
-           board->state[color].count[BISHOP];
+    return board->state[color].count[QUEEN] +
+        board->state[color].count[ROOK] +
+        board->state[color].count[KNIGHT] +
+        board->state[color].count[BISHOP];
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -441,20 +438,22 @@ int reached_fifty_move_rule(BOARD *board)
 //-------------------------------------------------------------------------------------------------
 void move_piece(BOARD *board, int color, int type, int frsq, int tosq)
 {
-    U64     bb_from_to = square_bb(frsq) ^ square_bb(tosq);
-
+    U64 bb_from_to = square_bb(frsq) ^ square_bb(tosq);
     board->state[color].square[frsq] = NO_PIECE;
     board->state[color].piece[type] ^= bb_from_to;
     board->state[color].all_pieces ^= bb_from_to;
     board->key ^= zk_square(color, type, frsq);
-    board->state[color].square[tosq] = (U8)type; 
+    board->state[color].square[tosq] = (U8)type;
     board->key ^= zk_square(color, type, tosq);
     if (type == PAWN) {
         board->pawn_key ^= zk_square(color, PAWN, frsq);
         board->pawn_key ^= zk_square(color, PAWN, tosq);
     }
-    tnn_unset_piece(board, color, type, frsq);
-    tnn_set_piece(board, color, type, tosq);
+    int nnue_index = board->histply + 1;
+    board->nnue_data[nnue_index].dirty_piece.piece[board->nnue_data[nnue_index].dirty_piece.count] = nnue_piece(color, type);
+    board->nnue_data[nnue_index].dirty_piece.from[board->nnue_data[nnue_index].dirty_piece.count] = nnue_square(frsq);
+    board->nnue_data[nnue_index].dirty_piece.to[board->nnue_data[nnue_index].dirty_piece.count] = nnue_square(tosq);
+    board->nnue_data[nnue_index].dirty_piece.count++;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -462,15 +461,18 @@ void move_piece(BOARD *board, int color, int type, int frsq, int tosq)
 //-------------------------------------------------------------------------------------------------
 void set_piece(BOARD *board, int color, int type, int tosq)
 {
-    U64     bb_set = square_bb(tosq);
-
-    board->state[color].square[tosq] = (U8)type; 
+    U64 bb_set = square_bb(tosq);
+    board->state[color].square[tosq] = (U8)type;
     board->state[color].piece[type] ^= bb_set;
     board->state[color].all_pieces ^= bb_set;
     board->key ^= zk_square(color, type, tosq);
     if (type == PAWN) board->pawn_key ^= zk_square(color, PAWN, tosq);
     board->state[color].count[type]++;
-    tnn_set_piece(board, color, type, tosq);
+    int nnue_index = board->histply + 1;
+    board->nnue_data[nnue_index].dirty_piece.piece[board->nnue_data[nnue_index].dirty_piece.count] = nnue_piece(color, type);
+    board->nnue_data[nnue_index].dirty_piece.from[board->nnue_data[nnue_index].dirty_piece.count] = 64; // hack
+    board->nnue_data[nnue_index].dirty_piece.to[board->nnue_data[nnue_index].dirty_piece.count] = nnue_square(tosq);
+    board->nnue_data[nnue_index].dirty_piece.count++;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -478,15 +480,32 @@ void set_piece(BOARD *board, int color, int type, int tosq)
 //-------------------------------------------------------------------------------------------------
 void remove_piece(BOARD *board, int color, int type, int frsq)
 {
-    U64     bb_remove = square_bb(frsq);
-
+    U64 bb_remove = square_bb(frsq);
     board->state[color].square[frsq] = NO_PIECE;
     board->state[color].piece[type] ^= bb_remove;
     board->state[color].all_pieces ^= bb_remove;
     board->key ^= zk_square(color, type, frsq);
     if (type == PAWN) board->pawn_key ^= zk_square(color, PAWN, frsq);
     board->state[color].count[type]--;
-    tnn_unset_piece(board, color, type, frsq);
+    int nnue_index = board->histply + 1;
+    board->nnue_data[nnue_index].dirty_piece.piece[board->nnue_data[nnue_index].dirty_piece.count] = nnue_piece(color, type);
+    board->nnue_data[nnue_index].dirty_piece.from[board->nnue_data[nnue_index].dirty_piece.count] = nnue_square(frsq);
+    board->nnue_data[nnue_index].dirty_piece.to[board->nnue_data[nnue_index].dirty_piece.count] = 64; // hack
+    board->nnue_data[nnue_index].dirty_piece.count++;
+}
+
+//-------------------------------------------------------------------------------------------------
+//  Place a piece on square and update color state. Don't update nnue info.
+//-------------------------------------------------------------------------------------------------
+void init_piece(BOARD *board, int color, int type, int tosq)
+{
+    U64 bb_set = square_bb(tosq);
+    board->state[color].square[tosq] = (U8)type;
+    board->state[color].piece[type] ^= bb_set;
+    board->state[color].all_pieces ^= bb_set;
+    board->key ^= zk_square(color, type, tosq);
+    if (type == PAWN) board->pawn_key ^= zk_square(color, PAWN, tosq);
+    board->state[color].count[type]++;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -494,8 +513,7 @@ void remove_piece(BOARD *board, int color, int type, int frsq)
 //-------------------------------------------------------------------------------------------------
 void move_piece_undo(BOARD *board, int color, int type, int frsq, int tosq)
 {
-    U64     bb_from_to = square_bb(frsq) ^ square_bb(tosq);
-
+    U64 bb_from_to = square_bb(frsq) ^ square_bb(tosq);
     board->state[color].square[frsq] = NO_PIECE;
     board->state[color].piece[type] ^= bb_from_to;
     board->state[color].all_pieces ^= bb_from_to;
@@ -507,8 +525,7 @@ void move_piece_undo(BOARD *board, int color, int type, int frsq, int tosq)
 //-------------------------------------------------------------------------------------------------
 void set_piece_undo(BOARD *board, int color, int type, int tosq)
 {
-    U64     bb_set = square_bb(tosq);
-
+    U64 bb_set = square_bb(tosq);
     board->state[color].square[tosq] = (U8)type;
     board->state[color].piece[type] ^= bb_set;
     board->state[color].all_pieces ^= bb_set;
@@ -520,8 +537,7 @@ void set_piece_undo(BOARD *board, int color, int type, int tosq)
 //-------------------------------------------------------------------------------------------------
 void remove_piece_undo(BOARD *board, int color, int type, int frsq)
 {
-    U64     bb_remove = square_bb(frsq);
-
+    U64 bb_remove = square_bb(frsq);
     board->state[color].square[frsq] = NO_PIECE;
     board->state[color].piece[type] ^= bb_remove;
     board->state[color].all_pieces ^= bb_remove;
@@ -533,8 +549,8 @@ void remove_piece_undo(BOARD *board, int color, int type, int frsq)
 //-------------------------------------------------------------------------------------------------
 int square_distance(int square1, int square2)
 {
-    int        file_distance = get_file(square1) - get_file(square2);
-    int        rank_distance = get_rank(square1) - get_rank(square2);
+    int file_distance = get_file(square1) - get_file(square2);
+    int rank_distance = get_rank(square1) - get_rank(square2);
 
     file_distance = ABS(file_distance);
     rank_distance = ABS(rank_distance);

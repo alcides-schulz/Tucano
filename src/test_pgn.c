@@ -79,7 +79,7 @@ void test_pgn(char *pgn_filename)
 
             if (is_incheck(&game.board, WHITE)) continue;
 
-            es = tnn_eval(&game);
+            es = evaluate(&game);
             //qs = quiesce(FALSE, -MAX_SCORE, MAX_SCORE, 0, -1);
 
             if (es != qs) continue;
