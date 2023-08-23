@@ -56,20 +56,20 @@ void nnue_half_kp_append_active_indices(const NNUE_POSITION *pos, const int c, N
     }
 }
 
-void nnue_half_kp_append_changed_indices(const NNUE_POSITION *pos, const int c, const NNUE_DIRTY *dp, NNUE_INDEXES *removed, NNUE_INDEXES *added)
+void nnue_half_kp_append_changed_indices(const NNUE_POSITION *pos, const int c, const NNUE_CHANGE *changes, NNUE_INDEXES *removed, NNUE_INDEXES *added)
 {
     int ksq = pos->squares[c];
     ksq = nnue_orient(c, ksq);
-    for (int i = 0; i < dp->count; i++) {
-        int pc = dp->piece[i];
+    for (int i = 0; i < changes->count; i++) {
+        int pc = changes->piece[i];
         if (NNUE_IS_KING(pc)) {
             continue;
         }
-        if (dp->from[i] != 64) {
-            removed->values[removed->size++] = nnue_make_index(c, dp->from[i], pc, ksq);
+        if (changes->from[i] != 64) {
+            removed->values[removed->size++] = nnue_make_index(c, changes->from[i], pc, ksq);
         }
-        if (dp->to[i] != 64) {
-            added->values[added->size++] = nnue_make_index(c, dp->to[i], pc, ksq);
+        if (changes->to[i] != 64) {
+            added->values[added->size++] = nnue_make_index(c, changes->to[i], pc, ksq);
         }
     }
 }
@@ -81,12 +81,12 @@ void nnue_append_active_indices(const NNUE_POSITION *pos, NNUE_INDEXES active[2]
     }
 }
 
-int nnue_king_move(const NNUE_DIRTY *dp)
+int nnue_has_king_move(const NNUE_CHANGE *changes)
 {
-    if (NNUE_IS_KING(dp->piece[0])) {
+    if (NNUE_IS_KING(changes->piece[0])) {
         return TRUE;
     }
-    if (dp->count > 1 && NNUE_IS_KING(dp->piece[1])) {
+    if (changes->count > 0 && NNUE_IS_KING(changes->piece[1])) {
         return TRUE;
     }
     return FALSE;
@@ -94,31 +94,14 @@ int nnue_king_move(const NNUE_DIRTY *dp)
 
 void nnue_append_changed_indices(const NNUE_POSITION *pos, NNUE_INDEXES removed[2], NNUE_INDEXES added[2], int reset[2])
 {
-    const NNUE_DIRTY *dp = &(pos->nnue_data[0]->dirty_piece);
-    if (pos->nnue_data[1]->accumulator.computed) {
-        for (unsigned c = 0; c < 2; c++) {
-            //reset[c] = dp->piece[0] == (int)NNUE_KING(c);
-            reset[c] = nnue_king_move(dp);
-            if (reset[c]) {
-                nnue_half_kp_append_active_indices(pos, c, &added[c]);
-            }
-            else {
-                nnue_half_kp_append_changed_indices(pos, c, dp, &removed[c], &added[c]);
-            }
+    NNUE_CHANGE *changes = &pos->current_nnue_data->changes;
+    for (unsigned c = 0; c < 2; c++) {
+        reset[c] = nnue_has_king_move(changes);
+        if (reset[c]) {
+            nnue_half_kp_append_active_indices(pos, c, &added[c]);
         }
-    }
-    else {
-        const NNUE_DIRTY *dp2 = &(pos->nnue_data[1]->dirty_piece);
-        for (unsigned c = 0; c < 2; c++) {
-            //reset[c] = dp->piece[0] == (int)NNUE_KING(c) || dp2->piece[0] == (int)NNUE_KING(c);
-            reset[c] = nnue_king_move(dp) || nnue_king_move(dp2);
-            if (reset[c]) {
-                nnue_half_kp_append_active_indices(pos, c, &added[c]);
-            }
-            else {
-                nnue_half_kp_append_changed_indices(pos, c, dp, &removed[c], &added[c]);
-                nnue_half_kp_append_changed_indices(pos, c, dp2, &removed[c], &added[c]);
-            }
+        else {
+            nnue_half_kp_append_changed_indices(pos, c, changes, &removed[c], &added[c]);
         }
     }
 }
@@ -126,7 +109,7 @@ void nnue_append_changed_indices(const NNUE_POSITION *pos, NNUE_INDEXES removed[
 // Calculate cumulative value without using difference calculation
 void nnue_refresh_accumulator(NNUE_POSITION *pos)
 {
-    NNUE_ACCUM *accumulator = &(pos->nnue_data[0]->accumulator);
+    NNUE_ACCUM *accumulator = &(pos->current_nnue_data->accumulator);
     NNUE_INDEXES activeIndices[2];
     activeIndices[0].size = activeIndices[1].size = 0;
     nnue_append_active_indices(pos, activeIndices);
@@ -143,17 +126,10 @@ void nnue_refresh_accumulator(NNUE_POSITION *pos)
     accumulator->computed = TRUE;
 }
 
-int nnue_update_accumulator(NNUE_POSITION *pos)
+void nnue_update_accumulator(NNUE_POSITION *pos)
 {
-    NNUE_ACCUM *accumulator = &(pos->nnue_data[0]->accumulator);
-    if (accumulator->computed) {
-        return TRUE;
-    }
-    NNUE_ACCUM *prevAcc;
-    if ((!pos->nnue_data[1] || !(prevAcc = &pos->nnue_data[1]->accumulator)->computed) 
-        && (!pos->nnue_data[2] || !(prevAcc = &pos->nnue_data[2]->accumulator)->computed)) {
-        return FALSE;
-    }
+    NNUE_ACCUM *accumulator = &(pos->current_nnue_data->accumulator);
+    NNUE_ACCUM *prevAcc = &(pos->previous_nnue_data->accumulator);
     NNUE_INDEXES removed_indices[2], added_indices[2];
     removed_indices[0].size = removed_indices[1].size = 0;
     added_indices[0].size = added_indices[1].size = 0;
@@ -184,7 +160,6 @@ int nnue_update_accumulator(NNUE_POSITION *pos)
         }
     }
     accumulator->computed = TRUE;
-    return TRUE;
 }
 
 int32_t nnue_affine_propagate(int8_t *input, int32_t *biases, weight_t *weights)
@@ -218,10 +193,7 @@ void nnue_affine_txfm(clipped_t *input, void *output, unsigned inDims, unsigned 
 // Convert input features
 void nnue_transform(NNUE_POSITION *pos, clipped_t *output)
 {
-    if (!nnue_update_accumulator(pos)) {
-        nnue_refresh_accumulator(pos);
-    }
-    int16_t(*accumulation)[2][256] = &pos->nnue_data[0]->accumulator.accumulation;
+    int16_t(*accumulation)[2][256] = &pos->current_nnue_data->accumulator.accumulation;
     int perspectives[2];
     perspectives[0] = pos->player;
     perspectives[1] = !pos->player;
@@ -237,32 +209,11 @@ void nnue_transform(NNUE_POSITION *pos, clipped_t *output)
 int nnue_calculate(NNUE_POSITION *pos)
 {
     NNUE_CALC_DATA ncd;
-
-    //transform(pos, B(input), input_mask);
     nnue_transform(pos, ncd.input);
-
-    //affine_txfm(B(input), B(hidden1_out), FtOutDims, 32, hidden1_biases, hidden1_weights, input_mask, hidden1_mask, true);
     nnue_affine_txfm(ncd.input, ncd.hidden1_out, FT_OUT_DIMS, 32, nnue_param.hidden1_biases, nnue_param.hidden1_weights);
-
-    //affine_txfm(B(hidden1_out), B(hidden2_out), 32, 32, hidden2_biases, hidden2_weights, hidden1_mask, NULL, false);
     nnue_affine_txfm(ncd.hidden1_out, ncd.hidden2_out, 32, 32, nnue_param.hidden2_biases, nnue_param.hidden2_weights);
-
-    //out_value = affine_propagate((int8_t *)B(hidden2_out), output_biases, output_weights);
     int32_t out_value = nnue_affine_propagate(ncd.hidden2_out, nnue_param.output_biases, nnue_param.output_weights);
-
     return out_value / FV_SCALE;
-}
-
-int nnue_evaluate(int player, int* pieces, int* squares, NNUE_DATA* nnue[3])
-{
-    NNUE_POSITION pos;
-    pos.nnue_data[0] = nnue[0];
-    pos.nnue_data[1] = nnue[1];
-    pos.nnue_data[2] = nnue[2];
-    pos.player = player;
-    pos.pieces = pieces;
-    pos.squares = squares;
-    return nnue_calculate(&pos);
 }
 
 // END

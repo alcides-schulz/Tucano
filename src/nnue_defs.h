@@ -149,12 +149,12 @@ typedef struct s_nnue_value {
 * nnue data structure
 */
 
-typedef struct s_dirty_piece {
+typedef struct s_nnue_change {
     int         count;
     int         piece[3];
     int         from[3];
     int         to[3];
-}   NNUE_DIRTY;
+}   NNUE_CHANGE;
 
 typedef struct s_accumulator {
     int16_t     accumulation[2][256];
@@ -163,7 +163,7 @@ typedef struct s_accumulator {
 
 typedef struct s_nnue_data {
     NNUE_ACCUM  accumulator;
-    NNUE_DIRTY  dirty_piece;
+    NNUE_CHANGE changes;
 }   NNUE_DATA;
 
 typedef struct s_index_list {
@@ -178,7 +178,8 @@ typedef struct s_nnue_position {
     int         player;
     int*        pieces;
     int*        squares;
-    NNUE_DATA*  nnue_data[3];
+    NNUE_DATA*  current_nnue_data;
+    NNUE_DATA*  previous_nnue_data;
 }   NNUE_POSITION;
 
 #define clamp(a, b, c) ((a) < (b) ? (b) : (a) > (c) ? (c) : (a))
@@ -192,6 +193,9 @@ int nnue_init(const char* eval_file_name, NNUE_PARAM *p_nnue_param);
 int nnue_calculate(NNUE_POSITION *pos);
 int8_t nnue_piece(int color, int piece);
 int8_t nnue_square(int square);
+void nnue_update_accumulator(NNUE_POSITION *pos);
+void nnue_refresh_accumulator(NNUE_POSITION *pos);
+int nnue_has_king_move(const NNUE_CHANGE *changes);
 
 void nnue_test(void);
 
