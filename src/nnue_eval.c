@@ -42,50 +42,38 @@ int8_t nnue_square(int square)
     return nnue_squares[square];
 }
 
-//int nnue_can_update(BOARD *board)
-//{
-//    int ply = get_ply(board) - 1;
-//    if (ply == -1) {
-//        return FALSE; // case for new games, setposition and evaluate call.
-//    }
-//    while (ply >= 0) {
-//        if (!board->nnue_data[ply].accumulator.computed) {
-//            return FALSE;
-//        }
-//        if (NNUE_IS_KING(board->nnue_data[ply].dirty_piece.piece[0])) {
-//            return FALSE;
-//        }
-//        ply--;
-//    }
-//    return TRUE;
-//}
-//
-//void nnue_append_changed_indexes(NNUE_DIRTY *dirty_piece)
-//{
-//
-//}
-//
-//void nnue_update_accumulator(BOARD *board, int ply)
-//{
-//    if (ply > 1) {
-//        nnue_update_accumulator(board, ply - 1);
-//    }
-//    memcpy(&board->nnue_data[ply].accumulator, &board->nnue_data[ply - 1].accumulator, sizeof(NNUE_ACCUM));
-//
-//    NNUE_INDEXES removed_indices[2], added_indices[2];
-//    removed_indices[0].size = removed_indices[1].size = 0;
-//    added_indices[0].size = added_indices[1].size = 0;
-//
-//
-//
-//}
-//
-//void nnue_refresh_accumulator()
-//{
-//
-//}
+int nnue_can_update(BOARD *board)
+{
+    int history_ply = get_history_ply(board) - 1;
+    while (history_ply > 0) {
+        if (nnue_has_king_move(&board->nnue_data[history_ply].changes)) {
+            return FALSE;
+        }
+        if (board->nnue_data[history_ply].accumulator.computed == TRUE) {
+            return TRUE;
+        }
+        history_ply--;
+    }
+    return FALSE;
+}
 
-void nnue_debug(char *desc, int history_ply, NNUE_POSITION *position);
+void nnue_update_tree(BOARD *board, int history_ply, NNUE_POSITION *position)
+{
+    if (history_ply > 0) {
+        if (board->nnue_data[history_ply - 1].accumulator.computed == FALSE) {
+            nnue_update_tree(board, history_ply - 1, position);
+        }
+    }
+    if (history_ply == 0) {
+        position->current_nnue_data = &board->nnue_data[0];
+        position->previous_nnue_data = NULL;
+        nnue_refresh_accumulator(position);
+        return;
+    }
+    position->current_nnue_data = &board->nnue_data[history_ply];
+    position->previous_nnue_data = &board->nnue_data[history_ply - 1];
+    nnue_update_accumulator(position);
+}
 
 //-------------------------------------------------------------------------------------------------
 //  Calculate the score for current position.
@@ -144,36 +132,28 @@ int evaluate(GAME *game)
     position.player = player;
     position.pieces = pieces;
     position.squares = squares;
-    position.nnue_data[0] = &game->board.nnue_data[history_ply];
-    position.nnue_data[1] = history_ply > 0 ? &game->board.nnue_data[history_ply - 1] : NULL;
-    position.nnue_data[2] = history_ply > 1 ? &game->board.nnue_data[history_ply - 2] : NULL;
 
-    //position.nnue_data[1] = NULL;
-    //position.nnue_data[2] = NULL;
+    if (nnue_can_update(&game->board)) {
+        nnue_update_tree(&game->board, history_ply, &position);
+        position.current_nnue_data = &game->board.nnue_data[history_ply];
+        position.previous_nnue_data = NULL;
+    }
+    else {
+        position.current_nnue_data = &game->board.nnue_data[history_ply];
+        position.previous_nnue_data = NULL;
+        nnue_refresh_accumulator(&position);
+    }
 
-    //nnue_debug("before", history_ply, &position);
+    //position.nnue_data[0] = &game->board.nnue_data[history_ply];
+    //position.nnue_data[1] = history_ply > 0 ? &game->board.nnue_data[history_ply - 1] : NULL;
+    //position.nnue_data[2] = history_ply > 1 ? &game->board.nnue_data[history_ply - 2] : NULL;
+
     score = nnue_calculate(&position);
-    //nnue_debug("after", history_ply, &position);
 
     eval_slot->key = board_key(&game->board);
     eval_slot->score = score;
 
     return score;
-}
-
-void nnue_debug(char *desc, int history_ply, NNUE_POSITION *position)
-{
-    printf("%s: history ply: %d player:%d \n", desc, history_ply, position->player);
-    for (int i = 0; i < 3; i++) {
-        if (position->nnue_data[i] != NULL) {
-            printf("nnue_data: %d computed: %d changes: %d\n", i, position->nnue_data[i]->accumulator.computed, position->nnue_data[i]->dirty_piece.count);
-            NNUE_DIRTY *dp = &position->nnue_data[i]->dirty_piece;
-            for (int j = 0; j < dp->count; j++) {
-                printf("    dirty_piece: %d type: %d from: %d to: %d\n", j, dp->piece[j], dp->from[j], dp->to[j]);
-            }
-        }
-    }
-    getchar();
 }
 
 //END

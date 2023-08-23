@@ -179,7 +179,7 @@ void make_move(BOARD *board, MOVE move)
     board->history[board->histply].fifty_move_rule  = board->fifty_move_rule;
 
     board->nnue_data[board->histply + 1].accumulator.computed = FALSE;
-    board->nnue_data[board->histply + 1].dirty_piece.count = 0;
+    board->nnue_data[board->histply + 1].changes.count = 0;
 
     // Key
     board->key ^= zk_color();
@@ -450,10 +450,10 @@ void move_piece(BOARD *board, int color, int type, int frsq, int tosq)
         board->pawn_key ^= zk_square(color, PAWN, tosq);
     }
     int nnue_index = board->histply + 1;
-    board->nnue_data[nnue_index].dirty_piece.piece[board->nnue_data[nnue_index].dirty_piece.count] = nnue_piece(color, type);
-    board->nnue_data[nnue_index].dirty_piece.from[board->nnue_data[nnue_index].dirty_piece.count] = nnue_square(frsq);
-    board->nnue_data[nnue_index].dirty_piece.to[board->nnue_data[nnue_index].dirty_piece.count] = nnue_square(tosq);
-    board->nnue_data[nnue_index].dirty_piece.count++;
+    board->nnue_data[nnue_index].changes.piece[board->nnue_data[nnue_index].changes.count] = nnue_piece(color, type);
+    board->nnue_data[nnue_index].changes.from[board->nnue_data[nnue_index].changes.count] = nnue_square(frsq);
+    board->nnue_data[nnue_index].changes.to[board->nnue_data[nnue_index].changes.count] = nnue_square(tosq);
+    board->nnue_data[nnue_index].changes.count++;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -469,10 +469,10 @@ void set_piece(BOARD *board, int color, int type, int tosq)
     if (type == PAWN) board->pawn_key ^= zk_square(color, PAWN, tosq);
     board->state[color].count[type]++;
     int nnue_index = board->histply + 1;
-    board->nnue_data[nnue_index].dirty_piece.piece[board->nnue_data[nnue_index].dirty_piece.count] = nnue_piece(color, type);
-    board->nnue_data[nnue_index].dirty_piece.from[board->nnue_data[nnue_index].dirty_piece.count] = 64; // hack
-    board->nnue_data[nnue_index].dirty_piece.to[board->nnue_data[nnue_index].dirty_piece.count] = nnue_square(tosq);
-    board->nnue_data[nnue_index].dirty_piece.count++;
+    board->nnue_data[nnue_index].changes.piece[board->nnue_data[nnue_index].changes.count] = nnue_piece(color, type);
+    board->nnue_data[nnue_index].changes.from[board->nnue_data[nnue_index].changes.count] = 64; // nnue hack
+    board->nnue_data[nnue_index].changes.to[board->nnue_data[nnue_index].changes.count] = nnue_square(tosq);
+    board->nnue_data[nnue_index].changes.count++;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -488,10 +488,10 @@ void remove_piece(BOARD *board, int color, int type, int frsq)
     if (type == PAWN) board->pawn_key ^= zk_square(color, PAWN, frsq);
     board->state[color].count[type]--;
     int nnue_index = board->histply + 1;
-    board->nnue_data[nnue_index].dirty_piece.piece[board->nnue_data[nnue_index].dirty_piece.count] = nnue_piece(color, type);
-    board->nnue_data[nnue_index].dirty_piece.from[board->nnue_data[nnue_index].dirty_piece.count] = nnue_square(frsq);
-    board->nnue_data[nnue_index].dirty_piece.to[board->nnue_data[nnue_index].dirty_piece.count] = 64; // hack
-    board->nnue_data[nnue_index].dirty_piece.count++;
+    board->nnue_data[nnue_index].changes.piece[board->nnue_data[nnue_index].changes.count] = nnue_piece(color, type);
+    board->nnue_data[nnue_index].changes.from[board->nnue_data[nnue_index].changes.count] = nnue_square(frsq);
+    board->nnue_data[nnue_index].changes.to[board->nnue_data[nnue_index].changes.count] = 64; // nnue hack
+    board->nnue_data[nnue_index].changes.count++;
 }
 
 //-------------------------------------------------------------------------------------------------
