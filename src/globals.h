@@ -35,6 +35,7 @@
 #pragma warning (disable : 4710)
 #pragma warning (disable : 4668)
 #pragma warning (disable : 4214)
+#pragma warning (disable : 4206)
 
 #endif
 

@@ -73,25 +73,26 @@ int main(int argc, char *argv[])
         }
 #endif
     }
-        char nnue_file[1000];
-        if (strlen(argv[0]) < 1000) {
-            strcpy(nnue_file, argv[0]);
-            char *last_slash = strrchr(nnue_file, '\\'); // windows
-            if (last_slash == NULL) {
-                last_slash = strrchr(nnue_file, '/'); // linux
-            }
-            if (last_slash != NULL) {
-                strcpy(last_slash + 1, TUCANO_EVAL_FILE);
-            }
-            else {
-                strcpy(nnue_file, TUCANO_EVAL_FILE);
-            }
-            if (!nnue_init(nnue_file, &nnue_param)) {
-                printf("could not load nnue file: %s\n", TUCANO_EVAL_FILE);
-            }
-        }
 
-    printf("   hash table: %d MB, threads: %d\n", hash_size, threads);
+    char nnue_file[1000];
+    if (strlen(argv[0]) < 1000) {
+        strcpy(nnue_file, argv[0]);
+        char *last_slash = strrchr(nnue_file, '\\'); // windows
+        if (last_slash == NULL) {
+            last_slash = strrchr(nnue_file, '/'); // linux
+        }
+        if (last_slash != NULL) {
+            strcpy(last_slash + 1, TUCANO_EVAL_FILE);
+        }
+        else {
+            strcpy(nnue_file, TUCANO_EVAL_FILE);
+        }
+        if (!nnue_init(nnue_file, &nnue_param)) {
+            printf("could not load nnue file: %s\n", TUCANO_EVAL_FILE);
+        }
+    }
+
+    printf("   hash table: %d MB, threads: %d, architecture: %s\n", hash_size, threads, NNUE_ARCH);
 
     // Initializations
     srand((UINT)19810505);

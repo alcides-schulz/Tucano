@@ -32,16 +32,26 @@ int8_t nnue_pieces[2][6] = {
     {12, 11, 10, 9, 8, 7}
 };
 
+//-------------------------------------------------------------------------------------------------
+//  Tucano piece to nnue piece.
+//-------------------------------------------------------------------------------------------------
 int8_t nnue_piece(int color, int piece)
 {
     return nnue_pieces[color][piece];
 }
 
+//-------------------------------------------------------------------------------------------------
+//  Tucano square to nnue square.
+//-------------------------------------------------------------------------------------------------
 int8_t nnue_square(int square)
 {
     return nnue_squares[square];
 }
 
+//-------------------------------------------------------------------------------------------------
+//  Indicate if accumulators can be updated in this tree. Have to find a computed accumulator, and
+//  should not have king moves, that forces the accumulator refresh.
+//-------------------------------------------------------------------------------------------------
 int nnue_can_update(BOARD *board)
 {
     int history_ply = get_history_ply(board) - 1;
@@ -57,6 +67,9 @@ int nnue_can_update(BOARD *board)
     return FALSE;
 }
 
+//-------------------------------------------------------------------------------------------------
+//  Update each accumulator in this tree, starting from a computed accumulator.
+//-------------------------------------------------------------------------------------------------
 void nnue_update_tree(BOARD *board, int history_ply, NNUE_POSITION *position)
 {
     if (history_ply > 0) {
@@ -76,7 +89,8 @@ void nnue_update_tree(BOARD *board, int history_ply, NNUE_POSITION *position)
 }
 
 //-------------------------------------------------------------------------------------------------
-//  Calculate the score for current position.
+//  Calculate current position score.
+//  If accumulators are not updated/computed then will use nnue data from move history to update.
 //-------------------------------------------------------------------------------------------------
 int evaluate(GAME *game)
 {
@@ -87,20 +101,6 @@ int evaluate(GAME *game)
         return eval_slot->score;
     }
 
-    /*  NNUE setup
-    *   Piece codes are
-    *     wking=1, wqueen=2, wrook=3, wbishop= 4, wknight= 5, wpawn= 6,
-    *     bking=7, bqueen=8, brook=9, bbishop=10, bknight=11, bpawn=12,
-    *   Squares are
-    *     A1=0, B1=1 ... H8=63
-    *   Input format:
-    *     piece[0] is white king, square[0] is its location
-    *     piece[1] is black king, square[1] is its location
-    *     ..
-    *     piece[x], square[x] can be in any order
-    *     ..
-    *     piece[n+1] is set to 0 to represent end of array
-    */
     int player = side_on_move(&game->board);
     int pieces[33];
     int squares[33];
@@ -143,10 +143,6 @@ int evaluate(GAME *game)
         position.previous_nnue_data = NULL;
         nnue_refresh_accumulator(&position);
     }
-
-    //position.nnue_data[0] = &game->board.nnue_data[history_ply];
-    //position.nnue_data[1] = history_ply > 0 ? &game->board.nnue_data[history_ply - 1] : NULL;
-    //position.nnue_data[2] = history_ply > 1 ? &game->board.nnue_data[history_ply - 2] : NULL;
 
     score = nnue_calculate(&position);
 

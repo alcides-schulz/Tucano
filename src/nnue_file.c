@@ -17,41 +17,6 @@
 
 #include "globals.h"
 
-#include <fcntl.h>
-#include <sys/stat.h>
-#include <string.h>
-#include <stdio.h>
-#include <ctype.h>
-#ifdef _WIN32
-#  include <windows.h>
-#else
-#  include <unistd.h>
-#  include <sys/mman.h>
-#endif
-
-/*
-#if !defined(USE_AVX512)
-static weight_t hidden1_weights alignas(64)[32 * 512];
-static weight_t hidden2_weights alignas(64)[32 * 32];
-#else
-static weight_t hidden1_weights alignas(64)[64 * 512];
-static weight_t hidden2_weights alignas(64)[64 * 32];
-#endif
-static weight_t output_weights alignas(64)[1 * 32];
-static int32_t hidden1_biases alignas(64)[32];
-static int32_t hidden2_biases alignas(64)[32];
-static int32_t output_biases[1];
-*/
-
-//static int16_t ft_biases[kHalfDimensions];
-//static int16_t ft_weights[kHalfDimensions * FtInDims];
-//static weight_t hidden1_weights [32 * 512];
-//static weight_t hidden2_weights [32 * 32];
-//static weight_t output_weights [1 * 32];
-//static int32_t hidden1_biases [32];
-//static int32_t hidden2_biases [32];
-//static int32_t output_biases[1];
-
 FD nnue_open_file(const char *name)
 {
 #ifndef _WIN32
@@ -138,16 +103,69 @@ int nnue_verify_net(const void *file_data, size_t size)
     return TRUE;
 }
 
-unsigned nnue_weight_index(unsigned r, unsigned c)
+#ifdef USE_AVX2
+void nnue_permute_biases(int32_t *biases)
 {
+    __m128i *b = (__m128i *)biases;
+    __m128i tmp[8];
+#ifdef USE_AVX512
+    tmp[0] = b[0];
+    tmp[1] = b[2];
+    tmp[2] = b[4];
+    tmp[3] = b[6];
+    tmp[4] = b[1];
+    tmp[5] = b[3];
+    tmp[6] = b[5];
+    tmp[7] = b[7];
+#elif USE_AVX2
+    tmp[0] = b[0];
+    tmp[1] = b[4];
+    tmp[2] = b[1];
+    tmp[3] = b[5];
+    tmp[4] = b[2];
+    tmp[5] = b[6];
+    tmp[6] = b[3];
+    tmp[7] = b[7];
+#else
+#error
+#endif
+    memcpy(b, tmp, 8 * sizeof(__m128i));
+}
+#endif
+
+unsigned nnue_weight_index(unsigned r, unsigned c, unsigned dims)
+{
+    (void)dims;
+#if defined(USE_AVX512)
+    if (dims > 32) {
+        unsigned b = c & 0x38;
+        b = (b << 1) | (b >> 2);
+        c = (c & ~0x38) | (b & 0x38);
+    }
+    else if (dims == 32) {
+        unsigned b = c & 0x18;
+        b = (b << 1) | (b >> 1);
+        c = (c & ~0x18) | (b & 0x18);
+    }
+#elif defined(USE_AVX2)
+    if (dims > 32) {
+        unsigned b = c & 0x18;
+        b = (b << 1) | (b >> 1);
+        c = (c & ~0x18) | (b & 0x18);
+    }
+#endif
+#if defined(USE_AVX512)
+    return c * 64 + r + (r & ~7);
+#else
     return c * 32 + r;
+#endif
 }
 
 const char *nnue_read_hidden_weights(weight_t *w, unsigned dims, const char *d)
 {
     for (unsigned r = 0; r < 32; r++) {
         for (unsigned c = 0; c < dims; c++) {
-            w[nnue_weight_index(r, c)] = *d++;
+            w[nnue_weight_index(r, c, dims)] = *d++;
         }
     }
     return d;
@@ -157,6 +175,11 @@ void nnue_read_output_weights(weight_t *w, const char *d)
 {
     for (unsigned i = 0; i < 32; i++) {
         unsigned c = i;
+#if defined(USE_AVX512)
+        unsigned b = c & 0x18;
+        b = (b << 1) | (b >> 1);
+        c = (c & ~0x18) | (b & 0x18);
+#endif
         w[c] = *d++;
     }
 }
@@ -185,6 +208,11 @@ void nnue_init_weights(const void *file_data, NNUE_PARAM *p_nnue_param)
         p_nnue_param->output_biases[i] = nnue_read_u32(d);
     }
     nnue_read_output_weights(p_nnue_param->output_weights, d);
+
+#ifdef USE_AVX2
+    nnue_permute_biases(p_nnue_param->hidden1_biases);
+    nnue_permute_biases(p_nnue_param->hidden2_biases);
+#endif
 }
 
 int nnue_load_eval_file(const char *eval_file, NNUE_PARAM *p_nnue_param)

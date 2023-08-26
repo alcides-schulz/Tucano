@@ -28,17 +28,54 @@
 #include <assert.h>
 #include <math.h>
 #include <inttypes.h>
+#include <fcntl.h>
+#include <sys/stat.h>
+
+//--------------------
+#ifdef _MSC_VER
+#define USE_AVX2   1
+#define USE_SSE41  1
+#define USE_SSE3   1
+#define USE_SSE2   1
+#define USE_SSE    1
+#endif
+//-------------------
+
+#if defined(USE_AVX2)
+#include <immintrin.h>
+#define NNUE_ARCH "AVX2"
+#elif defined(USE_SSE41)
+#include <smmintrin.h>
+#define NNUE_ARCH "SSE41"
+#elif defined(USE_SSE3)
+#include <tmmintrin.h>
+#define NNUE_ARCH "SSE3"
+#elif defined(USE_SSE2)
+#include <emmintrin.h>
+#define NNUE_ARCH "SSE2"
+#elif defined(USE_SSE)
+#include <xmmintrin.h>
+#define NNUE_ARCH "SSE"
+#elif defined(USE_MMX)
+#include <mmintrin.h>
+#define NNUE_ARCH "MMX"
+#elif defined(USE_NEON)
+#include <arm_neon.h>
+#define NNUE_ARCH "NEON"
+#else
+#define NNUE_ARCH "BASE"
+#endif
 
 #ifdef _MSC_VER
-#  define _CRT_SECURE_NO_WARNINGS
-#  pragma warning (disable: 4996)
+#define _CRT_SECURE_NO_WARNINGS
+#pragma warning (disable: 4996)
 #endif
 
 #ifdef _WIN32
-#  include <windows.h>
+#include <windows.h>
 #else
-#  include <unistd.h>
-#  include <sys/mman.h>
+#include <unistd.h>
+#include <sys/mman.h>
 #endif
 
 // NNUE Constants and defines
@@ -92,12 +129,15 @@ enum NNUE_STRUCTURE {
     NETWORK_START = TRANSFORMER_START + 4 + 2 * 256 + 2 * 256 * 64 * 641
 };
 
-#define NNUE_KING(c)    ( (c) ? bking : wking )
 #define NNUE_IS_KING(p) ( ((p) == wking) || ((p) == bking) )
 
-// Input feature converter
+typedef uint64_t mask2_t;
 typedef int8_t clipped_t;
+#if defined(USE_MMX) || (defined(USE_SSE2) && !defined(USE_AVX2))
+typedef int16_t weight_t;
+#else
 typedef int8_t weight_t;
+#endif
 
 // Align options for MSC and GCC compilers
 #ifdef _MSC_VER
@@ -111,20 +151,16 @@ typedef int8_t weight_t;
 
 // InputLayer = InputSlice<256 * 2>
 // out: 512 x clipped_t
-
 // Hidden1Layer = ClippedReLu<AffineTransform<InputLayer, 32>>
 // 512 x clipped_t -> 32 x int32_t -> 32 x clipped_t
-
 // Hidden2Layer = ClippedReLu<AffineTransform<hidden1, 32>>
 // 32 x clipped_t -> 32 x int32_t -> 32 x clipped_t
-
 // OutputLayer = AffineTransform<HiddenLayer2, 1>
 // 32 x clipped_t -> 1 x int32_t
-
 typedef struct s_nnue_value {
 #ifdef _MSC_VER
-    int16_t         ft_biases[KHALF_DIMENSIONS];
-    int16_t         ft_weights[KHALF_DIMENSIONS * FT_IN_DIMS];
+    AL64 int16_t    ft_biases[KHALF_DIMENSIONS];
+    AL64 int16_t    ft_weights[KHALF_DIMENSIONS * FT_IN_DIMS];
     AL64 weight_t   hidden1_weights[32 * 512];
     AL64 weight_t   hidden2_weights[32 * 32];
     AL64 weight_t   output_weights[1 * 32];
@@ -133,8 +169,8 @@ typedef struct s_nnue_value {
     int32_t         output_biases[1];
 #else
     // using align options for GCC
-    int16_t         ft_biases[KHALF_DIMENSIONS];
-    int16_t         ft_weights[KHALF_DIMENSIONS * FT_IN_DIMS];
+    int16_t         ft_biases[KHALF_DIMENSIONS] AL64;
+    int16_t         ft_weights[KHALF_DIMENSIONS * FT_IN_DIMS] AL64;
     weight_t        hidden1_weights[32 * 512] AL64;
     weight_t        hidden2_weights[32 * 32] AL64;
     weight_t        output_weights[1 * 32] AL64;
@@ -144,11 +180,6 @@ typedef struct s_nnue_value {
 #endif
 }   NNUE_PARAM;
 
-
-/**
-* nnue data structure
-*/
-
 typedef struct s_nnue_change {
     int         count;
     int         piece[3];
@@ -157,7 +188,11 @@ typedef struct s_nnue_change {
 }   NNUE_CHANGE;
 
 typedef struct s_accumulator {
-    int16_t     accumulation[2][256];
+#ifdef _MSC_VER
+    AL64 int16_t accumulation[2][256];
+#else
+    int16_t     accumulation[2][256] AL64;
+#endif
     int         computed;
 }   NNUE_ACCUM;
 
@@ -171,9 +206,6 @@ typedef struct s_index_list {
     unsigned    values[30];
 }   NNUE_INDEXES;
 
-/**
-* position data structure passed to core subroutines
-*/
 typedef struct s_nnue_position {
     int         player;
     int*        pieces;
@@ -181,6 +213,20 @@ typedef struct s_nnue_position {
     NNUE_DATA*  current_nnue_data;
     NNUE_DATA*  previous_nnue_data;
 }   NNUE_POSITION;
+
+typedef struct s_net_data {
+#ifdef _MSC_VER
+    AL64 clipped_t  input[FT_OUT_DIMS];
+#else
+    clipped_t       input[FT_OUT_DIMS] AL64;
+#endif
+    clipped_t       hidden1_out[32];
+#if (defined(USE_SSE2) || defined(USE_MMX)) && !defined(USE_AVX2)
+    int16_t hidden2_out[32];
+#else
+    int8_t hidden2_out[32];
+#endif
+}   NNUE_CALC_DATA;
 
 #define clamp(a, b, c) ((a) < (b) ? (b) : (a) > (c) ? (c) : (a))
 
