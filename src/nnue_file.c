@@ -208,7 +208,6 @@ void nnue_init_weights(const void *file_data, NNUE_PARAM *p_nnue_param)
         p_nnue_param->output_biases[i] = nnue_read_u32(d);
     }
     nnue_read_output_weights(p_nnue_param->output_weights, d);
-
 #ifdef USE_AVX2
     nnue_permute_biases(p_nnue_param->hidden1_biases);
     nnue_permute_biases(p_nnue_param->hidden2_biases);

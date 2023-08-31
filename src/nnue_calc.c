@@ -23,17 +23,7 @@
 
 #define VECTOR
 
-#ifdef USE_AVX512
-#define SIMD_WIDTH 512
-typedef __m512i vec16_t;
-typedef __m512i vec8_t;
-typedef __mmask64 mask_t;
-#define vec_add_16(a,b) _mm512_add_epi16(a,b)
-#define vec_sub_16(a,b) _mm512_sub_epi16(a,b)
-#define vec_packs(a,b) _mm512_packs_epi16(a,b)
-#define vec_mask_pos(a) _mm512_cmpgt_epi8_mask(a,_mm512_setzero_si512())
-#define NUM_REGS 8 // only 8 are needed
-#elif USE_AVX2
+#ifdef USE_AVX2
 #define SIMD_WIDTH 256
 typedef __m256i vec16_t;
 typedef __m256i vec8_t;
@@ -435,53 +425,7 @@ int neon_movemask(uint8x16_t v)
 #endif
 #endif
 
-#if defined(USE_AVX512)
-void nnue_affine_txfm(int8_t *input, void *output, unsigned inDims,
-    unsigned outDims, const int32_t *biases, const weight_t *weights,
-    mask_t *inMask, mask_t *outMask, const bool pack8_and_calc_mask)
-{
-    assert(outDims == 32);
-
-    (void)outDims;
-    const __m512i kZero = _mm512_setzero_si512();
-    __m512i out_0 = ((__m512i *)biases)[0];
-    __m512i out_1 = ((__m512i *)biases)[1];
-    __m512i first, second;
-    mask2_t v;
-    unsigned idx;
-
-    memcpy(&v, inMask, sizeof(mask2_t));
-    for (unsigned offset = 0; offset < inDims;) {
-        if (!nnue_next_index(&idx, &offset, &v, inMask, inDims))
-            break;
-        first = ((__m512i *)weights)[idx];
-        uint16_t factor = input[idx];
-        if (nnue_next_index(&idx, &offset, &v, inMask, inDims)) {
-            second = ((__m512i *)weights)[idx];
-            factor |= input[idx] << 8;
-        }
-        else {
-            second = kZero;
-        }
-        __m512i mul = _mm512_set1_epi16(factor), prod, signs;
-        prod = _mm512_maddubs_epi16(mul, _mm512_unpacklo_epi8(first, second));
-        signs = _mm512_srai_epi16(prod, 15);
-        out_0 = _mm512_add_epi32(out_0, _mm512_unpacklo_epi16(prod, signs));
-        out_1 = _mm512_add_epi32(out_1, _mm512_unpackhi_epi16(prod, signs));
-    }
-
-    __m512i out16 = _mm512_srai_epi16(_mm512_packs_epi32(out_0, out_1), SHIFT);
-
-    __m256i *outVec = (__m256i *)output;
-    const __m256i kZero256 = _mm256_setzero_si256();
-    outVec[0] = _mm256_packs_epi16(
-        _mm512_castsi512_si256(out16), _mm512_extracti64x4_epi64(out16, 1));
-    if (pack8_and_calc_mask)
-        outMask[0] = (uint32_t)_mm256_movemask_epi8(_mm256_cmpgt_epi8(outVec[0], kZero256));
-    else
-        outVec[0] = _mm256_max_epi8(outVec[0], kZero256);
-}
-#elif defined(USE_AVX2)
+#if defined(USE_AVX2)
 void nnue_affine_txfm(int8_t *input, void *output, unsigned inDims,
     unsigned outDims, const int32_t *biases, const weight_t *weights,
     mask_t *inMask, mask_t *outMask, const int pack8_and_calc_mask)

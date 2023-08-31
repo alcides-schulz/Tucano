@@ -228,6 +228,7 @@ typedef struct s_net_data {
 #endif
 }   NNUE_CALC_DATA;
 
+
 #define clamp(a, b, c) ((a) < (b) ? (b) : (a) > (c) ? (c) : (a))
 
 //  nnue global vars
