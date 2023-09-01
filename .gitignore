@@ -288,3 +288,4 @@ __pycache__/
 *.exe
 *.bat
 /tucano_nn01.bin
+/tucano_nn02.bin
