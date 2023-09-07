@@ -22,10 +22,10 @@
 //-------------------------------------------------------------------------------------------------
 
 #define STAT_NULL_DEPTH 4
-int STAT_NULL_MARGIN[STAT_NULL_DEPTH] = { 0, 100, 200, 400 };
+int STAT_NULL_MARGIN[STAT_NULL_DEPTH] = { 0, 80, 160, 320 };
 
-#define RAZOR_DEPTH 4
-int RAZOR_MARGIN[RAZOR_DEPTH] = { 0, 300, 600, 1200 };
+#define RAZOR_DEPTH 6
+int RAZOR_MARGIN[RAZOR_DEPTH] = { 0, 250, 500, 750, 1000, 1250 };
 
 //-------------------------------------------------------------------------------------------------
 //  Search
@@ -115,13 +115,11 @@ int search_zw(GAME *game, UINT incheck, int beta, int depth)
     int improving = ply > 1 && game->eval_hist[ply] > game->eval_hist[ply - 2];
 
     // Razoring
-    if (!incheck && depth < RAZOR_DEPTH && !is_mate_score(beta)) {
-        if (eval_score + RAZOR_MARGIN[depth] < beta && !has_pawn_on_rank7(&game->board, turn)) {
-            razor_beta = beta - RAZOR_MARGIN[depth];
-            score = quiesce(game, FALSE, razor_beta - 1, razor_beta, 0);
-            if (game->search.abort) return 0;
-            if (score < razor_beta) return score;
-        }
+    if (!incheck && depth < RAZOR_DEPTH && eval_score + RAZOR_MARGIN[depth] < beta) {
+        razor_beta = beta - RAZOR_MARGIN[depth];
+        score = quiesce(game, FALSE, razor_beta - 1, razor_beta, 0);
+        if (game->search.abort) return 0;
+        if (score < razor_beta) return score;
     }
 
     // Null move heuristic: side to move has advantage that even allowing an extra move to opponent, still keeps advantage.
