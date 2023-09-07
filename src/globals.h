@@ -25,19 +25,7 @@
 // Comment next line to use "assert" functions. "assert" functions are helpfull during debug.
 #define NDEBUG
 
-// Basic integer type definition. Copied from stockfish.
-// This is necessary to keep the several tables with the same size in 32 and 64 bits systems.
 #if defined(_MSC_VER)
-
-// MSVC does not support <inttypes.h>
-typedef   signed __int8    int8_t;
-typedef unsigned __int8   uint8_t;
-typedef   signed __int16  int16_t;
-typedef unsigned __int16 uint16_t;
-typedef   signed __int32  int32_t;
-typedef unsigned __int32 uint32_t;
-typedef   signed __int64  int64_t;
-typedef unsigned __int64 uint64_t;
 
 #pragma warning (disable : 4706)
 #pragma warning (disable : 4711)
@@ -47,10 +35,7 @@ typedef unsigned __int64 uint64_t;
 #pragma warning (disable : 4710)
 #pragma warning (disable : 4668)
 #pragma warning (disable : 4214)
-
-#else
-
-#include <inttypes.h>
+#pragma warning (disable : 4206)
 
 #endif
 
@@ -95,7 +80,10 @@ typedef HANDLE THREAD_ID;
 #define EXTERN extern
 #endif
 
-// Type definitions.
+// nnue
+#include "nnue_defs.h"
+
+// Type definitions
 typedef uint64_t        U64; // this is the bitboard
 typedef int32_t         S32;
 typedef uint32_t        U32;
@@ -228,7 +216,6 @@ MOVE    pack_capture(int moving_piece, int captured_piece, int from_square, int 
 MOVE    pack_en_passant_capture(int from_square, int to_square, int pawn_square);
 MOVE    pack_promotion(int from_square, int to_square, int prom_piece);
 MOVE    pack_capture_promotion(int captured_piece, int from_square, int to_square, int prom_piece);
-MOVE    pack_null_move(void);
 
 int     unpack_from(MOVE move);
 int     unpack_to(MOVE move);
@@ -390,13 +377,16 @@ typedef struct s_board
     U8          ep_square;
     U16         selective_depth;
     MOVE_HIST   history[MAX_HIST];
-#ifdef __GNUC__
-    S16         nn_hidden_value[TNN_HIDDEN_SIZE] __attribute__((aligned(16)));
-#else
-    S16         nn_hidden_value[TNN_HIDDEN_SIZE];
-#endif
-    S16         nn_history[MAX_HIST][TNN_HIDDEN_SIZE];
+    NNUE_DATA   nnue_data[MAX_HIST];
 }   BOARD;
+
+typedef struct s_eval_table
+{
+    U64     key;
+    S32     score;
+}   EVAL_TABLE;
+
+#define EVAL_TABLE_SIZE 65536
 
 //  Game Data
 typedef struct s_game {
@@ -404,6 +394,7 @@ typedef struct s_game {
     BOARD       board;
     PV_LINE     pv_line;
     MOVE_ORDER  move_order;
+    EVAL_TABLE  eval_table[EVAL_TABLE_SIZE];
     int         eval_hist[MAX_PLY];
     int         is_main_thread;
     THREAD_ID   thread_handle;
@@ -487,6 +478,7 @@ void    auto_play(int total_games, SETTINGS *settings);
 void    new_game(GAME *game, char *fen);
 int     valid_threads(int threads);
 int     valid_hash_size(int hash_size);
+int     get_game_result(GAME *game);
 
 // Interface protocols. Communication between engine and GUI.
 void uci_loop(char *engine_name, char *engine_version, char *engine_author);
@@ -553,8 +545,6 @@ int     score_from_tt(int score, int ply);
 int     see_move(BOARD *board, MOVE move);
 int     piece_value_see(int piece);
 
-int     get_game_result(GAME *game);
-
 // transposition table
 void    tt_age(void);
 void    tt_init(size_t size_mb);
@@ -564,6 +554,9 @@ void    tt_read(U64 key, TT_RECORD *record);
 
 // Analyze Mode
 void    analyze_mode(GAME *game);
+
+// Evaluation
+int evaluate(GAME *game);
 
 // Board
 void    new_game(GAME *game, char *fen);
@@ -621,6 +614,7 @@ void    init_seldepth(BOARD *board);
 int     get_played_moves_count(BOARD *board, int color);
 void    move_piece(BOARD *board, int color, int type, int frsq, int tosq);
 void    set_piece(BOARD *board, int color, int type, int tosq);
+void    init_piece(BOARD *board, int color, int type, int tosq);
 void    remove_piece(BOARD *board, int color, int type, int frsq);
 void    move_piece_undo(BOARD *board, int color, int type, int frsq, int tosq);
 void    set_piece_undo(BOARD *board, int color, int type, int index);
@@ -716,15 +710,5 @@ int     pawn_is_candidate(BOARD *board, int pcsq, int color);
 U32 egtb_probe_wdl(BOARD *board, int depth, int ply);
 
 #endif
-
-// Neural Network
-#define NN_QUANTIZATION 64
-
-S16 tnn_index(int piece_color, int piece_type, int square);
-void tnn_fen2index(char *fen, S16 index[]);
-void tnn_init_hidden_value(BOARD *board);
-void tnn_set_piece(BOARD *board, int piece_color, int piece_type, int square);
-void tnn_unset_piece(BOARD *board, int piece_color, int piece_type, int square);
-int tnn_eval(GAME *game);
 
 //End

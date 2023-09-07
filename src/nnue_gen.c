@@ -33,6 +33,7 @@ typedef struct s_nndd
     int     ply;
     int     side;
     int     depth;
+    int     nodes;
 }   NNDD;
 
 NNDD    nndd[1024];
@@ -43,7 +44,7 @@ NNDD    nndd[1024];
 //      *.tnn -> format for tucano nn trainer.
 //      *.plain or other -> plain format compatible with nodchip nnue trainer
 //-------------------------------------------------------------------------------------------------
-void generate_nn_data(int fen_total, int max_depth, char *output_filename, int log_pgn, int log_fen)
+void generate_nn_data(int fen_total, int max_depth, int max_nodes, char *output_filename, int log_pgn, int log_fen)
 {
     GAME        *game;
     SETTINGS    settings;
@@ -74,7 +75,7 @@ void generate_nn_data(int fen_total, int max_depth, char *output_filename, int l
     settings.max_depth = max_depth;
     settings.post_flag = POST_NONE;
     settings.use_book = FALSE;
-    settings.max_nodes = 0;
+    settings.max_nodes = max_nodes;
 
     FILE *output = fopen(output_filename, "w");
 
@@ -126,6 +127,7 @@ void generate_nn_data(int fen_total, int max_depth, char *output_filename, int l
                     nndd[nndd_count].side = side_on_move(&game->board);
                     nndd[nndd_count].score = game->search.best_score;
                     nndd[nndd_count].depth = settings.max_depth;
+                    nndd[nndd_count].nodes = (int)game->search.nodes;
                     nndd_count++;
                 }
             }
@@ -152,7 +154,6 @@ void generate_nn_data(int fen_total, int max_depth, char *output_filename, int l
                 case GR_BLACK_WIN: fprintf(output, "[0-1]"); break;
                 default: fprintf(output, "[1/2]"); break;
                 }
-                fprintf(output, ";depth=%d", nndd[i].depth);
                 fprintf(output, ";move=%s", nndd[i].move);
                 fprintf(output, "\n");
             }
@@ -241,18 +242,18 @@ void make_random_move_nn(GAME *game)
     }
 }
 
-void generate_nn_files(char *to_file_mask, int total_positions, int max_depth)
+void generate_nn_files(char *to_file_mask, int total_positions, int max_depth, int max_nodes)
 {
     char to_file_name[1000];
 
     for (int i = 1; i <= 100; i++) {
-        sprintf(to_file_name, to_file_mask, i);
+        sprintf(to_file_name, to_file_mask, max_depth, max_nodes, i);
         FILE *tf = fopen(to_file_name, "r");
         if (tf != NULL) {
             fclose(tf);
             continue;
         }
-        generate_nn_data(total_positions, max_depth, to_file_name, FALSE, FALSE);
+        generate_nn_data(total_positions, max_depth, max_nodes, to_file_name, FALSE, FALSE);
         break;
     }
 }
@@ -260,15 +261,17 @@ void generate_nn_files(char *to_file_mask, int total_positions, int max_depth)
 void tnn_generate_menu()
 {
 #ifdef _MSC_VER
-    char *to_file_mask_tnn = "d:/temp/data/d%04d.tnn";
-    char *to_file_mask_plain = "d:/temp/data/d%04d.plain";
+    char *to_file_mask_tnn = "d:/temp/data/data_d%d_n%d_%04d.tnn";
+    char *to_file_mask_plain = "d:/temp/data/data_d%d_n%d_%04d.plain";
     int total_positions = 100000;
-    int max_depth = 4;
+    int max_depth = 64;
+    int max_nodes = 10000;
 #else
-    char *to_file_mask_tnn = "./data/d%04d.tnn";
-    char *to_file_mask_plain = "./data/d%04d.plain";
+    char *to_file_mask_tnn = "./data/data_d%d_n%d_%04d.tnn";
+    char *to_file_mask_plain = "./data/data_d%d_n%d_%04d.plain";
     int total_positions = 100000000;
-    int max_depth = 7;
+    int max_depth = 64;
+    int max_nodes = 10000;
 #endif
     char resp[100];
 
@@ -280,6 +283,7 @@ void tnn_generate_menu()
         printf("\t.plain file mask: %s\n", to_file_mask_plain);
         printf("\tTotal positions.: %d\n", total_positions);
         printf("\tMax depth.......: %d\n", max_depth);
+        printf("\tMax nodes.......: %d\n", max_nodes);
         printf("\n");
 
         printf("\t1. Generate training data .tnn\n");
@@ -288,8 +292,8 @@ void tnn_generate_menu()
         printf("\t--> ");
         fgets(resp, 100, stdin);
         printf("\n");
-        if (!strncmp(resp, "1", 1)) generate_nn_files(to_file_mask_tnn, total_positions, max_depth);
-        if (!strncmp(resp, "2", 1)) generate_nn_files(to_file_mask_plain, total_positions, max_depth);
+        if (!strncmp(resp, "1", 1)) generate_nn_files(to_file_mask_tnn, total_positions, max_depth, max_nodes);
+        if (!strncmp(resp, "2", 1)) generate_nn_files(to_file_mask_plain, total_positions, max_depth, max_nodes);
         if (!strncmp(resp, "x", 1)) break;
     }
 }
