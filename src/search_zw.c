@@ -110,11 +110,12 @@ int search_zw(GAME *game, UINT incheck, int beta, int depth)
     }
 #endif 
 
+    // Capture current eval and verify if this line is improving the score.
     int eval_score = evaluate(game);
     game->eval_hist[ply] = eval_score;
     int improving = ply > 1 && game->eval_hist[ply] > game->eval_hist[ply - 2];
 
-    // Razoring
+    // Razoring: eval score + margin is lower than beta, so just performs quiesce search to avoid search
     if (!incheck && depth < RAZOR_DEPTH && eval_score + RAZOR_MARGIN[depth] < beta) {
         razor_beta = beta - RAZOR_MARGIN[depth];
         score = quiesce(game, FALSE, razor_beta - 1, razor_beta, 0);
@@ -122,12 +123,13 @@ int search_zw(GAME *game, UINT incheck, int beta, int depth)
         if (score < razor_beta) return score;
     }
 
+    // Static null move: eval score + margin is higher that current beta, so it can skip the search.
+    if (!incheck && depth < STAT_NULL_DEPTH && eval_score - STAT_NULL_MARGIN[depth] >= beta) {
+        return eval_score - STAT_NULL_MARGIN[depth];
+    }
+
     // Null move heuristic: side to move has advantage that even allowing an extra move to opponent, still keeps advantage.
     if (!incheck && !is_mate_score(beta) && has_pieces(&game->board, turn) && !has_recent_null_move(&game->board)) {
-        // static null move
-        if (depth < STAT_NULL_DEPTH && eval_score - STAT_NULL_MARGIN[depth] >= beta && improving) {
-            return eval_score - STAT_NULL_MARGIN[depth];
-        }
         // null move search
         if (depth >= 2 && eval_score >= beta) {
             int null_depth = depth - 4 - ((depth - 2) / 4) - MIN(3, (eval_score - beta) / 200);
