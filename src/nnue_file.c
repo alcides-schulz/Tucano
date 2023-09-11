@@ -241,9 +241,11 @@ int nnue_init(const char* eval_file_name, NNUE_PARAM *p_nnue_param)
         fflush(stdout);
         return TRUE;
     }
-    printf("\nEval file '%s' not found!\n", eval_file_name);
-    fflush(stdout);
-    return FALSE;
+    else {
+        printf("\nEval file error: could not load data from '%s' !\n", eval_file_name);
+        fflush(stdout);
+        return FALSE;
+    }
 }
 
 //EOF

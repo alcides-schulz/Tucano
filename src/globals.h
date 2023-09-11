@@ -119,7 +119,7 @@ typedef unsigned int    UINT;
 #define EGTB_WIN     25000
 #define MATE_VALUE   32000
 #define MAX_SCORE    32767
-#define PLY_SCORE    (EGTB_WIN - MAX_PLY) // for MATE and EGTBWIN score
+#define WIN_SCORE    (EGTB_WIN - MAX_PLY) // for MATE and EGTBWIN score
 
 #define POST_NONE       0
 #define POST_DEFAULT    1
@@ -386,7 +386,7 @@ typedef struct s_eval_table
     S32     score;
 }   EVAL_TABLE;
 
-#define EVAL_TABLE_SIZE 65536
+#define EVAL_TABLE_SIZE 64536
 
 //  Game Data
 typedef struct s_game {
@@ -516,7 +516,7 @@ void    save_beta_cutoff_data(MOVE_ORDER *move_order, int color, int ply, MOVE b
 int     get_beta_cutoff_percent(MOVE_ORDER *move_order, int color, MOVE move);
 int     get_pruning_margin(MOVE_ORDER *move_order, int color, MOVE move);
 int     get_has_bad_history(MOVE_ORDER *move_order, int color, MOVE move);
-int     is_killer(MOVE_ORDER *move_order, int color, int ply, MOVE move);
+int     is_killer_move(MOVE_ORDER *move_order, int color, int ply, MOVE move);
 int     is_counter_move(MOVE_ORDER *move_order, int prev_color, MOVE previous_move, MOVE current_move);
 
 // Search
@@ -528,14 +528,12 @@ U64     get_additional_threads_tbhits(void);
 void    *ponder_search(void *game);
 void    update_pv(PV_LINE *pv_line, int ply, MOVE move);
 int     piece_value(int piece);
-int     is_free_pawn(BOARD *board, int color, MOVE move);
+int     is_free_passer(BOARD *board, int color, MOVE move);
 int     has_pawn_on_rank7(BOARD *board, int color);
 int     is_pawn_to_rank78(int turn, MOVE move);
 void    check_time(GAME *game);
-int     search_pv(GAME *game, UINT incheck, int alpha, int beta, int depth);
-int     search_zw(GAME *game, UINT incheck, int beta, int depth);
+int     search(GAME *game, UINT incheck, int alpha, int beta, int depth, MOVE exclude_move);
 int     quiesce(GAME *game, UINT incheck, int alpha, int beta, int depth);
-int     search_singular(GAME *game, UINT incheck, int beta, int depth, MOVE exclude_move);
 void    post_info(GAME *game, int score, int depth);
 int     is_check(BOARD *board, MOVE move);
 S16     score_to_tt(int score, int ply);

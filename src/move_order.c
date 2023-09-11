@@ -57,7 +57,7 @@ void save_beta_cutoff_data(MOVE_ORDER *move_order, int color, int ply, MOVE best
 //-------------------------------------------------------------------------------------------------
 //  Indicate if move is in the "killer moves" list.
 //-------------------------------------------------------------------------------------------------
-int is_killer(MOVE_ORDER *move_order, int color, int ply, MOVE move)
+int is_killer_move(MOVE_ORDER *move_order, int color, int ply, MOVE move)
 {
     return (move == move_order->killers[ply][color][0] || move == move_order->killers[ply][color][1]);
 }

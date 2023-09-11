@@ -17,10 +17,6 @@ You can find the GNU General Public License at http://www.gnu.org/licenses/
 
 #include "globals.h"
 
-#ifdef TUCANNUE
-#include "nnue/nnue.h"
-#endif
-
 //-------------------------------------------------------------------------------------------------
 //    UCI protocol implementation.
 //-------------------------------------------------------------------------------------------------
@@ -55,9 +51,7 @@ void uci_loop(char *engine_name, char *engine_version, char *engine_author) {
     printf("option name Threads type spin default 1 min %d max %d\n", MIN_THREADS, MAX_THREADS);
     printf("option name SyzygyPath type string default <empty>\n");
     printf("option name Ponder type check default false\n");
-#ifdef TUCANNUE
     printf("option name EvalFile type string default <empty>\n");
-#endif
 
     printf("uciok\n");
     
@@ -106,15 +100,13 @@ void uci_loop(char *engine_name, char *engine_version, char *engine_author) {
         }
 #endif
 
-#ifdef TUCANNUE
         if (!strncmp(uci_line, EVAL_FILE_OPTION_STRING, strlen(EVAL_FILE_OPTION_STRING))) {
             char *eval_file = &uci_line[strlen(EVAL_FILE_OPTION_STRING)];
             if (strlen(eval_file) && strcmp(eval_file, "<empty>")) {
-                USE_NN_EVAL = nnue_init(eval_file);
+                nnue_init(eval_file, &nnue_param);
             }
             continue;
         }
-#endif
 
         if (!strncmp(uci_line, "position", 8)) {
             parse_uci_position(uci_line);

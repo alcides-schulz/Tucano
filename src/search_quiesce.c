@@ -109,6 +109,7 @@ int quiesce(GAME *game, UINT incheck, int alpha, int beta, int depth)
         //  Score verification
         if (score > best_score) {
             if (score > alpha) {
+                update_pv(&game->pv_line, ply, move);
                 if (score >= beta) {
                     tt_record.info.move = move;
                     tt_record.info.depth = 0;
@@ -117,7 +118,6 @@ int quiesce(GAME *game, UINT incheck, int alpha, int beta, int depth)
                     tt_save(game->board.key, &tt_record);
                     return score;
                 }
-                update_pv(&game->pv_line, ply, move);
                 alpha = score;
                 best_move = move;
             }

@@ -20,7 +20,7 @@
 
 #define ENGINE "Tucano"
 #define AUTHOR "Alcides Schulz"
-#define VERSION "11.03"
+#define VERSION "11.04"
 
 void        develop_workbench(void);
 double      bench(int depth, int print);
@@ -87,9 +87,7 @@ int main(int argc, char *argv[])
         else {
             strcpy(nnue_file, TUCANO_EVAL_FILE);
         }
-        if (!nnue_init(nnue_file, &nnue_param)) {
-            printf("could not load nnue file: %s\n", TUCANO_EVAL_FILE);
-        }
+        nnue_init(nnue_file, &nnue_param);
     }
 
     printf("   hash table: %d MB, threads: %d, architecture: %s\n", hash_size, threads, NNUE_ARCH);

@@ -149,7 +149,7 @@ void check_time(GAME *search_data)
 //-------------------------------------------------------------------------------------------------
 //  Test if move made is a free pawn. No enemy pawns in front of it.
 //-------------------------------------------------------------------------------------------------
-int is_free_pawn(BOARD *board, int turn, MOVE move)
+int is_free_passer(BOARD *board, int turn, MOVE move)
 {
     if (unpack_piece(move) != PAWN) return FALSE;
     if (unpack_type(move) == MT_PROMO || unpack_type(move) == MT_CPPRM) return TRUE;
@@ -199,8 +199,8 @@ int is_eval_score(int score)
 //-------------------------------------------------------------------------------------------------
 S16 score_to_tt(int score, int ply)
 {
-    if (score >= PLY_SCORE) score += ply;
-    if (score <= -PLY_SCORE) score -= ply;
+    if (score >= WIN_SCORE) score += ply;
+    if (score <= -WIN_SCORE) score -= ply;
     return (S16)score;
 }
 
@@ -209,8 +209,8 @@ S16 score_to_tt(int score, int ply)
 //-------------------------------------------------------------------------------------------------
 int score_from_tt(int score, int ply)
 {
-    if (score >= PLY_SCORE) score -= ply;
-    if (score <= -PLY_SCORE) score += ply;
+    if (score >= WIN_SCORE) score -= ply;
+    if (score <= -WIN_SCORE) score += ply;
     return score;
 }
 

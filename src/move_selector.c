@@ -282,7 +282,7 @@ void assign_tactical_score(MOVE_LIST *ml)
             break;
         default:
             ml->score[i] = get_beta_cutoff_percent(ml->move_order, side_on_move(ml->board), ml->moves[i]);
-            if (is_killer(ml->move_order, side_on_move(ml->board), get_ply(ml->board), ml->moves[i])) {
+            if (is_killer_move(ml->move_order, side_on_move(ml->board), get_ply(ml->board), ml->moves[i])) {
                 ml->score[i] += SORT_KILLER;
             }
             if (is_counter_move(ml->move_order, flip_color(side_on_move(ml->board)), get_last_move_made(ml->board), ml->moves[i])) {
@@ -301,7 +301,7 @@ void assign_quiet_score(MOVE_LIST *ml)
 
     for (i = 0; i < ml->count; i++) {
         ml->score[i] = get_beta_cutoff_percent(ml->move_order, side_on_move(ml->board), ml->moves[i]);
-        if (is_killer(ml->move_order, side_on_move(ml->board), get_ply(ml->board), ml->moves[i])) {
+        if (is_killer_move(ml->move_order, side_on_move(ml->board), get_ply(ml->board), ml->moves[i])) {
             ml->score[i] += SORT_CAPTURE;
         }
         if (is_counter_move(ml->move_order, flip_color(side_on_move(ml->board)), get_last_move_made(ml->board), ml->moves[i])) {

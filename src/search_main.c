@@ -251,7 +251,7 @@ int search_asp(GAME *game, int incheck, int depth, int prev_score)
             int alpha = prev_score - window;
             int beta = prev_score + window;
 
-            int score = search_pv(game, incheck, alpha, beta, depth);
+            int score = search(game, incheck, alpha, beta, depth, MOVE_NONE);
             if (game->search.abort) return 0;
 
             if (score > alpha && score < beta) return score;
@@ -263,7 +263,7 @@ int search_asp(GAME *game, int incheck, int depth, int prev_score)
 
     }
 
-    return search_pv(game, incheck, -MAX_SCORE, MAX_SCORE, depth);
+    return search(game, incheck, -MAX_SCORE, MAX_SCORE, depth, MOVE_NONE);
 }
 
 //END
