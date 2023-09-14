@@ -116,11 +116,11 @@ int piece_value(int piece)
 //-------------------------------------------------------------------------------------------------
 void update_pv(PV_LINE *pv_line, int ply, MOVE move) 
 {
-    pv_line->pv_line[ply][ply] = move;
-    for (int i = ply + 1; i < pv_line->pv_size[ply + 1]; i++) {
-        pv_line->pv_line[ply][i] = pv_line->pv_line[ply + 1][i];
+    pv_line->line[ply][ply] = move;
+    for (int i = ply + 1; i < pv_line->size[ply + 1]; i++) {
+        pv_line->line[ply][i] = pv_line->line[ply + 1][i];
     }
-    pv_line->pv_size[ply] = pv_line->pv_size[ply + 1];
+    pv_line->size[ply] = pv_line->size[ply + 1];
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -280,8 +280,8 @@ void post_info(GAME *game, int score, int depth)
 
     // print pv (works for all options above)
     char move_string[20];
-    for (int pvi = 0; pvi < game->pv_line.pv_size[0]; pvi++) {
-        util_get_move_string(game->pv_line.pv_line[0][pvi], move_string);
+    for (int pvi = 0; pvi < game->pv_line.size[0]; pvi++) {
+        util_get_move_string(game->pv_line.line[0][pvi], move_string);
         printf(" %s", move_string);
     }
 

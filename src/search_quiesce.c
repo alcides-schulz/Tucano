@@ -39,7 +39,7 @@ int quiesce(GAME *game, UINT incheck, int alpha, int beta, int depth)
     check_time(game);
     if (game->search.abort) return 0;
 
-    game->pv_line.pv_size[ply] = ply;
+    game->pv_line.size[ply] = ply;
     game->search.nodes++;
 
     if (ply > 0 && is_draw(&game->board)) return 0;

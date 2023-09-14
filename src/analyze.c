@@ -57,9 +57,9 @@ void analyze_mode(GAME *game)
         }
 
         if (!strcmp(analysis_command, "hint")) {
-            if (analysis_game.pv_line.pv_line[0][0] != MOVE_NONE) {
+            if (analysis_game.pv_line.line[0][0] != MOVE_NONE) {
                 char move_string[100];
-                util_get_move_string(analysis_game.pv_line.pv_line[0][0], move_string);
+                util_get_move_string(analysis_game.pv_line.line[0][0], move_string);
                 printf("Hint: %s\n", move_string);
                 fflush(stdout);
             }

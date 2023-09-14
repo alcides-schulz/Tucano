@@ -257,8 +257,8 @@ int     is_file_valid(int file);
 
 // Principal Variation line.
 typedef struct s_pv_line {
-    MOVE    pv_line[MAX_PLY][MAX_PLY];
-    int     pv_size[MAX_PLY];
+    MOVE    line[MAX_PLY][MAX_PLY];
+    int     size[MAX_PLY];
 }   PV_LINE;
 
 

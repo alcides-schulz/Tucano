@@ -28,12 +28,7 @@ static int RAZOR_MARGIN[RAZOR_DEPTH] = { 0, 250, 500, 750, 1000, 1250 };
 //-------------------------------------------------------------------------------------------------
 int search(GAME *game, UINT incheck, int alpha, int beta, int depth, MOVE exclude_move)
 {
-    int     ply = get_ply(&game->board);
-    int     turn = side_on_move(&game->board);
-    int     pv_node = alpha != beta - 1 ? TRUE : FALSE;
-    int     root_node = ply == 0 ? TRUE : FALSE;
-
-    assert(incheck == 0 || incheck == 1);
+    assert(incheck == TRUE || incheck == FALSE);
     assert(alpha >= -MAX_SCORE && alpha <= MAX_SCORE);
     assert(beta >= -MAX_SCORE && beta <= MAX_SCORE);
     assert(beta > alpha);
@@ -41,9 +36,15 @@ int search(GAME *game, UINT incheck, int alpha, int beta, int depth, MOVE exclud
 
     if (depth <= 0) return quiesce(game, incheck, alpha, beta, 0);
 
+    int ply = get_ply(&game->board);
+    int turn = side_on_move(&game->board);
+    int pv_node = alpha != beta - 1 ? TRUE : FALSE;
+    int root_node = ply == 0 ? TRUE : FALSE;
+    int singular_move_search = exclude_move != MOVE_NONE ? TRUE : FALSE;
+
     if (ply >= MAX_PLY) return evaluate(game);
 
-    game->pv_line.pv_size[ply] = ply;
+    game->pv_line.size[ply] = ply;
     game->search.nodes++;
 
     if (!root_node) {
@@ -74,7 +75,7 @@ int search(GAME *game, UINT incheck, int alpha, int beta, int depth, MOVE exclud
     MOVE trans_move = tt_record.info.move;
 
 #ifdef EGTB_SYZYGY
-    if (!pv_node && !root_node && exclude_move == MOVE_NONE) {
+    if (!pv_node && !root_node && !singular_move_search) {
         // endgame tablebase probe
         U32 tbresult = egtb_probe_wdl(&game->board, depth, ply);
         if (tbresult != TB_RESULT_FAILED) {
@@ -112,7 +113,7 @@ int search(GAME *game, UINT incheck, int alpha, int beta, int depth, MOVE exclud
     game->eval_hist[ply] = eval_score;
     int improving = ply > 1 && game->eval_hist[ply] > game->eval_hist[ply - 2];
 
-    if (!pv_node && !incheck && exclude_move == MOVE_NONE) {
+    if (!pv_node && !incheck && !singular_move_search) {
         
         // Razoring: eval score + margin is lower than alpha, so just performs quiesce search and avoid regular search
         if (depth < RAZOR_DEPTH && eval_score + RAZOR_MARGIN[depth] < alpha) {
@@ -179,10 +180,10 @@ int search(GAME *game, UINT incheck, int alpha, int beta, int depth, MOVE exclud
     while ((move = next_move(&ml)) != MOVE_NONE) {
 
         assert(is_valid(&game->board, move));
+        
+        if (move == exclude_move) continue;
 
         if (!is_pseudo_legal(&game->board, ml.pins, move)) continue;
-
-        if (move == exclude_move) continue;
 
         move_count++;
 
@@ -196,14 +197,16 @@ int search(GAME *game, UINT incheck, int alpha, int beta, int depth, MOVE exclud
         }
 
         //  Singular move extension
-        if (pv_node && !root_node && tt_record.data && move == trans_move && tt_record.info.flag >= TT_LOWER && depth >= 8 && !extensions) {
-            int trans_score = score_from_tt(tt_record.info.score, game->board.ply);
-            if (tt_record.info.depth >= depth - 3 && !is_mate_score(trans_score)) {
-                int reduced_beta = trans_score - 4 * depth;
-                int singular_score = search(game, incheck, reduced_beta - 1, reduced_beta, depth / 2, move);
-                if (game->search.abort) return 0;
-                if (singular_score < reduced_beta) {
-                    extensions = 1;
+        if (pv_node && !root_node && depth >= 8 && !extensions) {
+            if (tt_record.data && move == trans_move && tt_record.info.flag >= TT_LOWER) {
+                int trans_score = score_from_tt(tt_record.info.score, game->board.ply);
+                if (tt_record.info.depth >= depth - 3 && !is_mate_score(trans_score)) {
+                    int reduced_beta = trans_score - 4 * depth;
+                    int singular_score = search(game, incheck, reduced_beta - 1, reduced_beta, depth / 2, move);
+                    if (game->search.abort) return 0;
+                    if (singular_score < reduced_beta) {
+                        extensions = 1;
+                    }
                 }
             }
         }
@@ -213,7 +216,6 @@ int search(GAME *game, UINT incheck, int alpha, int beta, int depth, MOVE exclud
             if (!is_killer_move(&game->move_order, turn, ply, move)) {
                 if (!is_counter_move(&game->move_order, flip_color(turn), get_last_move_made(&game->board), move)) {
                     int move_has_bad_history = get_has_bad_history(&game->move_order, turn, move);
-                    int singular_move_search = exclude_move != MOVE_NONE ? TRUE : FALSE;
                     // Move count pruning: prune moves based on move count.
                     if (!pv_node && !singular_move_search) {
                         if (move_has_bad_history && depth < 10 && !incheck) {
@@ -274,7 +276,7 @@ int search(GAME *game, UINT incheck, int alpha, int beta, int depth, MOVE exclud
                 alpha = score;
                 best_move = move;
                 if (score >= beta) {
-                    if (exclude_move == MOVE_NONE) {
+                    if (!singular_move_search) {
                         if (move_is_quiet(move)) {
                             save_beta_cutoff_data(&game->move_order, turn, ply, move, &ml, get_last_move_made(&game->board));
                         }
@@ -291,7 +293,7 @@ int search(GAME *game, UINT incheck, int alpha, int beta, int depth, MOVE exclud
         }
     }
 
-    if (exclude_move != MOVE_NONE) {
+    if (singular_move_search) {
         //  Special case for singular move search
         if (best_score == -MAX_SCORE) {
             return beta - 1;
