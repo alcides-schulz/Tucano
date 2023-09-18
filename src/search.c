@@ -237,6 +237,7 @@ int search(GAME *game, UINT incheck, int alpha, int beta, int depth, MOVE exclud
                             reductions = reduction_table[MIN(depth, MAX_DEPTH - 1)][MIN(move_count, MAX_MOVE - 1)];
                             if (!pv_node && !singular_move_search) {
                                 if (move_has_bad_history || !improving || (incheck && unpack_piece(move) == KING)) reductions++;
+                                if (trans_move != MOVE_NONE && !move_is_quiet(trans_move)) reductions++;
                             }
                             else {
                                 if (reductions > 0 && !move_has_bad_history) reductions--;
