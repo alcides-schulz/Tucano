@@ -20,7 +20,7 @@
 
 #define ENGINE "Tucano"
 #define AUTHOR "Alcides Schulz"
-#define VERSION "11.06"
+#define VERSION "11.07"
 
 void        develop_workbench(void);
 double      bench(int depth, int print);
@@ -616,10 +616,11 @@ int valid_hash_size(int hash_size) {
 //-------------------------------------------------------------------------------------------------
 //  Used for development tests.
 //-------------------------------------------------------------------------------------------------
+void tnn_generate_menu();
+
 void develop_workbench(void)
 {
-    //printf("nnue_init: %d\n", nnue_init("tucano_nn01.bin", &nnue_param));
-    nnue_test();
+    tnn_generate_menu();
 }
 
 //END

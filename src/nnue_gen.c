@@ -263,15 +263,15 @@ void tnn_generate_menu()
 #ifdef _MSC_VER
     char *to_file_mask_tnn = "d:/temp/data/data_d%d_n%d_%04d.tnn";
     char *to_file_mask_plain = "d:/temp/data/data_d%d_n%d_%04d.plain";
-    int total_positions = 100000;
-    int max_depth = 64;
-    int max_nodes = 10000;
+    int total_positions = 100000000;
+    int max_depth = 8;
+    int max_nodes = 0;
 #else
     char *to_file_mask_tnn = "./data/data_d%d_n%d_%04d.tnn";
     char *to_file_mask_plain = "./data/data_d%d_n%d_%04d.plain";
     int total_positions = 100000000;
-    int max_depth = 64;
-    int max_nodes = 10000;
+    int max_depth = 8;
+    int max_nodes = 0;
 #endif
     char resp[100];
 

@@ -53,11 +53,9 @@ int search(GAME *game, UINT incheck, int alpha, int beta, int depth, MOVE exclud
             return 0;
         }
         //  Mate pruning.
-        if (!root_node) {
-            alpha = MAX(-MATE_VALUE + ply, alpha);
-            beta = MIN(MATE_VALUE - ply, beta);
-            if (alpha >= beta) return alpha;
-        }
+        alpha = MAX(-MATE_VALUE + ply, alpha);
+        beta = MIN(MATE_VALUE - ply, beta);
+        if (alpha >= beta) return alpha;
     }
 
     check_time(game);
@@ -198,7 +196,7 @@ int search(GAME *game, UINT incheck, int alpha, int beta, int depth, MOVE exclud
 
         //  Singular move extension
         if (pv_node && !root_node && depth >= 8 && !extensions) {
-            if (tt_record.data && move == trans_move && tt_record.info.flag >= TT_LOWER) {
+            if (tt_record.data && move == trans_move && tt_record.info.flag != TT_UPPER) {
                 int trans_score = score_from_tt(tt_record.info.score, game->board.ply);
                 if (tt_record.info.depth >= depth - 3 && !is_mate_score(trans_score)) {
                     int reduced_beta = trans_score - 4 * depth;
@@ -218,30 +216,28 @@ int search(GAME *game, UINT incheck, int alpha, int beta, int depth, MOVE exclud
                     int move_has_bad_history = get_has_bad_history(&game->move_order, turn, move);
                     // Move count pruning: prune moves based on move count.
                     if (!pv_node && !singular_move_search) {
-                        if (move_has_bad_history && depth < 10 && !incheck) {
+                        if (move_has_bad_history && depth < 8 && !incheck) {
                             int pruning_threshold = 4 + depth * 2;
                             if (!improving) pruning_threshold = pruning_threshold - 3;
                             if (move_count > pruning_threshold) continue;
                         }
                     }
-                    if (!singular_move_search || !is_free_passer(&game->board, turn, move)) {
-                        // Futility pruning: eval + margin below beta. Uses beta cutoff history.
-                        if (depth < 10 && ((!pv_node && exclude_move == MOVE_NONE) || !incheck)) {
-                            int pruning_margin = depth * (50 + get_pruning_margin(&game->move_order, turn, move));
-                            if (eval_score + pruning_margin < alpha) {
-                                continue;
-                            }
+                    // Futility pruning: eval + margin below beta. Uses beta cutoff history.
+                    if (depth < 5 && ((!pv_node) || !incheck)) {
+                        int pruning_margin = depth * (50 + get_pruning_margin(&game->move_order, turn, move));
+                        if (eval_score + pruning_margin < alpha) {
+                            continue;
                         }
-                        // Late move reductions: reduce depth for later moves
-                        if (move_count > 3 && depth > 2) {
-                            reductions = reduction_table[MIN(depth, MAX_DEPTH - 1)][MIN(move_count, MAX_MOVE - 1)];
-                            if (!pv_node && !singular_move_search) {
-                                if (move_has_bad_history || !improving || (incheck && unpack_piece(move) == KING)) reductions++;
-                                if (trans_move != MOVE_NONE && !move_is_quiet(trans_move)) reductions++;
-                            }
-                            else {
-                                if (reductions > 0 && !move_has_bad_history) reductions--;
-                            }
+                    }
+                    // Late move reductions: reduce depth for later moves
+                    if (move_count > 3 && depth > 2) {
+                        reductions = reduction_table[MIN(depth, MAX_DEPTH - 1)][MIN(move_count, MAX_MOVE - 1)];
+                        if (!pv_node && !singular_move_search) {
+                            if (move_has_bad_history || !improving || (incheck && unpack_piece(move) == KING)) reductions++;
+                            if (trans_move != MOVE_NONE && !move_is_quiet(trans_move)) reductions++;
+                        }
+                        else {
+                            if (reductions > 0 && !move_has_bad_history) reductions--;
                         }
                     }
                 }
