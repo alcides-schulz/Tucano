@@ -195,7 +195,7 @@ int search(GAME *game, UINT incheck, int alpha, int beta, int depth, MOVE exclud
         }
 
         //  Singular move extension
-        if (pv_node && !root_node && depth >= 8 && !extensions) {
+        if (!root_node && depth >= 8 && !extensions && !singular_move_search) {
             if (tt_record.data && move == trans_move && tt_record.info.flag != TT_UPPER) {
                 int trans_score = score_from_tt(tt_record.info.score, game->board.ply);
                 if (tt_record.info.depth >= depth - 3 && !is_mate_score(trans_score)) {
@@ -204,6 +204,11 @@ int search(GAME *game, UINT incheck, int alpha, int beta, int depth, MOVE exclud
                     if (game->search.abort) return 0;
                     if (singular_score < reduced_beta) {
                         extensions = 1;
+                    }
+                    else {
+                        if (reduced_beta >= beta) {
+                            return reduced_beta;
+                        }
                     }
                 }
             }
