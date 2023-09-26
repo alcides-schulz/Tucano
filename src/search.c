@@ -144,18 +144,18 @@ int search(GAME *game, UINT incheck, int alpha, int beta, int depth, MOVE exclud
 
         //  Prob-Cut: after a capture a low depth with reduced beta indicates it is safe to ignore this node
         if (depth >= 5 && !is_mate_score(beta)) {
-            int beta_cut = beta + 100;
-            MOVE move;
-            MOVE_LIST mlpc;
-            select_init(&mlpc, game, incheck, trans_move, TRUE);
-            while ((move = next_move(&mlpc)) != MOVE_NONE) {
-                if (move_is_quiet(move) || eval_score + see_move(&game->board, move) < beta_cut) continue;
-                if (!is_pseudo_legal(&game->board, mlpc.pins, move)) continue;
-                make_move(&game->board, move);
-                int score = -search(game, is_incheck(&game->board, side_on_move(&game->board)), -beta_cut, -beta_cut + 1, depth - 4, MOVE_NONE);
+            int pc_beta = beta + 100;
+            MOVE pc_move;
+            MOVE_LIST pc_move_list;
+            select_init(&pc_move_list, game, incheck, trans_move, TRUE);
+            while ((pc_move = next_move(&pc_move_list)) != MOVE_NONE) {
+                if (move_is_quiet(pc_move) || eval_score + see_move(&game->board, pc_move) < pc_beta) continue;
+                if (!is_pseudo_legal(&game->board, pc_move_list.pins, pc_move)) continue;
+                make_move(&game->board, pc_move);
+                int pc_score = -search(game, is_incheck(&game->board, side_on_move(&game->board)), -pc_beta, -pc_beta + 1, depth - 4, MOVE_NONE);
                 undo_move(&game->board);
                 if (game->search.abort) return 0;
-                if (score >= beta_cut) return score;
+                if (pc_score >= pc_beta) return pc_score;
             }
         }
 
@@ -194,7 +194,7 @@ int search(GAME *game, UINT incheck, int alpha, int beta, int depth, MOVE exclud
             extensions = 1;
         }
 
-        //  Singular move extension
+        //  Singular move extension/cutoff/reduction
         if (!root_node && depth >= 8 && !extensions && !singular_move_search) {
             if (tt_record.data && move == trans_move && tt_record.info.flag != TT_UPPER) {
                 int trans_score = score_from_tt(tt_record.info.score, game->board.ply);
@@ -208,6 +208,11 @@ int search(GAME *game, UINT incheck, int alpha, int beta, int depth, MOVE exclud
                     else {
                         if (reduced_beta >= beta) {
                             return reduced_beta;
+                        }
+                        else {
+                            if (trans_score <= alpha || trans_score >= beta) {
+                                reductions = 1;
+                            }
                         }
                     }
                 }
@@ -228,7 +233,7 @@ int search(GAME *game, UINT incheck, int alpha, int beta, int depth, MOVE exclud
                         }
                     }
                     // Futility pruning: eval + margin below beta. Uses beta cutoff history.
-                    if (depth < 5 && ((!pv_node) || !incheck)) {
+                    if (depth < 5 && (!pv_node || !incheck)) {
                         int pruning_margin = depth * (50 + get_pruning_margin(&game->move_order, turn, move));
                         if (eval_score + pruning_margin < alpha) {
                             continue;
@@ -236,7 +241,7 @@ int search(GAME *game, UINT incheck, int alpha, int beta, int depth, MOVE exclud
                     }
                     // Late move reductions: reduce depth for later moves
                     if (move_count > 3 && depth > 2) {
-                        reductions = reduction_table[MIN(depth, MAX_DEPTH - 1)][MIN(move_count, MAX_MOVE - 1)];
+                        reductions += reduction_table[MIN(depth, MAX_DEPTH - 1)][MIN(move_count, MAX_MOVE - 1)];
                         if (!pv_node && !singular_move_search) {
                             if (move_has_bad_history || !improving || (incheck && unpack_piece(move) == KING)) reductions++;
                             if (trans_move != MOVE_NONE && !move_is_quiet(trans_move)) reductions++;
