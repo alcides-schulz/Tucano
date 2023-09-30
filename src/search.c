@@ -225,12 +225,10 @@ int search(GAME *game, UINT incheck, int alpha, int beta, int depth, MOVE exclud
                 if (!is_counter_move(&game->move_order, flip_color(turn), get_last_move_made(&game->board), move)) {
                     int move_has_bad_history = get_has_bad_history(&game->move_order, turn, move);
                     // Move count pruning: prune moves based on move count.
-                    if (!pv_node && !singular_move_search) {
-                        if (move_has_bad_history && depth < 8 && !incheck) {
-                            int pruning_threshold = 4 + depth * 2;
-                            if (!improving) pruning_threshold = pruning_threshold - 3;
-                            if (move_count > pruning_threshold) continue;
-                        }
+                    if (!pv_node && move_has_bad_history && depth < 8 && !incheck) {
+                        int pruning_threshold = 4 + depth * 2;
+                        if (!improving) pruning_threshold = pruning_threshold - 3;
+                        if (move_count > pruning_threshold) continue;
                     }
                     // Futility pruning: eval + margin below beta. Uses beta cutoff history.
                     if (depth < 5 && (!pv_node || !incheck)) {
@@ -242,7 +240,7 @@ int search(GAME *game, UINT incheck, int alpha, int beta, int depth, MOVE exclud
                     // Late move reductions: reduce depth for later moves
                     if (move_count > 3 && depth > 2) {
                         reductions += reduction_table[MIN(depth, MAX_DEPTH - 1)][MIN(move_count, MAX_MOVE - 1)];
-                        if (!pv_node && !singular_move_search) {
+                        if (!pv_node) {
                             if (move_has_bad_history || !improving || (incheck && unpack_piece(move) == KING)) reductions++;
                             if (trans_move != MOVE_NONE && !move_is_quiet(trans_move)) reductions++;
                         }
