@@ -78,8 +78,8 @@ int quiesce(GAME *game, UINT incheck, int alpha, int beta, int depth)
         //  Skip moves that are not going to improve the position.
         if (!incheck && unpack_type(move) == MT_CAPPC) {
 
-            // Skip captures that will not improve alpha (delta pruning)
-            if (best_score + MAX(100, 400 + depth * 10) + piece_value(unpack_capture(move)) <= alpha) {
+            // Skip captures that will not improve alpha (delta pruning). Note: depth is negative here.
+            if (best_score + MAX(100, 500 + depth * 10) + piece_value(unpack_capture(move)) <= alpha) {
                 continue;
             }
 
