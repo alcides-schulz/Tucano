@@ -246,6 +246,7 @@ int search(GAME *game, UINT incheck, int alpha, int beta, int depth, MOVE exclud
                         }
                         else {
                             if (reductions > 0 && !move_has_bad_history) reductions--;
+                            if (reductions > 0 && incheck) reductions--;
                         }
                     }
                 }
