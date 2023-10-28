@@ -20,7 +20,7 @@
 
 #define ENGINE "Tucano"
 #define AUTHOR "Alcides Schulz"
-#define VERSION "11.12"
+#define VERSION "11.13"
 
 void        develop_workbench(void);
 double      bench(int depth, int print);
@@ -30,6 +30,7 @@ void        settings_init(void);
 char        line[MAX_READ];
 char        command[MAX_READ] = { '\0' };
 char        syzygy_path[1024] = "";
+int         nnue_initialized = FALSE;
 
 //-------------------------------------------------------------------------------------------------
 //  Main loop
@@ -67,27 +68,29 @@ int main(int argc, char *argv[])
             if (++i < argc) strcpy(syzygy_path, argv[i]);
         }
 #endif
-#ifdef TUCANNUE
         if (!strcmp("-eval_file", argv[i])) {
-            if (++i < argc) USE_NN_EVAL = nnue_init(argv[i]);
+            if (++i < argc) {
+                nnue_data_loaded = nnue_init(argv[i], &nnue_param);
+            }
         }
-#endif
     }
 
-    char nnue_file[1000];
-    if (strlen(argv[0]) < 1000) {
-        strcpy(nnue_file, argv[0]);
-        char *last_slash = strrchr(nnue_file, '\\'); // windows
-        if (last_slash == NULL) {
-            last_slash = strrchr(nnue_file, '/'); // linux
+    if (!nnue_data_loaded) {
+        char nnue_file[1000];
+        if (strlen(argv[0]) < 1000) {
+            strcpy(nnue_file, argv[0]);
+            char *last_slash = strrchr(nnue_file, '\\'); // windows
+            if (last_slash == NULL) {
+                last_slash = strrchr(nnue_file, '/'); // linux
+            }
+            if (last_slash != NULL) {
+                strcpy(last_slash + 1, TUCANO_EVAL_FILE);
+            }
+            else {
+                strcpy(nnue_file, TUCANO_EVAL_FILE);
+            }
+            nnue_data_loaded = nnue_init(nnue_file, &nnue_param);
         }
-        if (last_slash != NULL) {
-            strcpy(last_slash + 1, TUCANO_EVAL_FILE);
-        }
-        else {
-            strcpy(nnue_file, TUCANO_EVAL_FILE);
-        }
-        nnue_init(nnue_file, &nnue_param);
     }
 
     printf("   hash table: %d MB, threads: %d, architecture: %s\n", hash_size, threads, NNUE_ARCH);
@@ -616,11 +619,12 @@ int valid_hash_size(int hash_size) {
 //-------------------------------------------------------------------------------------------------
 //  Used for development tests.
 //-------------------------------------------------------------------------------------------------
-void tnn_generate_menu();
+void test_pgn(char *pgn_filename);
+void extract_tnn(char *input_pgn);
 
 void develop_workbench(void)
 {
-    tnn_generate_menu();
+    extract_tnn("a.pgn");
 }
 
 //END

@@ -233,6 +233,8 @@ typedef struct s_net_data {
 
 //  nnue global vars
 EXTERN NNUE_PARAM   nnue_param;
+EXTERN int nnue_data_loaded;
+
 #define TUCANO_EVAL_FILE "tucano_nn02.bin"
 
 //  nnue global functions

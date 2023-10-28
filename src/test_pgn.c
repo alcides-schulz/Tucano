@@ -5,6 +5,7 @@ int pgn_is_end_game(char *pgn_moves);
 int pgn_is_number_or_space(char c1);
 MOVE pgn_get_curr_move(BOARD *board, char *pgn_move);
 void util_pgn_desc(MOVE move, char *string, int inc_file, int inc_rank);
+GAME test_game;
 
 void test_pgn(char *pgn_filename)
 {
@@ -17,7 +18,7 @@ void test_pgn(char *pgn_filename)
     MOVE    curr_move;
     int     game_count = 0;
     int     move_count;
-    FILE    *out = fopen("tune-positions.txt", "w");
+    FILE    *out = fopen("positions.txt", "w");
     char    fen[1000];
     char    res;
     char    white[100];
@@ -25,7 +26,12 @@ void test_pgn(char *pgn_filename)
     char    result[100];
     int     es;
     int     qs = 0;
-    GAME game;
+
+    if (!pgn_file) {
+        printf("cannot open file: %s\n", pgn_filename);
+        fclose(out);
+        return;
+    }
 
     int        total_positions = 0;
     int        selected_positions = 0;
@@ -35,7 +41,7 @@ void test_pgn(char *pgn_filename)
     while (read_game(pgn_file, pgn_moves, pgn_game, white, black, result)) {
         assert(strlen(pgn_moves) < 16384);
 
-        new_game(&game, FEN_NEW_GAME);
+        new_game(&test_game, FEN_NEW_GAME);
 
         game_count++;
         move_count = 0;
@@ -56,30 +62,32 @@ void test_pgn(char *pgn_filename)
             }
             pgn_move[pm] = 0;
 
+            printf("%s\n", pgn_move);
+
             move_count++;
-            curr_move = pgn_get_curr_move(&game.board, pgn_move);
+            curr_move = pgn_get_curr_move(&test_game.board, pgn_move);
 
             if (curr_move == MOVE_NONE) {
                 printf("\n\nNOT FOUND: %s\n\n", pgn_move);
-                print_current_moves(&game);
-                board_print(&game.board, "move");
+                print_current_moves(&test_game);
+                board_print(&test_game.board, "move");
                 break;
             }
 
-            assert(is_valid(&game.board, curr_move));
+            assert(is_valid(&test_game.board, curr_move));
 
-            make_move(&game.board, curr_move);
+            make_move(&test_game.board, curr_move);
             total_positions++;
 
-            if (side_on_move(&game.board) == BLACK) continue;
+            if (side_on_move(&test_game.board) == BLACK) continue;
 
             if (move_count <= 16) continue; // book moves
 
             //if (move_count >= 50) continue;
 
-            if (is_incheck(&game.board, WHITE)) continue;
+            if (is_incheck(&test_game.board, WHITE)) continue;
 
-            es = evaluate(&game);
+            es = evaluate(&test_game);
             //qs = quiesce(FALSE, -MAX_SCORE, MAX_SCORE, 0, -1);
 
             if (es != qs) continue;
@@ -88,7 +96,7 @@ void test_pgn(char *pgn_filename)
             selected_positions++;
             //printf("%d: [%s] eval: %d total: %d selected: %d\n", move_count, pgn_move, es, total_positions, selected_positions);
             
-            util_get_board_fen(&game.board, fen);
+            util_get_board_fen(&test_game.board, fen);
             if (strstr(result, "1-0")) 
                 res = 'w';
             else

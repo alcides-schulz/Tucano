@@ -183,7 +183,7 @@ void pgn_process_move_comments(PGN_GAME *game, PGN_MOVE *pgn_move)
         pgn_move->book = TRUE;
         return;
     }
-    if (strstr(comments, "{M")) {
+    if (strstr(comments, "{+M") || strstr(comments, "{-M")) {
         pgn_move->mate = TRUE;
         return;
     }
@@ -307,7 +307,76 @@ void pgn_move_desc(MOVE move, char *string, int inc_file, int inc_rank)
     }
 }
 
-void extract_games(char *input_pgn)
+void extract_tnn(char *input_pgn)
+{
+    PGN_FILE    pgn_file;
+    PGN_GAME    pgn_game;
+    PGN_MOVE    pgn_move;
+
+    GAME *game = (GAME *)malloc(sizeof(GAME));
+    if (game == NULL) {
+        fprintf(stderr, "select_positions.malloc: not enough memory for %d bytes.\n", (int)sizeof(GAME));
+        return;
+    }
+
+    if (!pgn_open(&pgn_file, input_pgn)) {
+        fprintf(stderr, "cannot open file: %s\n", input_pgn);
+        return;
+    }
+
+    int game_count = 0;
+
+    while (pgn_next_game(&pgn_file, &pgn_game)) {
+
+        game_count++;
+
+        if (strstr(pgn_game.string, "loses on time") != NULL) {
+            continue;
+        }
+
+        if (pgn_file.game_number % 100 == 0) {
+            printf("game %3d: %s vs %s: %s                  \r", pgn_file.game_number, pgn_game.white, pgn_game.black, pgn_game.result);
+        }
+
+        int move_count = 0;
+
+        new_game(game, pgn_game.initial_fen);
+
+        while (pgn_next_move(&pgn_game, &pgn_move)) {
+
+            MOVE move = pgn_engine_move(game, &pgn_move);
+
+            printf("%s %d %d %f\n", pgn_move.string, pgn_move.book, pgn_move.mate, pgn_move.value);
+
+            if (move == MOVE_NONE) {
+                printf("%s\n", pgn_game.string);
+                printf("PGN_MOVE: [%s]\n", pgn_move.string);
+                board_print(&game->board, NULL);
+                break;
+            }
+            
+            move_count++;
+
+            if (!pgn_move.book && !pgn_move.mate) {
+                char fen[1024];
+                util_get_board_fen(&game->board, fen);
+                printf("%s;score=%d;move=%s:ply=%d\n", fen, (int)(pgn_move.value * 100), pgn_move.string, move_count);
+            }
+
+            make_move(&game->board, move);
+        }
+
+        break;
+    }
+
+    pgn_close(&pgn_file);
+
+    free(game);
+
+    printf("\ndone.\n");
+}
+
+void extract_good_games(char *input_pgn)
 {
     PGN_FILE    pgn_file;
     PGN_GAME    pgn_game;
@@ -352,6 +421,8 @@ void extract_games(char *input_pgn)
         while (pgn_next_move(&pgn_game, &pgn_move)) {
 
             MOVE move = pgn_engine_move(game, &pgn_move);
+
+            printf("%s %d %d %f\n", pgn_move.string, pgn_move.book, pgn_move.mate, pgn_move.value);
 
             if (move == MOVE_NONE) {
                 valid_game = FALSE;
