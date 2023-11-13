@@ -262,11 +262,6 @@ typedef struct s_pv_line {
 }   PV_LINE;
 
 
-// Neural Network Definitions
-#define TNN_INDEX_SIZE  32
-#define TNN_INPUT_SIZE  (6 * 64 * 2)
-#define TNN_HIDDEN_SIZE 512
-
 // Piece Values
 #define VALUE_PAWN      180
 #define VALUE_KNIGHT    640

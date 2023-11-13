@@ -130,7 +130,7 @@ int search(GAME *game, UINT incheck, int alpha, int beta, int depth, MOVE exclud
         if (has_pieces(&game->board, turn) && !has_recent_null_move(&game->board)) {
             // null move search
             if (depth >= 2 && eval_score >= beta) {
-                int null_depth = depth - 4 - ((depth - 2) / 4) - MIN(3, (eval_score - beta) / 200);
+                int null_depth = depth - 4 - ((depth - 4) / 4) - MIN(3, (eval_score - beta) / 200);
                 make_move(&game->board, NULL_MOVE);
                 int score = -search(game, incheck, -beta, -beta + 1, null_depth, MOVE_NONE);
                 undo_move(&game->board);

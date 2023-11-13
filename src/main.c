@@ -619,12 +619,11 @@ int valid_hash_size(int hash_size) {
 //-------------------------------------------------------------------------------------------------
 //  Used for development tests.
 //-------------------------------------------------------------------------------------------------
-void test_pgn(char *pgn_filename);
 void extract_tnn(char *input_pgn);
 
 void develop_workbench(void)
 {
-    extract_tnn("a.pgn");
+
 }
 
 //END
