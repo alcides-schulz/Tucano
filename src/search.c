@@ -132,12 +132,14 @@ int search(GAME *game, UINT incheck, int alpha, int beta, int depth, MOVE exclud
             if (depth >= 2 && eval_score >= beta) {
                 int null_depth = depth - 4 - ((depth - 4) / 4) - MIN(3, (eval_score - beta) / 200);
                 make_move(&game->board, NULL_MOVE);
-                int score = -search(game, incheck, -beta, -beta + 1, null_depth, MOVE_NONE);
+                int null_score = -search(game, FALSE, -beta, -beta + 1, null_depth, MOVE_NONE);
                 undo_move(&game->board);
                 if (game->search.abort) return 0;
-                if (score >= beta) {
-                    if (is_mate_score(score)) score = beta; // don't accept mate score from null move search
-                    return score;
+                if (null_score >= beta) {
+                    if (is_mate_score(null_score)) {
+                        null_score = beta; // don't accept mate score from null move search
+                    }
+                    return null_score;
                 }
             }
         }
@@ -152,10 +154,13 @@ int search(GAME *game, UINT incheck, int alpha, int beta, int depth, MOVE exclud
                 if (move_is_quiet(pc_move) || eval_score + see_move(&game->board, pc_move) < pc_beta) continue;
                 if (!is_pseudo_legal(&game->board, pc_move_list.pins, pc_move)) continue;
                 make_move(&game->board, pc_move);
-                int pc_score = -search(game, is_incheck(&game->board, side_on_move(&game->board)), -pc_beta, -pc_beta + 1, depth - 4, MOVE_NONE);
+                int pc_incheck = is_incheck(&game->board, side_on_move(&game->board));
+                int pc_score = -search(game, pc_incheck, -pc_beta, -pc_beta + 1, depth - 4, MOVE_NONE);
                 undo_move(&game->board);
                 if (game->search.abort) return 0;
-                if (pc_score >= pc_beta) return pc_score;
+                if (pc_score >= pc_beta) {
+                    return pc_score;
+                }
             }
         }
 
@@ -278,7 +283,9 @@ int search(GAME *game, UINT incheck, int alpha, int beta, int depth, MOVE exclud
         if (score > best_score) {
             if (score > alpha) {
                 update_pv(&game->pv_line, ply, move);
-                if (root_node) post_info(game, score, depth);
+                if (root_node) {
+                    post_info(game, score, depth);
+                }
                 alpha = score;
                 best_move = move;
                 if (score >= beta) {
