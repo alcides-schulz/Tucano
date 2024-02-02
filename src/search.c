@@ -145,21 +145,23 @@ int search(GAME *game, UINT incheck, int alpha, int beta, int depth, MOVE exclud
         }
 
         //  Prob-Cut: after a capture a low depth with reduced beta indicates it is safe to ignore this node
+        int pc_beta = beta + 100;
         if (depth >= 5 && !is_mate_score(beta)) {
-            int pc_beta = beta + 100;
-            MOVE pc_move;
-            MOVE_LIST pc_move_list;
-            select_init(&pc_move_list, game, incheck, trans_move, TRUE);
-            while ((pc_move = next_move(&pc_move_list)) != MOVE_NONE) {
-                if (move_is_quiet(pc_move) || eval_score + see_move(&game->board, pc_move) < pc_beta) continue;
-                if (!is_pseudo_legal(&game->board, pc_move_list.pins, pc_move)) continue;
-                make_move(&game->board, pc_move);
-                int pc_incheck = is_incheck(&game->board, side_on_move(&game->board));
-                int pc_score = -search(game, pc_incheck, -pc_beta, -pc_beta + 1, depth - 4, MOVE_NONE);
-                undo_move(&game->board);
-                if (game->search.abort) return 0;
-                if (pc_score >= pc_beta) {
-                    return pc_score;
+            if (!tt_record.data || tt_record.info.score >= pc_beta || tt_record.info.depth < depth - 3) {
+                MOVE pc_move;
+                MOVE_LIST pc_move_list;
+                select_init(&pc_move_list, game, incheck, trans_move, TRUE);
+                while ((pc_move = next_move(&pc_move_list)) != MOVE_NONE) {
+                    if (move_is_quiet(pc_move) || eval_score + see_move(&game->board, pc_move) < pc_beta) continue;
+                    if (!is_pseudo_legal(&game->board, pc_move_list.pins, pc_move)) continue;
+                    make_move(&game->board, pc_move);
+                    int pc_incheck = is_incheck(&game->board, side_on_move(&game->board));
+                    int pc_score = -search(game, pc_incheck, -pc_beta, -pc_beta + 1, depth - 4, MOVE_NONE);
+                    undo_move(&game->board);
+                    if (game->search.abort) return 0;
+                    if (pc_score >= pc_beta) {
+                        return pc_score;
+                    }
                 }
             }
         }
