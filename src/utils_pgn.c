@@ -58,7 +58,7 @@ int pgn_next_game(PGN_FILE *pgn, PGN_GAME *game)
     while ((byte = fgetc(pgn->file)) != EOF) {
         if (game_index + 1 >= PGN_STRING_SIZE) break;
         if (move_index + 1 >= PGN_STRING_SIZE) break;
-
+        
         game->string[game_index++] = (char)byte;
 
         if (is_comment) {
@@ -134,13 +134,12 @@ int pgn_next_move(PGN_GAME *game, PGN_MOVE *move)
     int        msi;
 
     memset(move, 0, sizeof(PGN_MOVE));
-
-    if (pgn_no_more_moves(&game->moves[game->moves_index])) return FALSE;
-
+    if (pgn_no_more_moves(&game->moves[game->moves_index])) {
+        return FALSE;
+    }
     while (pgn_number_or_space(game->moves[game->moves_index])) {
         game->moves_index++;
     }
-
     msi = 0;
     while (game->moves[game->moves_index] && game->moves[game->moves_index] != ' ' && msi + 1 < PGN_MOVE_SIZE) {
         if (strchr("#+", game->moves[game->moves_index])) {
@@ -155,6 +154,28 @@ int pgn_next_move(PGN_GAME *game, PGN_MOVE *move)
 
     game->move_number++;
 
+    return TRUE;
+}
+
+int pgn_is_mate(char *comments, PGN_MOVE *pgn_move)
+{
+    pgn_move->mate = 0;
+    int negative = FALSE;
+    char *mate_string = strstr(comments, "{+M");
+    if (mate_string == NULL) {
+        mate_string = strstr(comments, "{-M");
+        negative = TRUE;
+    }
+    if (mate_string == NULL) {
+        return FALSE;
+    }
+    for (int i = 3; isdigit(mate_string[i]); i++) {
+        //printf("%d %s %d\n", i, &mate_string[i], mate_string[i]);
+        pgn_move->mate = pgn_move->mate * 10 + (mate_string[i] - '0');
+    }
+    if (negative) {
+        pgn_move->mate *= -1;
+    }
     return TRUE;
 }
 
@@ -183,8 +204,7 @@ void pgn_process_move_comments(PGN_GAME *game, PGN_MOVE *pgn_move)
         pgn_move->book = TRUE;
         return;
     }
-    if (strstr(comments, "{+M") || strstr(comments, "{-M")) {
-        pgn_move->mate = TRUE;
+    if (pgn_is_mate(comments, pgn_move)) {
         return;
     }
     char *start_eval = strchr(comments, '{');
@@ -214,8 +234,12 @@ MOVE pgn_engine_move(GAME *game, PGN_MOVE *pgn_move)
 
 int pgn_no_more_moves(char *pgn_moves)
 {
-    while (*pgn_moves == ' ') pgn_moves++;
-    if (!*pgn_moves) return TRUE;
+    while (*pgn_moves == ' ') {
+        pgn_moves++;
+    }
+    if (!*pgn_moves) {
+        return TRUE;
+    }
     if (!strncmp(pgn_moves, "1-0", 3) || !strncmp(pgn_moves, "0-1", 3) || !strncmp(pgn_moves, "1/2-1/2", 7)) {
         return TRUE;
     }
@@ -241,8 +265,9 @@ int pgn_is_end_of_game_string(char *g, int p)
 
 int pgn_number_or_space(char c1)
 {
-    if ((c1 >= '0' && c1 <= '9') || c1 == '.' || c1 == ' ')
+    if ((c1 >= '0' && c1 <= '9') || c1 == '.' || c1 == ' ' || c1 == '\n' || c1 == '\r') {
         return TRUE;
+    }
     return FALSE;
 }
 
@@ -414,35 +439,31 @@ void extract_good_games(char *input_pgn)
         int total_diff = 0;
         int move_count = 0;
 
-        int white_win = strstr(pgn_game.result, "1-0") != NULL;
-
         new_game(game, pgn_game.initial_fen);
+
+        //printf("%s\n", pgn_game.moves);
 
         while (pgn_next_move(&pgn_game, &pgn_move)) {
 
             MOVE move = pgn_engine_move(game, &pgn_move);
+            
+            move_count++;
 
-            printf("%s %d %d %f\n", pgn_move.string, pgn_move.book, pgn_move.mate, pgn_move.value);
+            //printf("%s %d %d %f\n", pgn_move.string, pgn_move.book, pgn_move.mate, pgn_move.value);
 
             if (move == MOVE_NONE) {
                 valid_game = FALSE;
                 printf("%s\n", pgn_game.string);
-                printf("PGN_MOVE: [%s]\n", pgn_move.string);
-                board_print(&game->board, NULL);
+                printf("GAME: %d PGN_MOVE: %d [%s]\n", game_count, move_count, pgn_move.string);
+                board_print(&game->board, "error");
                 continue;
             }
 
             make_move(&game->board, move);
-            move_count++;
 
             int diff = 0;
-            if (move_count < 80) {
-                if (white_win) {
-                    diff = material_value(&game->board, BLACK) - material_value(&game->board, WHITE);
-                }
-                else {
-                    diff = material_value(&game->board, WHITE) - material_value(&game->board, BLACK);
-                }
+            if (move_count < 50) {
+                diff = material_value(&game->board, BLACK) - material_value(&game->board, WHITE);
                 if (diff > 0) total_diff += diff;
             }
         }
@@ -475,6 +496,142 @@ int pgn_game_has_valid_result(PGN_GAME *pgn_game)
         if (strstr(pgn_game->string, VALID_RESULT[i]) != NULL) return TRUE;
     }
     return FALSE;
+}
+
+void extract_composition(char *input_pgn)
+{
+    PGN_FILE    pgn_file;
+    PGN_GAME    pgn_game;
+    PGN_MOVE    pgn_move;
+
+    GAME *game = (GAME *)malloc(sizeof(GAME));
+    if (game == NULL) {
+        fprintf(stderr, "select_positions.malloc: not enough memory for %d bytes.\n", (int)sizeof(GAME));
+        return;
+    }
+
+    if (!pgn_open(&pgn_file, input_pgn)) {
+        fprintf(stderr, "cannot open file: %s\n", input_pgn);
+        return;
+    }
+
+    int game_count = 0;
+    FILE *out_file = fopen("d:/temp/composition.csv", "w");
+
+    while (pgn_next_game(&pgn_file, &pgn_game)) {
+
+        game_count++;
+
+        if (strstr(pgn_game.string, "loses on time") != NULL) {
+            continue;
+        }
+        if (strstr(pgn_game.result, "1-0") == NULL) {
+            continue;
+        }
+
+        if (pgn_file.game_number % 100 == 0) {
+            printf("game %3d: %s vs %s: %s                  \r", pgn_file.game_number, pgn_game.white, pgn_game.black, pgn_game.result);
+        }
+
+        new_game(game, pgn_game.initial_fen);
+
+        //printf("%s\n", pgn_game.moves);
+
+        while (pgn_next_move(&pgn_game, &pgn_move)) {
+
+            MOVE move = pgn_engine_move(game, &pgn_move);
+
+            //printf("%s %d %d %f\n", pgn_move.string, pgn_move.book, pgn_move.mate, pgn_move.value);
+
+            if (move == MOVE_NONE) {
+                printf("%s\n", pgn_game.string);
+                printf("PGN_MOVE: [%s]\n", pgn_move.string);
+                board_print(&game->board, NULL);
+                continue;
+            }
+
+            if (side_on_move(&game->board) == WHITE && pgn_move.mate == 5) {
+                char move_string[100];
+                char fen[1000];
+                util_get_move_string(move, move_string);
+                util_get_board_fen(&game->board, fen);
+                int pc = 0;
+                pc += pieces_count(&game->board, WHITE) + pieces_count(&game->board, BLACK);
+                pc += pawn_count(&game->board, WHITE) + pawn_count(&game->board, BLACK);
+                fprintf(out_file, "%s,%s,%d\n", fen, move_string, pc);
+            }
+
+            make_move(&game->board, move);
+        }
+
+        //break;
+    }
+
+    pgn_close(&pgn_file);
+    fclose(out_file);
+
+    free(game);
+
+    printf("\ndone.\n");
+}
+
+void generate_replay(char *input_pgn, char *output_pgn)
+{
+    PGN_FILE    pgn_file;
+    PGN_GAME    pgn_game;
+    PGN_MOVE    pgn_move;
+
+    GAME *game = (GAME *)malloc(sizeof(GAME));
+    if (game == NULL) {
+        fprintf(stderr, "select_positions.malloc: not enough memory for %d bytes.\n", (int)sizeof(GAME));
+        return;
+    }
+
+    if (!pgn_open(&pgn_file, input_pgn)) {
+        fprintf(stderr, "cannot open file: %s\n", input_pgn);
+        return;
+    }
+
+    FILE *out_file = fopen(output_pgn, "w");
+    char fen[1000];
+    char move_string[100];
+
+    while (pgn_next_game(&pgn_file, &pgn_game)) {
+
+        printf("game %3d: %s vs %s: %s                  \r", pgn_file.game_number, pgn_game.white, pgn_game.black, pgn_game.result);
+
+        new_game(game, pgn_game.initial_fen);
+
+        util_get_board_fen(&game->board, fen);
+        fprintf(out_file, "%s,\n", fen);
+
+        while (pgn_next_move(&pgn_game, &pgn_move)) {
+
+            MOVE move = pgn_engine_move(game, &pgn_move);
+
+            if (move == MOVE_NONE) {
+                printf("%s\n", pgn_game.string);
+                printf("PGN_MOVE: [%s]\n", pgn_move.string);
+                board_print(&game->board, NULL);
+                continue;
+            }
+
+            make_move(&game->board, move);
+
+            util_get_move_string(move, move_string);
+            util_get_board_fen(&game->board, fen);
+            fprintf(out_file, "%s,%s\n", fen, move_string);
+        }
+
+        break; // only one game at a time.
+    }
+
+    pgn_close(&pgn_file);
+    fclose(out_file);
+
+    free(game);
+
+    printf("\ndone.\n");
 }
 
 //END

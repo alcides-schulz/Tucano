@@ -628,7 +628,7 @@ void    util_draw_board(BOARD *board);
 void    save_board_pgn(GAME *game, char *file_name, int book_moves);
 
 // PGN utils
-#define PGN_STRING_SIZE 16384
+#define PGN_STRING_SIZE 32767
 #define PGN_TAG_SIZE    128
 #define PGN_MOVE_SIZE   32
 #define PGN_FEN_SIZE    512

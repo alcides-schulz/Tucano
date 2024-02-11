@@ -20,7 +20,7 @@
 
 #define ENGINE "Tucano"
 #define AUTHOR "Alcides Schulz"
-#define VERSION "11.15"
+#define VERSION "11.16"
 
 void        develop_workbench(void);
 double      bench(int depth, int print);
@@ -619,10 +619,42 @@ int valid_hash_size(int hash_size) {
 //-------------------------------------------------------------------------------------------------
 //  Used for development tests.
 //-------------------------------------------------------------------------------------------------
-void extract_tnn(char *input_pgn);
+void extract_good_games(char *input_pgn);
+void extract_composition(char *input_pgn);
+void generate_replay(char *input_pgn, char *output_pgn);
 
 void develop_workbench(void)
 {
+    //extract_composition("d:/temp/a.pgn");
+    generate_replay("d:/temp/b.pgn", "d:/temp/game_replay.txt");
+
+    //MOVE_LIST ml1;
+    //MOVE_LIST ml2;
+    //MOVE move1;
+    //MOVE move2;
+    //char fen1[500];
+    //char fen2[500];
+
+    //select_init(&ml1, &main_game, FALSE, MOVE_NONE, FALSE);
+    //while ((move1 = next_move(&ml1)) != MOVE_NONE) {
+    //    if (!is_pseudo_legal(&main_game.board, ml1.pins, move1)) continue;
+    //    make_move(&main_game.board, move1);
+    //    util_get_board_fen(&main_game.board, fen1);
+    //    select_init(&ml2, &main_game, FALSE, MOVE_NONE, FALSE);
+    //    while ((move2 = next_move(&ml2)) != MOVE_NONE) {
+    //        if (!is_pseudo_legal(&main_game.board, ml2.pins, move2)) continue;
+    //        make_move(&main_game.board, move2);
+    //        float eval = (float)(evaluate(&main_game) / 200.0);
+    //        util_get_board_fen(&main_game.board, fen2);
+    //        undo_move(&main_game.board);
+
+    //        util_print_move(move1, FALSE);
+    //        printf(",%s,", fen1);
+    //        util_print_move(move2, FALSE);
+    //        printf(",%s,%.2f\n", fen2, eval);
+    //    }
+    //    undo_move(&main_game.board);
+    //}
 }
 
 //END
