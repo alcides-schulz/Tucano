@@ -61,6 +61,8 @@ typedef void*(*pt_start_fn)(void*);
 
 #define THREAD_CREATE(x,f,t)    pthread_create(&(x),NULL,(pt_start_fn)f,t)
 #define THREAD_WAIT(x)          pthread_join(x, NULL)
+#define ALIGNED_ALLOC(a, s)     aligned_alloc(a, s)
+#define ALIGNED_FREE            free
 
 #else // Windows and MinGW
 
@@ -72,6 +74,8 @@ typedef HANDLE THREAD_ID;
 
 #define THREAD_CREATE(x,f,t)    (x = CreateThread(NULL,0,(LPTHREAD_START_ROUTINE)f,t,0,NULL))
 #define THREAD_WAIT(x)          { WaitForSingleObject(x, INFINITE); CloseHandle(x); }
+#define ALIGNED_ALLOC(a, s)     _aligned_malloc(s, a)
+#define ALIGNED_FREE            _aligned_free
 
 #endif
 

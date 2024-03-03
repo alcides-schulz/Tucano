@@ -32,7 +32,7 @@ void auto_play(int total_games, SETTINGS *settings)
     char        move_string[20];
     GAME        *game;
 
-    game = (GAME *)malloc(sizeof(GAME));
+    game = (GAME *)ALIGNED_ALLOC(64, sizeof(GAME));
     if (game == NULL) {
         fprintf(stderr, "auto_play.malloc: not enough memory for %d bytes.\n", (int)sizeof(GAME));
         return;
@@ -62,7 +62,7 @@ void auto_play(int total_games, SETTINGS *settings)
         print_game_result(game);
     }
 
-    free(game);
+    ALIGNED_FREE(game);
 }
 
 //-------------------------------------------------------------------------------------------------

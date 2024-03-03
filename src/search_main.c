@@ -33,13 +33,13 @@ int     additional_threads = 0;
 void threads_init(int threads_count)
 {
     if (thread_data != NULL) {
-        free(thread_data);
+        ALIGNED_FREE(thread_data);
         thread_data = NULL;
     }
     if (threads_count <= 0) threads_count = 1;
     additional_threads = threads_count - 1;
     if (additional_threads == 0) return;
-    thread_data = (GAME *)malloc(sizeof(GAME) * additional_threads);
+    thread_data = (GAME *)ALIGNED_ALLOC(64, sizeof(GAME) * additional_threads);
     if (thread_data == NULL) {
         fprintf(stderr, "Error allocating memory for %d additional threads. Running with no paralel search.\n", additional_threads);
         additional_threads = 0;

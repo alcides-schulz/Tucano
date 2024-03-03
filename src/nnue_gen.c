@@ -51,7 +51,7 @@ void generate_nn_data(int fen_total, int max_depth, int max_nodes, char *output_
     int         tnn_format = FALSE;
     int         plain_format = FALSE;
 
-    game = (GAME *)malloc(sizeof(GAME));
+    game = (GAME *)ALIGNED_ALLOC(64, sizeof(GAME));
     if (game == NULL) {
         fprintf(stderr, "generate_nn_data.malloc: not enough memory for %d bytes.\n", (int)sizeof(GAME));
         return;
@@ -206,7 +206,7 @@ void generate_nn_data(int fen_total, int max_depth, int max_nodes, char *output_
     printf("\n");
 
     fclose(output);
-    free(game);
+    ALIGNED_FREE(game);
     if (log_fen) {
         fclose(fen_file);
     }
