@@ -346,12 +346,16 @@ typedef struct s_move_history
     U8      can_castle_qs;
 }   MOVE_HIST;
 
-//  Move ordering data: history heuristic and killers. 
+//  Move ordering data: cutoff history heuristic, killers, counter moves
+typedef struct s_cutoff_history {
+    U16     search_count;
+    U16     cutoff_count;
+}   CUTOFF_HISTORY;
+
 typedef struct s_move_ordering {
-    int     search_count[COLORS][NUM_PIECES][64];
-    int     beta_cutoff_count[COLORS][NUM_PIECES][64];
-    MOVE    killers[MAX_PLY][COLORS][2];
-    MOVE    counter_move[COLORS][NUM_PIECES][64][2];
+    CUTOFF_HISTORY  cutoff_history[COLORS][NUM_PIECES][64];
+    MOVE            killers[MAX_PLY][COLORS][2];
+    MOVE            counter_move[COLORS][NUM_PIECES][64][2];
 }   MOVE_ORDER;
 
 //  Board representation (bitboard based)
