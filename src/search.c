@@ -260,6 +260,12 @@ int search(GAME *game, UINT incheck, int alpha, int beta, int depth, MOVE exclud
             }
         }
 
+        if (move_count > 5 && !extensions && !incheck && depth < 5 && !move_is_quiet(move)) {
+            if (best_score + 100 * depth + see_move(&game->board, move) <= alpha) {
+                continue;
+            }
+        }
+
         //  Make move and search new position.
         make_move(&game->board, move);
 
