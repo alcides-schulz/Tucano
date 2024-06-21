@@ -209,16 +209,21 @@ int search(GAME *game, UINT incheck, int alpha, int beta, int depth, MOVE exclud
                     int reduced_beta = trans_score - 4 * depth;
                     int singular_score = search(game, incheck, reduced_beta - 1, reduced_beta, depth / 2, move);
                     if (game->search.abort) return 0;
-                    if (singular_score < reduced_beta) {
-                        extensions = 1;
+                    if (singular_score + 50 < reduced_beta) {
+                        extensions = 2;
                     }
                     else {
-                        if (reduced_beta >= beta) {
-                            return reduced_beta;
+                        if (singular_score < reduced_beta) {
+                            extensions = 1;
                         }
                         else {
-                            if (trans_score <= alpha || trans_score >= beta) {
-                                reductions = 1;
+                            if (reduced_beta >= beta) {
+                                return reduced_beta;
+                            }
+                            else {
+                                if (trans_score <= alpha || trans_score >= beta) {
+                                    reductions = 1;
+                                }
                             }
                         }
                     }
