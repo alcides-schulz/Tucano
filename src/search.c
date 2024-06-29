@@ -114,7 +114,7 @@ int search(GAME *game, UINT incheck, int alpha, int beta, int depth, MOVE exclud
     if (!pv_node && !incheck && !singular_move_search) {
         
         // Razoring: eval score + margin is lower than alpha, so just performs quiesce search and avoid regular search
-        if (depth < RAZOR_DEPTH && eval_score + RAZOR_MARGIN[depth] < alpha) {
+        if (depth < RAZOR_DEPTH && eval_score + RAZOR_MARGIN[depth] < alpha && !is_mate_score(alpha)) {
             int razor_margin = alpha - RAZOR_MARGIN[depth];
             int score = quiesce(game, FALSE, razor_margin, razor_margin + 1, 0);
             if (game->search.abort) return 0;
@@ -122,7 +122,7 @@ int search(GAME *game, UINT incheck, int alpha, int beta, int depth, MOVE exclud
         }
 
         // Static null move: eval score + margin is higher that current beta, so it can skip the search.
-        if (depth < STAT_NULL_DEPTH && eval_score - STAT_NULL_MARGIN[depth] >= beta) {
+        if (depth < STAT_NULL_DEPTH && eval_score - STAT_NULL_MARGIN[depth] >= beta && !is_mate_score(beta)) {
             return eval_score - STAT_NULL_MARGIN[depth];
         }
 
