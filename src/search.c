@@ -243,7 +243,7 @@ int search(GAME *game, UINT incheck, int alpha, int beta, int depth, MOVE exclud
                         if (move_count > pruning_threshold) continue;
                     }
                     // Futility pruning: eval + margin below beta. Uses beta cutoff history.
-                    if (depth < 5 && (!pv_node || !incheck)) {
+                    if (depth < 8 && (!pv_node || !incheck) && !is_mate_score(alpha)) {
                         int pruning_margin = depth * (50 + get_pruning_margin(&game->move_order, turn, move));
                         if (eval_score + pruning_margin < alpha) {
                             continue;
