@@ -233,7 +233,9 @@ void *iterative_deepening(void *pv_game)
     // collect best and ponder moves
     if (game->is_main_thread) {
         game->search.best_move = game->pv_line.line[0][0];
-        game->search.ponder_move = game->pv_line.line[0][1];
+        if (game->pv_line.size[0] > 1) {
+            game->search.ponder_move = game->pv_line.line[0][1];
+        }
     }
 
     return NULL;
