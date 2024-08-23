@@ -634,4 +634,162 @@ void generate_replay(char *input_pgn, char *output_pgn)
     printf("\ndone.\n");
 }
 
+
+void generate_plain_files(char *pgn_file_list)
+{
+    PGN_FILE    pgn_file;
+    PGN_GAME    pgn_game;
+    PGN_MOVE    pgn_move;
+
+    GAME *game = (GAME *)malloc(sizeof(GAME));
+    if (game == NULL) {
+        fprintf(stderr, "select_positions.malloc: not enough memory for %d bytes.\n", (int)sizeof(GAME));
+        return;
+    }
+
+    FILE *file_list = fopen(pgn_file_list, "r");
+    if (!file_list) {
+        fprintf(stderr, "cannot open pgn file list: %s\n", pgn_file_list);
+        return;
+    }
+
+    int MAX_PLAIN_POSITIONS = 100000000;
+    int plain_position_count = 0;
+    int plain_file_number = 0;
+    char plain_file_name[512];
+    FILE *plain_file = NULL;
+
+    char input_pgn[1024];
+    
+    while (fgets(input_pgn, 1000, file_list) != NULL) {
+
+        char *new_line_char = strchr(input_pgn, '\n');
+        if (new_line_char != NULL) {
+            *new_line_char = '\0';
+        }
+
+        if (!pgn_open(&pgn_file, input_pgn)) {
+            fprintf(stderr, "cannot open file: %s\n", input_pgn);
+            continue;
+        }
+
+        int game_count = 0;
+
+        while (pgn_next_game(&pgn_file, &pgn_game)) {
+
+            game_count++;
+
+            if (strstr(pgn_game.string, "loses on time") != NULL) {
+                continue;
+            }
+            if (strstr(pgn_game.result, "1-0") == NULL) {
+                if (strstr(pgn_game.result, "0-1") == NULL) {
+                    if (strstr(pgn_game.result, "1/2-1/2") == NULL) {
+                        //printf("\ninvalid result: %s\n", pgn_game.result);
+                        continue;
+                    }
+                }
+            }
+
+            if (pgn_file.game_number % 100 == 0) {
+                printf("file %s game %3d: %s vs %s: %s      \r", 
+                    input_pgn, pgn_file.game_number, pgn_game.white, pgn_game.black, pgn_game.result);
+            }
+
+            int move_count = 0;
+            int white_win = strstr(pgn_game.result, "1-0") != NULL;
+            int black_win = strstr(pgn_game.result, "0-1") != NULL;
+ 
+            new_game(game, pgn_game.initial_fen);
+
+            //printf("%s\n", pgn_game.moves);
+
+            while (pgn_next_move(&pgn_game, &pgn_move)) {
+
+                MOVE move = pgn_engine_move(game, &pgn_move);
+
+                move_count++;
+
+                //printf("%s %d %d %f\n", pgn_move.string, pgn_move.book, pgn_move.mate, pgn_move.value);
+                //getchar();
+
+                if (move == MOVE_NONE) {
+                    //printf("file name: %s\n", input_pgn);
+                    //printf("%s\n", pgn_game.string);
+                    //printf("GAME: %d PGN_MOVE: %d [%s]\n", game_count, move_count, pgn_move.string);
+                    //board_print(&game->board, "error");
+                    continue;
+                }
+
+                if (!pgn_move.book && !pgn_move.mate && !move_is_en_passant(move)) {
+
+                    char fen[512];
+                    util_get_board_fen(&game->board, fen);
+
+                    char move_string[100];
+                    util_get_move_string(move, move_string);
+
+                    int score = (int)(pgn_move.value * 100);
+
+                    int result = 0;
+                    if (white_win) {
+                        result = side_on_move(&game->board) == WHITE ? 1 : -1;
+                    }
+                    if (black_win) {
+                        result = side_on_move(&game->board) == WHITE ? -1 : 1;
+                    }
+
+                    int ply = move_count;
+
+                    //fen 8/7p/4nk2/7P/6K1/8/8/8 w - -
+                    //move g4f3
+                    //score -807
+                    //ply 118
+                    //result -1
+                    //e
+                    if (plain_file == NULL || plain_position_count > MAX_PLAIN_POSITIONS) {
+                        plain_position_count = 0;
+                        plain_file_number++;
+                        sprintf(plain_file_name, "data%04d.plain", plain_file_number);
+                        if (plain_file != NULL) {
+                            fclose(plain_file);
+                        }
+                        plain_file = fopen(plain_file_name, "w");
+                        if (!plain_file) {
+                            fprintf(stderr, "could not create plain file\n");
+                            fclose(file_list);
+                            free(game);
+                            return;
+                        }
+                        printf("\nplain file: %s\n", plain_file_name);
+                    }
+                    //fprintf(plain_file, "MOVE: %s %d %d %f\n", pgn_move.string, pgn_move.book, pgn_move.mate, pgn_move.value);
+                    fprintf(plain_file, "fen %s\n", fen);
+                    fprintf(plain_file, "move %s\n", move_string);
+                    fprintf(plain_file, "score %d\n", score);
+                    fprintf(plain_file, "ply %d\n", ply);
+                    fprintf(plain_file, "result %d\n", result);
+                    fprintf(plain_file, "e\n");
+                    plain_position_count++;
+                    //if (position_count == 1000) {
+                    //    pgn_close(&pgn_file);
+                    //    goto end_processing;
+                    //}
+
+                }
+                make_move(&game->board, move);
+            }
+        }
+
+        pgn_close(&pgn_file);
+
+    }
+//end_processing:
+    fclose(plain_file);
+    fclose(file_list);
+    free(game);
+
+    printf("\ndone.\n");
+}
+
 //END

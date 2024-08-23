@@ -20,7 +20,7 @@
 
 #define ENGINE "Tucano"
 #define AUTHOR "Alcides Schulz"
-#define VERSION "11.23"
+#define VERSION "11.24"
 
 void        develop_workbench(void);
 double      bench(int depth, int print);
@@ -30,7 +30,6 @@ void        settings_init(void);
 char        line[MAX_READ];
 char        command[MAX_READ] = { '\0' };
 char        syzygy_path[1024] = "";
-int         nnue_initialized = FALSE;
 
 //-------------------------------------------------------------------------------------------------
 //  Main loop
@@ -623,10 +622,11 @@ void extract_good_games(char *input_pgn);
 void extract_composition(char *input_pgn);
 void generate_replay(char *input_pgn, char *output_pgn);
 void tnn_generate_menu();
+void generate_plain_files(char *pgn_file_list);
 
 void develop_workbench(void)
 {
-    
+    //generate_replay("d:/temp/game0013.pgn", "d:/temp/replay0013.pgn");
 }
 
 //END
