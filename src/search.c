@@ -114,7 +114,7 @@ int search(GAME *game, UINT incheck, int alpha, int beta, int depth, MOVE exclud
     if (!pv_node && !incheck && !singular_move_search) {
         
         // Razoring: eval score + margin is lower than alpha, so just performs quiesce search and avoid regular search
-        if (depth < RAZOR_DEPTH && eval_score + RAZOR_MARGIN[depth] < alpha && !is_mate_score(alpha)) {
+        if (depth < RAZOR_DEPTH && eval_score + RAZOR_MARGIN[depth] < alpha && !is_mate_score(alpha) && trans_move == MOVE_NONE) {
             int razor_margin = alpha - RAZOR_MARGIN[depth];
             int score = quiesce(game, FALSE, razor_margin, razor_margin + 1, 0);
             if (game->search.abort) return 0;
