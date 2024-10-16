@@ -126,13 +126,12 @@ int search(GAME *game, UINT incheck, int alpha, int beta, int depth, MOVE exclud
             return eval_score - STAT_NULL_MARGIN[depth];
         }
 
-        // TODO test depth - 5 
         // Null move heuristic: side to move has advantage that even allowing an extra move to opponent, still keeps advantage.
         if (has_pieces(&game->board, turn) && !has_recent_null_move(&game->board)) {
             // null move search
             if (depth >= 2 && eval_score >= beta) {
                 MOVE last_move = get_last_move_made(&game->board);
-                int null_depth = depth - 4 - ((depth - 4) / 4) - MIN(3, (eval_score - beta) / 200) - (move_is_quiet(last_move) ? 0 : 1);
+                int null_depth = depth - 5 - ((depth - 4) / 4) - MIN(3, (eval_score - beta) / 200) - (move_is_quiet(last_move) ? 0 : 1);
                 make_move(&game->board, NULL_MOVE);
                 int null_score = -search(game, FALSE, -beta, -beta + 1, null_depth, MOVE_NONE);
                 undo_move(&game->board);
