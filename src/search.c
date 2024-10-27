@@ -234,7 +234,7 @@ int search(GAME *game, UINT incheck, int alpha, int beta, int depth, MOVE exclud
         }
 
         //  Pruning or depth reductions
-        if (!extensions && move_count > 1 && move_is_quiet(move)) {
+        if (!root_node && !extensions && move_count > 1 && move_is_quiet(move)) {
             if (!is_killer_move(&game->move_order, turn, ply, move)) {
                 if (!is_counter_move(&game->move_order, flip_color(turn), get_last_move_made(&game->board), move)) {
                     int move_has_bad_history = get_has_bad_history(&game->move_order, turn, move);
@@ -252,22 +252,20 @@ int search(GAME *game, UINT incheck, int alpha, int beta, int depth, MOVE exclud
                         }
                     }
                     // Late move reductions: reduce depth for later moves
-                    if (move_count > 3 && depth > 2) {
-                        reductions += reduction_table[MIN(depth, MAX_DEPTH - 1)][MIN(move_count, MAX_MOVE - 1)];
-                        if (!pv_node) {
-                            if (move_has_bad_history || !improving || (incheck && unpack_piece(move) == KING)) reductions++;
-                            if (trans_move != MOVE_NONE && !move_is_quiet(trans_move)) reductions++;
-                        }
-                        else {
-                            if (reductions > 0 && !move_has_bad_history) reductions--;
-                            if (reductions > 0 && incheck) reductions--;
-                        }
+                    reductions += reduction_table[MIN(depth, MAX_DEPTH - 1)][MIN(move_count, MAX_MOVE - 1)];
+                    if (!pv_node) {
+                        if (move_has_bad_history || !improving || (incheck && unpack_piece(move) == KING)) reductions++;
+                        if (trans_move != MOVE_NONE && !move_is_quiet(trans_move)) reductions++;
+                    }
+                    else {
+                        if (reductions > 0 && !move_has_bad_history) reductions--;
+                        if (reductions > 0 && incheck) reductions--;
                     }
                 }
             }
         }
 
-        if (move_count > 5 && !extensions && !incheck && depth < 5 && !move_is_quiet(move)) {
+        if (!root_node && move_count > 5 && !extensions && !incheck && depth < 5 && !move_is_quiet(move)) {
             if (best_score + 100 * depth + see_move(&game->board, move) <= alpha) {
                 continue;
             }

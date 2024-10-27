@@ -119,17 +119,16 @@ void generate_nn_data(int fen_total, int max_depth, int max_nodes, char *output_
                 printf("\ninvalid move: [%s] fen: [%s]\n", nndd[nndd_count].move, nndd[nndd_count].fen);
                 break;
             }
-            else {
-                if (!move_is_en_passant(game->search.best_move)) {
-                    util_get_board_fen(&game->board, nndd[nndd_count].fen);
-                    util_get_move_string(game->search.best_move, nndd[nndd_count].move);
-                    nndd[nndd_count].ply = get_history_ply(&game->board);
-                    nndd[nndd_count].side = side_on_move(&game->board);
-                    nndd[nndd_count].score = game->search.best_score;
-                    nndd[nndd_count].depth = settings.max_depth;
-                    nndd[nndd_count].nodes = (int)game->search.nodes;
-                    nndd_count++;
-                }
+
+            if (move_is_quiet(game->search.best_move) && !move_is_en_passant(game->search.best_move)) {
+                util_get_board_fen(&game->board, nndd[nndd_count].fen);
+                util_get_move_string(game->search.best_move, nndd[nndd_count].move);
+                nndd[nndd_count].ply = get_history_ply(&game->board);
+                nndd[nndd_count].side = side_on_move(&game->board);
+                nndd[nndd_count].score = game->search.best_score;
+                nndd[nndd_count].depth = settings.max_depth;
+                nndd[nndd_count].nodes = (int)game->search.nodes;
+                nndd_count++;
             }
 
             make_move(&game->board, game->search.best_move);
@@ -263,16 +262,13 @@ void tnn_generate_menu()
 #ifdef _MSC_VER
     char *to_file_mask_tnn = "d:/temp/data/data_d%d_n%d_%04d.tnn";
     char *to_file_mask_plain = "d:/temp/data/data_d%d_n%d_%04d.plain";
-    int total_positions = 100000000;
-    int max_depth = 10;
-    int max_nodes = 0;
 #else
     char *to_file_mask_tnn = "./data/data_d%d_n%d_%04d.tnn";
     char *to_file_mask_plain = "./data/data_d%d_n%d_%04d.plain";
-    int total_positions = 100000000;
-    int max_depth = 10;
-    int max_nodes = 0;
 #endif
+    int total_positions = 100000000;
+    int max_depth = 16;
+    int max_nodes = 12500;
     char resp[100];
 
     while (TRUE) {

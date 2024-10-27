@@ -20,7 +20,7 @@
 
 #define ENGINE "Tucano"
 #define AUTHOR "Alcides Schulz"
-#define VERSION "11.27"
+#define VERSION "11.28"
 
 void        develop_workbench(void);
 double      bench(int depth, int print);
@@ -628,7 +628,7 @@ void develop_workbench(void)
 {
     //generate_replay("D:/Projetos/YoutubeChanels/TucanoTestGames/GamesDone/game0013_ExposedKing.pgn", 
     //                "D:/Projetos/YoutubeChanels/TucanoTestGames/GamesDone/replay0013.txt");
-    //tnn_generate_menu();
+    tnn_generate_menu();
     //extract_good_games("d:/temp/a.pgn");
 }
 
