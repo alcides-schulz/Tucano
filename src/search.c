@@ -234,42 +234,60 @@ int search(GAME *game, UINT incheck, int alpha, int beta, int depth, MOVE exclud
         }
 
         //  Pruning or depth reductions
-        if (!root_node && !extensions && move_count > 1 && move_is_quiet(move)) {
+        if ( !extensions && move_count > 1) {
             if (!is_killer_move(&game->move_order, turn, ply, move)) {
                 if (!is_counter_move(&game->move_order, flip_color(turn), get_last_move_made(&game->board), move)) {
                     int move_has_bad_history = get_has_bad_history(&game->move_order, turn, move);
                     // Move count pruning: prune moves based on move count.
-                    if (!pv_node && move_has_bad_history && depth < 8 && !incheck) {
+                    if (!root_node && !pv_node && move_has_bad_history && depth < 8 && !incheck && move_is_quiet(move)) {
                         int pruning_threshold = 4 + depth * 2;
                         if (!improving) pruning_threshold = pruning_threshold - 3;
-                        if (move_count > pruning_threshold) continue;
+                        if (move_count > pruning_threshold) {
+                            continue;
+                        }
                     }
                     // Futility pruning: eval + margin below beta. Uses beta cutoff history.
-                    if (depth < 8 && (!pv_node || !incheck) && !is_mate_score(alpha)) {
+                    if (!root_node && depth < 8 && (!pv_node || !incheck) && !is_mate_score(alpha) && move_is_quiet(move)) {
                         int pruning_margin = depth * (50 + get_pruning_margin(&game->move_order, turn, move));
                         if (eval_score + pruning_margin < alpha) {
                             continue;
                         }
                     }
-                    // Late move reductions: reduce depth for later moves
-                    reductions += reduction_table[MIN(depth, MAX_DEPTH - 1)][MIN(move_count, MAX_MOVE - 1)];
-                    if (!pv_node) {
-                        if (move_has_bad_history || !improving || (incheck && unpack_piece(move) == KING)) reductions++;
-                        if (trans_move != MOVE_NONE && !move_is_quiet(trans_move)) reductions++;
+                    // Pruning based on SEE heuristic.
+                    if (!root_node && depth <= 8 && !incheck) {
+                        int see_margin = 0;
+                        if (move_is_quiet(move)) {
+                            see_margin = -60 * depth;
+                        }
+                        else {
+                            see_margin = -10 * depth * depth;
+                        }
+                        if (see_move(&game->board, move) < see_margin) {
+                            continue;
+                        }
                     }
-                    else {
-                        if (reductions > 0 && !move_has_bad_history) reductions--;
-                        if (reductions > 0 && incheck) reductions--;
+                    // Late move reductions: reduce depth for later moves
+                    if (move_is_quiet(move)) {
+                        reductions += reduction_table[MIN(depth, MAX_DEPTH - 1)][MIN(move_count, MAX_MOVE - 1)];
+                        if (!pv_node) {
+                            if (move_has_bad_history || !improving || (incheck && unpack_piece(move) == KING)) reductions++;
+                            if (trans_move != MOVE_NONE && !move_is_quiet(trans_move)) reductions++;
+                        }
+                        else {
+                            if (reductions > 0 && !move_has_bad_history) reductions--;
+                            if (reductions > 0 && incheck) reductions--;
+                            if (reductions > 0 && root_node) reductions--;
+                        }
                     }
                 }
             }
         }
 
-        if (!root_node && move_count > 5 && !extensions && !incheck && depth < 5 && !move_is_quiet(move)) {
-            if (best_score + 100 * depth + see_move(&game->board, move) <= alpha) {
-                continue;
-            }
-        }
+        //if (!root_node && move_count > 5 && !extensions && !incheck && depth < 5 && !move_is_quiet(move)) {
+        //    if (best_score + 100 * depth + see_move(&game->board, move) <= alpha) {
+        //        continue;
+        //    }
+        //}
 
         //  Make move and search new position.
         make_move(&game->board, move);
