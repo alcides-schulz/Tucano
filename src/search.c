@@ -283,11 +283,12 @@ int search(GAME *game, UINT incheck, int alpha, int beta, int depth, MOVE exclud
             }
         }
 
-        //if (!root_node && move_count > 5 && !extensions && !incheck && depth < 5 && !move_is_quiet(move)) {
-        //    if (best_score + 100 * depth + see_move(&game->board, move) <= alpha) {
-        //        continue;
-        //    }
-        //}
+        // SEE based pruning for captures at low depth
+        if (!pv_node && !root_node && move_count > 5 && !extensions && !incheck && depth == 1 && !move_is_quiet(move) && !improving) {
+            if (best_score + 200 + see_move(&game->board, move) <= alpha) {
+                continue;
+            }
+        }
 
         //  Make move and search new position.
         make_move(&game->board, move);
