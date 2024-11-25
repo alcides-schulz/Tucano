@@ -66,9 +66,15 @@ int search(GAME *game, UINT incheck, int alpha, int beta, int depth, MOVE exclud
     tt_read(game->board.key, &tt_record);
     if (!pv_node && tt_record.data && tt_record.info.depth >= depth && exclude_move == MOVE_NONE) {
         int score = score_from_tt(tt_record.info.score, ply);
-        if (tt_record.info.flag == TT_EXACT) return score;
-        if (score >= beta && tt_record.info.flag == TT_LOWER) return score;
-        if (score <= alpha && tt_record.info.flag == TT_UPPER) return score;
+        if (tt_record.info.flag == TT_EXACT) {
+            return score;
+        }
+        if (score >= beta && tt_record.info.flag == TT_LOWER) {
+            return score;
+        }
+        if (score <= alpha && tt_record.info.flag == TT_UPPER) {
+            return score;
+        }
     }
     MOVE trans_move = tt_record.info.move;
 

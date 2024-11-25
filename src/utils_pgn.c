@@ -588,7 +588,7 @@ void generate_replay(char *input_pgn, char *output_pgn)
     }
 
     if (!pgn_open(&pgn_file, input_pgn)) {
-        fprintf(stderr, "cannot open file: %s\n", input_pgn);
+        fprintf(stderr, "cannot open file: '%s'\n", input_pgn);
         return;
     }
 

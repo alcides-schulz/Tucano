@@ -33,7 +33,7 @@ int quiesce(GAME *game, UINT incheck, int alpha, int beta, int depth)
     int     ply = get_ply(&game->board);
     int     gives_check;
     MOVE    best_move = MOVE_NONE;
-
+    
     assert(alpha <= beta);
 
     check_time(game);
@@ -52,21 +52,33 @@ int quiesce(GAME *game, UINT incheck, int alpha, int beta, int depth)
     beta = MIN(MATE_VALUE - ply, beta);
     if (alpha >= beta) return alpha;
 
+    S8 quiesce_depth = incheck || depth >= 0 ? 0 : -1;
+
     // transposition table score or move hint
     TT_RECORD tt_record;
     tt_read(game->board.key, &tt_record);
-    if (tt_record.data) {
+    if (tt_record.data && tt_record.info.depth >= quiesce_depth) {
         score = score_from_tt(tt_record.info.score, game->board.ply);
-        if (tt_record.info.flag == TT_EXACT) return score;
-        if (score >= beta && tt_record.info.flag == TT_LOWER) return score;
-        if (score <= alpha && tt_record.info.flag == TT_UPPER) return score;
+        if (tt_record.info.flag == TT_EXACT) {
+            return score;
+        }
+        if (score >= beta && tt_record.info.flag == TT_LOWER) {
+            return score;
+        }
+        if (score <= alpha && tt_record.info.flag == TT_UPPER) {
+            return score;
+        }
     }
     MOVE trans_move = tt_record.info.move;
 
     if (!incheck) {
         best_score = evaluate(game);
-        if (best_score >= beta) return best_score;
-        if (best_score > alpha) alpha = best_score;
+        if (best_score >= beta) {
+            return best_score;
+        }
+        if (best_score > alpha) {
+            alpha = best_score;
+        }
     }
 
     select_init(&ml, game, incheck, trans_move, TRUE);
@@ -112,7 +124,7 @@ int quiesce(GAME *game, UINT incheck, int alpha, int beta, int depth)
                 update_pv(&game->pv_line, ply, move);
                 if (score >= beta) {
                     tt_record.info.move = move;
-                    tt_record.info.depth = 0;
+                    tt_record.info.depth = quiesce_depth;
                     tt_record.info.flag = TT_LOWER;
                     tt_record.info.score = score_to_tt(score, ply);
                     tt_save(game->board.key, &tt_record);
@@ -132,13 +144,13 @@ int quiesce(GAME *game, UINT incheck, int alpha, int beta, int depth)
 
     if (best_move != MOVE_NONE) {
         tt_record.info.move = best_move;
-        tt_record.info.depth = 0;
+        tt_record.info.depth = quiesce_depth;
         tt_record.info.flag = TT_EXACT;
         tt_record.info.score = score_to_tt(best_score, ply);
     }
     else {
         tt_record.info.move = MOVE_NONE;
-        tt_record.info.depth = 0;
+        tt_record.info.depth = quiesce_depth;
         tt_record.info.flag = TT_UPPER;
         tt_record.info.score = score_to_tt(best_score, ply);
     }
