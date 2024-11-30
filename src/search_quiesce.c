@@ -27,12 +27,11 @@
 int quiesce(GAME *game, UINT incheck, int alpha, int beta, int depth)
 {
     MOVE_LIST   ml;
-    int     score;
-    MOVE    move = MOVE_NONE;
-    int     best_score = -MAX_SCORE;
-    int     ply = get_ply(&game->board);
-    int     gives_check;
-    MOVE    best_move = MOVE_NONE;
+    int         score;
+    MOVE        move = MOVE_NONE;
+    int         best_score = -MAX_SCORE;
+    int         ply = get_ply(&game->board);
+    MOVE        best_move = MOVE_NONE;
     
     assert(alpha <= beta);
 
@@ -105,7 +104,7 @@ int quiesce(GAME *game, UINT incheck, int alpha, int beta, int depth)
 
         if (!is_pseudo_legal(&game->board, ml.pins, move)) continue;
 
-        gives_check = is_check(&game->board, move);
+        int gives_check = is_check(&game->board, move);
 
         make_move(&game->board, move);
 
