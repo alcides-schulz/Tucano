@@ -14,7 +14,10 @@ Neural Network Evaluation
 Starting with version 10 release, Tucano uses a neural network evaluation, which increases the engine strength. This network architecture is based on stockfish neural network.
 From version 10.06 and later, including official release 11.00, the network has been changed and use a new structure of 768x512x1 neurons. Also includes its own network trainer. The weights are embeeded in the file eval_nn.h.
 
-Starting with version 11.01, it returns to version 10 archictecture, using NNUE evaluation, with incremental update of the position. For this version it will require the network file that can be download from https://github.com/alcides-schulz/TucanoNets. This file should be put in the same folder as the executable so tucano can find it automatically. Otherwise inform in the parameters as explained below.
+Starting with version 11.01, it returns to version 10 archictecture, using NNUE evaluation, with incremental update of the position. 
+
+**To run tucano, it will require the network file that can be download from https://github.com/alcides-schulz/TucanoNets. The current network file is tucano_nn03.bin. This file should be put in the same folder as the executable so tucano can find it automatically. Otherwise inform in the parameters as explained below.**
+
 
 Terms of use
 ------------
