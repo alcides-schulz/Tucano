@@ -14,7 +14,7 @@ Neural Network Evaluation
 Starting with version 10 release, Tucano uses a neural network evaluation, which increases the engine strength. This network architecture is based on stockfish neural network.
 From version 10.06 and later, including official release 11.00, the network has been changed and use a new structure of 768x512x1 neurons. Also includes its own network trainer. The weights are embeeded in the file eval_nn.h.
 
-Starting with version 11.01, it returns to version 10 archictecture, using NNUE evaluation, with incremental update of the position. For this version it will require the network file that can be download from https://github.com/alcides-schulz/TucanoNets.
+Starting with version 11.01, it returns to version 10 archictecture, using NNUE evaluation, with incremental update of the position. For this version it will require the network file that can be download from https://github.com/alcides-schulz/TucanoNets. This file should be put in the same folder as the executable so tucano can find it automatically. Otherwise inform in the parameters as explained below.
 
 Terms of use
 ------------
@@ -68,6 +68,7 @@ If you compile tucano you can use the command "bench" to get a signature. Just s
 Signature is a number generated after searching a couple of positions to indicate you have the correct compilation. 
 If you don't get the correct signature it means that something is wrong with the compilation process and the program may not perform correctly.
 
+    12.00:  5620048
     11.00:  5203395
     10.00:  5734637 (with nn eval file loaded)
      9.00: 21898211
@@ -100,17 +101,16 @@ You can report issues with other platforms and I will try to address as possible
 
 Here are the commands used for compilation:
 
-Windows (compiled using mingW version 7.2.0)
+Windows (compiled using mingW version 13.1.0)
 
         AVX2
-        gcc -o tucano_avx2.exe -DEGTB_SYZYGY -DTNNAVX2 -O3 -Isrc -flto -m64 -mtune=generic -s -static -Wall -Wfatal-errors -mavx2 -msse4.1 -mssse3 -msse2 -msse src\*.c src\fathom\tbprobe.c
+        gcc -o tucano_avx2.exe -DEGTB_SYZYGY -O3 -Isrc -flto -m64 -mtune=generic -s -static -Wall -Wfatal-errors -DUSE_AVX2 -mavx2 -DUSE_SSE41 -msse4.1 -DUSE_SSSE3 -mssse3 -DUSE_SSE2 -msse2 -DUSE_SSE -msse src\*.c src\fathom\tbprobe.c
         
         SSE4.1
-        gcc -o tucano_sse4.exe -DEGTB_SYZYGY -DTNNSSE4 -O3 -Isrc -flto -m64 -mtune=generic -s -static -Wall -Wfatal-errors -msse4.1 -mssse3 -msse2 -msse src\*.c src\fathom\tbprobe.c
+        gcc -o tucano_sse4.exe -DEGTB_SYZYGY -O3 -Isrc -flto -m64 -mtune=generic -s -static -Wall -Wfatal-errors -DUSE_SSE41 -msse4.1 -DUSE_SSSE3 -mssse3 -DUSE_SSE2 -msse2 -DUSE_SSE -msse src\*.c src\fathom\tbprobe.c
         
         OLD
-        gcc -o tucano_old.exe -DEGTB_SYZYGY -O3 -Isrc -flto -m64 -mtune=generic -s -static -Wall -Wfatal-errors src\*.c src\fathom\tbprobe.c
-
+        gcc -o tucano_old.exe  -DEGTB_SYZYGY -O3 -Isrc -flto -m64 -mtune=generic -s -static -Wall -Wfatal-errors src\*.c src\fathom\tbprobe.c
 
 Linux and ARM V8 (using src/makefile):
     
@@ -118,6 +118,6 @@ Linux and ARM V8 (using src/makefile):
     make <architeture>
           <architecture>: avx2, sse4, old
 
-Note: It is recommend to use AVX2 or SSE4 in order to have a good performance with neural network evaluation. The OLD version is basic and doesn't have the performance benefits of avx2 and sse4 architectures but can work for old plataforms.
+Note: It is recommended to use AVX2 or SSE4 in order to have a good performance with neural network evaluation. The OLD version is basic and doesn't have the performance benefits of avx2 and sse4 architectures but can work for old plataforms.
 
 //END
