@@ -41,6 +41,8 @@ int search(GAME *game, UINT incheck, int alpha, int beta, int depth, MOVE exclud
     int pv_node = alpha != beta - 1 ? TRUE : FALSE;
     int root_node = ply == 0 ? TRUE : FALSE;
     int singular_move_search = exclude_move != MOVE_NONE ? TRUE : FALSE;
+    int egtb_max_score = MAX_SCORE;
+    int egtb_min_score = -MAX_SCORE;
 
     if (ply >= MAX_PLY) return evaluate(game);
 
@@ -79,7 +81,7 @@ int search(GAME *game, UINT incheck, int alpha, int beta, int depth, MOVE exclud
     MOVE trans_move = tt_record.info.move;
 
 #ifdef EGTB_SYZYGY
-    if (!pv_node && !root_node && !singular_move_search) {
+    if (!root_node && !singular_move_search) {
         // endgame tablebase probe
         U32 tbresult = egtb_probe_wdl(&game->board, depth, ply);
         if (tbresult != TB_RESULT_FAILED) {
@@ -100,7 +102,7 @@ int search(GAME *game, UINT incheck, int alpha, int beta, int depth, MOVE exclud
                 tt_flag = TT_EXACT;
                 break;
             }
-            if (tt_flag == TT_EXACT || (tt_flag == TT_LOWER && score >= beta) || (tt_flag == TT_UPPER && score < alpha)) {
+            if (tt_flag == TT_EXACT || (tt_flag == TT_LOWER && score >= beta) || (tt_flag == TT_UPPER && score <= alpha)) {
                 tt_record.info.move = MOVE_NONE;
                 tt_record.info.depth = (S8)depth;
                 tt_record.info.flag = tt_flag;
@@ -108,6 +110,15 @@ int search(GAME *game, UINT incheck, int alpha, int beta, int depth, MOVE exclud
                 tt_save(game->board.key, &tt_record);
                 return score;
             }
+            // save egtb  min/max to adjust search scores later.
+            if (pv_node && tt_flag == TT_LOWER) {
+                egtb_min_score = score;
+                alpha = MAX(alpha, score);
+            }
+            if (pv_node && tt_flag == TT_UPPER) {
+                egtb_max_score = score;
+            }
+            
         }
     }
 #endif 
@@ -337,6 +348,10 @@ int search(GAME *game, UINT incheck, int alpha, int beta, int depth, MOVE exclud
                         if (move_is_quiet(move)) {
                             save_beta_cutoff_data(&game->move_order, turn, ply, move, &ml, get_last_move_made(&game->board));
                         }
+                        // Prevent scores outside egtb hits.
+                        if (pv_node) {
+                            score = MAX(egtb_min_score, MIN(score, egtb_max_score));
+                        }
                         tt_record.info.move = move;
                         tt_record.info.depth = (S8)depth;
                         tt_record.info.flag = TT_LOWER;
@@ -360,6 +375,10 @@ int search(GAME *game, UINT incheck, int alpha, int beta, int depth, MOVE exclud
         //  Regular search score verification
         if (best_score == -MAX_SCORE) {
             return (incheck ? -MATE_VALUE + ply : 0);
+        }
+        // Prevent scores outside egtb hits.
+        if (pv_node) {
+            best_score = MAX(egtb_min_score, MIN(best_score, egtb_max_score));
         }
         //  Record transposition table information
         if (best_move != MOVE_NONE) {

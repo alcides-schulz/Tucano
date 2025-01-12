@@ -120,15 +120,17 @@ void generate_nn_data(int fen_total, int max_depth, int max_nodes, char *output_
                 break;
             }
 
-            if (move_is_quiet(game->search.best_move) && !move_is_en_passant(game->search.best_move)) {
-                util_get_board_fen(&game->board, nndd[nndd_count].fen);
-                util_get_move_string(game->search.best_move, nndd[nndd_count].move);
-                nndd[nndd_count].ply = get_history_ply(&game->board);
-                nndd[nndd_count].side = side_on_move(&game->board);
-                nndd[nndd_count].score = game->search.best_score;
-                nndd[nndd_count].depth = settings.max_depth;
-                nndd[nndd_count].nodes = (int)game->search.nodes;
-                nndd_count++;
+            if (move_is_quiet(game->search.best_move)) {
+                if (!is_incheck(&game->board, side_on_move(&game->board))) {
+                    util_get_board_fen(&game->board, nndd[nndd_count].fen);
+                    util_get_move_string(game->search.best_move, nndd[nndd_count].move);
+                    nndd[nndd_count].ply = get_history_ply(&game->board);
+                    nndd[nndd_count].side = side_on_move(&game->board);
+                    nndd[nndd_count].score = game->search.best_score;
+                    nndd[nndd_count].depth = settings.max_depth;
+                    nndd[nndd_count].nodes = (int)game->search.nodes;
+                    nndd_count++;
+                }
             }
 
             make_move(&game->board, game->search.best_move);
@@ -223,18 +225,18 @@ void make_random_move_nn(GAME *game)
 
     select_init(&ml, game, is_incheck(&game->board, side_on_move(&game->board)), MOVE_NONE, FALSE);
     while ((move = next_move(&ml)) != MOVE_NONE) {
-        make_move(&game->board, move);
-        if (is_illegal(&game->board, move)) {
-            undo_move(&game->board);
+        if (!is_pseudo_legal(&game->board, ml.pins, move)) {
             continue;
         }
-        undo_move(&game->board);
-
+        if (!is_valid(&game->board, move)) {
+            //util_print_move(move, TRUE);
+            //board_print(&game->board, NULL);
+            continue;
+        }
         if (count < 100) {
             move_list[count++] = move;
         }
     }
-
     if (count) {
         int index = rand() % count;
         make_move(&game->board, move_list[index]);
@@ -267,8 +269,8 @@ void tnn_generate_menu()
     char *to_file_mask_plain = "./data/data_d%d_n%d_%04d.plain";
 #endif
     int total_positions = 100000000;
-    int max_depth = 16;
-    int max_nodes = 12500;
+    int max_depth = 10;
+    int max_nodes = 0;
     char resp[100];
 
     while (TRUE) {
