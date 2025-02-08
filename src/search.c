@@ -81,7 +81,7 @@ int search(GAME *game, UINT incheck, int alpha, int beta, int depth, MOVE exclud
     MOVE trans_move = tt_record.info.move;
 
 #ifdef EGTB_SYZYGY
-    if (!root_node && !singular_move_search) {
+    if (!root_node && !singular_move_search && !game->is_egtb_position) {
         // endgame tablebase probe
         U32 tbresult = egtb_probe_wdl(&game->board, depth, ply);
         if (tbresult != TB_RESULT_FAILED) {
@@ -118,7 +118,6 @@ int search(GAME *game, UINT incheck, int alpha, int beta, int depth, MOVE exclud
             if (pv_node && tt_flag == TT_UPPER) {
                 egtb_max_score = score;
             }
-            
         }
     }
 #endif 
@@ -197,7 +196,6 @@ int search(GAME *game, UINT incheck, int alpha, int beta, int depth, MOVE exclud
         depth--;
     }
 
-    //TODO test best_score = eval_score
     //  Loop through move list
     MOVE_LIST   ml;
     MOVE        best_move = MOVE_NONE;
@@ -206,7 +204,12 @@ int search(GAME *game, UINT incheck, int alpha, int beta, int depth, MOVE exclud
     int         move_count = 0;
     MOVE        move;
 
-    select_init(&ml, game, incheck, trans_move, FALSE);
+    if (root_node && game->is_egtb_position) {
+        memcpy(&ml, &game->root_moves, sizeof(MOVE_LIST));
+    }
+    else {
+        select_init(&ml, game, incheck, trans_move, FALSE);
+    }
     while ((move = next_move(&ml)) != MOVE_NONE) {
 
         assert(is_valid(&game->board, move));

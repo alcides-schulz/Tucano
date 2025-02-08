@@ -391,19 +391,6 @@ typedef struct s_eval_table
 
 #define EVAL_TABLE_SIZE 64536
 
-//  Game Data
-typedef struct s_game {
-    SEARCH      search;
-    BOARD       board;
-    PV_LINE     pv_line;
-    MOVE_ORDER  move_order;
-    EVAL_TABLE  eval_table[EVAL_TABLE_SIZE];
-    int         eval_hist[MAX_PLY];
-    int         is_main_thread;
-    THREAD_ID   thread_handle;
-    int         thread_number;
-}   GAME;
-
 // Move generation and selection
 #define MAX_MOVE   128
 
@@ -426,6 +413,20 @@ typedef struct s_move_list
     MOVE_ORDER  *move_order;
 }   MOVE_LIST;
 
+//  Game Data
+typedef struct s_game {
+    SEARCH      search;
+    BOARD       board;
+    PV_LINE     pv_line;
+    MOVE_ORDER  move_order;
+    EVAL_TABLE  eval_table[EVAL_TABLE_SIZE];
+    int         eval_hist[MAX_PLY];
+    int         is_main_thread;
+    THREAD_ID   thread_handle;
+    int         thread_number;
+    int         is_egtb_position;
+    MOVE_LIST   root_moves;
+}   GAME;
 
 // Transposition Table entry type
 #define TT_UPPER    0x01
@@ -511,6 +512,8 @@ MOVE    next_move(MOVE_LIST *ml);
 MOVE    prev_move(MOVE_LIST *ml);
 int     is_late_moves(MOVE_LIST *ml);
 int     is_bad_capture(MOVE_LIST *ml);
+void    set_root_node(MOVE_LIST *ml);
+
 int     is_mate_score(int score);
 int     is_eval_score(int score);
 
@@ -708,7 +711,9 @@ int     pawn_is_candidate(BOARD *board, int pcsq, int color);
 #define TB_NO_STDBOOL
 #include "fathom/tbprobe.h"
 
-U32 egtb_probe_wdl(BOARD *board, int depth, int ply);
+U32     egtb_probe_wdl(BOARD *board, int depth, int ply);
+void    egtb_rank_root_moves(GAME *game);
+void    egtb_test(char *file_name);
 
 #endif
 

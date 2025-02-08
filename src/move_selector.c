@@ -21,14 +21,17 @@
 //  Generate, sort and select the next move.
 //-------------------------------------------------------------------------------------------------
 
-enum    {TRANS, 
-         GEN_CAP, 
-         NEXT_CAP, 
-         GEN_QUIET, 
-         NEXT_QUIET, 
-         NEXT_LATE_MOVE, 
-         GEN_EVASION, 
-         NEXT_EVASION};
+enum {
+    TRANS,
+    GEN_CAP,
+    NEXT_CAP,
+    GEN_QUIET,
+    NEXT_QUIET,
+    NEXT_LATE_MOVE,
+    GEN_EVASION,
+    NEXT_EVASION,
+    NEXT_ROOT
+};
 
 #define    SORT_CAPTURE   100000000
 #define    SORT_KILLER     10000000
@@ -59,6 +62,15 @@ void select_init(MOVE_LIST *ml, GAME *game, int incheck, MOVE ttm, int caps)
     ml->sort = TRUE;
     ml->board = &game->board;
     ml->move_order = &game->move_order;
+}
+
+//-------------------------------------------------------------------------------------------------
+//  Prepare root search when it is an egtb position ranked.
+//-------------------------------------------------------------------------------------------------
+void set_root_node(MOVE_LIST *ml)
+{
+    ml->phase = NEXT_ROOT;
+    ml->pins = find_pins(ml->board);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -218,6 +230,13 @@ MOVE next_move(MOVE_LIST *ml)
             return ml->moves[ml->next++];
         }
         return MOVE_NONE;
+    case NEXT_ROOT:
+        while (ml->next < ml->count) {
+            select_next(ml);
+            if (skip_trans_move(ml)) continue;
+            return ml->moves[ml->next++];
+        }
+        return MOVE_NONE;
     }
 
     // should not get here...
@@ -241,21 +260,17 @@ MOVE prev_move(MOVE_LIST *ml)
 //-------------------------------------------------------------------------------------------------
 void select_next(MOVE_LIST *ml) 
 {
-    int     i;
-    int     best_index = ml->next;
-    MOVE    temp_move;
-    int     temp_score;
+    int best_index = ml->next;
 
-    for (i = ml->next + 1; i < ml->count; i++)  {
+    for (int i = ml->next + 1; i < ml->count; i++)  {
         if (ml->score[i] > ml->score[best_index]) 
             best_index = i;
     }
     if (best_index != ml->next) {
-        temp_move = ml->moves[ml->next];
+        MOVE temp_move = ml->moves[ml->next];
         ml->moves[ml->next] = ml->moves[best_index];
         ml->moves[best_index] = temp_move;
-
-        temp_score = ml->score[ml->next];
+        int temp_score = ml->score[ml->next];
         ml->score[ml->next] = ml->score[best_index];
         ml->score[best_index] = temp_score;
     }

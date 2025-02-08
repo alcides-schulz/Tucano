@@ -83,7 +83,8 @@ void search_run(GAME *game, SETTINGS *settings)
     game->search.abort = FALSE;
     game->search.nodes = 0;
     game->search.tbhits = 0;
-
+    
+    game->is_egtb_position = FALSE;
     game->is_main_thread = TRUE;
 
     //  Try to find a move from book.
@@ -103,6 +104,9 @@ void search_run(GAME *game, SETTINGS *settings)
     memset(&game->pv_line, 0, sizeof(PV_LINE));
     memset(&game->move_order, 0, sizeof(MOVE_ORDER));
     tt_age();
+#ifdef EGTB_SYZYGY
+    egtb_rank_root_moves(game);
+#endif
 
     //  Multi Thread: copy data to additional threads and start them.
     for (int i = 0; i < additional_threads; i++) {
