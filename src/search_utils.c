@@ -77,12 +77,6 @@ void prepare_search(GAME *game, SETTINGS *settings)
     // Allocate time for this move
     game->search.normal_move_time = settings->total_move_time / moves_to_go;
 
-    // Reduce up to 50% of the time for initial moves.
-    if (moves_to_go > 1) {
-        double reduction_percent = (double)(MIN(moves_to_go, 30) / 30.0 / 2.0);
-        game->search.normal_move_time -= (UINT)(game->search.normal_move_time * reduction_percent);
-    }
-
     // Allocate time buffer to avoid timeout
     int time_buffer = (int)(settings->total_move_time * 0.10);
     if (time_buffer > 1000) time_buffer = 1000;
