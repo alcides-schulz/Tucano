@@ -626,7 +626,8 @@ void generate_plain_files(char *pgn_file_list);
 
 void develop_workbench(void)
 {
-    tnn_generate_menu();
+    //tnn_generate_menu();
+    extract_composition("d:/temp/a.pgn");
 }
 
 //END

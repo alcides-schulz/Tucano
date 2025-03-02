@@ -214,6 +214,9 @@ int search(GAME *game, UINT incheck, int alpha, int beta, int depth, MOVE exclud
         if (move == exclude_move) continue;
 
         if (!is_pseudo_legal(&game->board, ml.pins, move)) continue;
+#ifdef TUCANO_COMPOSITION
+        if (move == game->search.exclude) continue;
+#endif
 
         move_count++;
 

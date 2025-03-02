@@ -498,11 +498,52 @@ int pgn_game_has_valid_result(PGN_GAME *pgn_game)
     return FALSE;
 }
 
+int is_only_one_mate_move(GAME *game, int mate_in, MOVE mate_move)
+{
+    SETTINGS settings;
+    settings.single_move_time = 10000;
+    settings.total_move_time = 0;
+    settings.moves_per_level = 0;
+    settings.max_depth = MAX_DEPTH;
+    settings.post_flag = POST_NONE;
+    settings.use_book = FALSE;
+    settings.max_nodes = 0;
+#ifdef TUCANO_COMPOSITION
+    settings.exclude = mate_move;
+#endif
+
+    search_run(game, &settings);
+    //board_print(&game->board, NULL);
+    //util_print_move(game->search.best_move, FALSE);
+    //printf(" %d %d\n", game->search.best_score, MATE_VALUE - game->search.best_score);
+    //getchar();
+    if (MATE_VALUE - game->search.best_score == mate_in) {
+        return FALSE;
+    }
+    return TRUE;
+}
+
+int get_move_count(GAME *game, int incheck)
+{
+    MOVE_LIST   ml;
+    MOVE        move;
+    int         count = 0;
+    select_init(&ml, game, incheck, MOVE_NONE, FALSE);
+    while ((move = next_move(&ml)) != MOVE_NONE) {
+        if (!is_pseudo_legal(&game->board, ml.pins, move)) {
+            continue;
+        }
+        count++;
+    }
+    return count;
+}
+
 void extract_composition(char *input_pgn)
 {
     PGN_FILE    pgn_file;
     PGN_GAME    pgn_game;
     PGN_MOVE    pgn_move;
+    int         MATE_COUNT = 5; // mate in 3 for side on move
 
     GAME *game = (GAME *)malloc(sizeof(GAME));
     if (game == NULL) {
@@ -517,6 +558,7 @@ void extract_composition(char *input_pgn)
 
     int game_count = 0;
     FILE *out_file = fopen("d:/temp/composition.csv", "w");
+    fprintf(out_file, "fen,move,wvalue,bvalue,moves,quiet,check\n");
 
     while (pgn_next_game(&pgn_file, &pgn_game)) {
 
@@ -524,14 +566,14 @@ void extract_composition(char *input_pgn)
 
         if (strstr(pgn_game.string, "loses on time") != NULL) {
             continue;
-        }
+        } 
         if (strstr(pgn_game.result, "1-0") == NULL) {
             continue;
         }
 
-        if (pgn_file.game_number % 100 == 0) {
+        //if (pgn_file.game_number % 100 == 0) {
             printf("game %3d: %s vs %s: %s                  \r", pgn_file.game_number, pgn_game.white, pgn_game.black, pgn_game.result);
-        }
+        //}
 
         new_game(game, pgn_game.initial_fen);
 
@@ -550,15 +592,28 @@ void extract_composition(char *input_pgn)
                 continue;
             }
 
-            if (side_on_move(&game->board) == WHITE && pgn_move.mate == 5) {
-                char move_string[100];
-                char fen[1000];
-                util_get_move_string(move, move_string);
-                util_get_board_fen(&game->board, fen);
-                int pc = 0;
-                pc += pieces_count(&game->board, WHITE) + pieces_count(&game->board, BLACK);
-                pc += pawn_count(&game->board, WHITE) + pawn_count(&game->board, BLACK);
-                fprintf(out_file, "%s,%s,%d\n", fen, move_string, pc);
+            if (side_on_move(&game->board) == WHITE && pgn_move.mate == MATE_COUNT) {
+                int incheck = is_incheck(&game->board, side_on_move(&game->board));
+                if (!incheck) {
+                    if (is_only_one_mate_move(game, MATE_COUNT, move)) {
+                        //printf("\n%s %d %d %f\n", pgn_move.string, pgn_move.book, pgn_move.mate, pgn_move.value);
+                        char move_string[100];
+                        char fen[1000];
+                        util_get_move_string(move, move_string);
+                        util_get_board_fen(&game->board, fen);
+                        int wv = material_value(&game->board, WHITE);
+                        int bv = material_value(&game->board, BLACK);
+                        int move_count = get_move_count(game, incheck);
+                        int quiet = move_is_quiet(move) ? 1 : 0;
+                        int check = is_check(&game->board, move);
+                        fprintf(out_file, "%s,%s,", fen, move_string);
+                        fprintf(out_file, "%d,%d,", wv, bv);
+                        fprintf(out_file, "%d,%d,%d", move_count, quiet, check);
+                        fprintf(out_file, "\n");
+                        fflush(out_file);
+                        break;
+                    }
+                }
             }
 
             make_move(&game->board, move);

@@ -326,6 +326,9 @@ typedef struct s_search
     int     abort;                  // indicates end of search
     int     root_move_count;        // number of moves at root node, used by xboard analysis
     int     root_move_search;       // number of move searched at root node, used by xboard analysis
+#ifdef TUCANO_COMPOSITION
+    MOVE    exclude;                // used for composition function, non-playing feature
+#endif
 }   SEARCH;
 
 // To verify game results
@@ -459,6 +462,9 @@ typedef struct s_settings {
     int     post_flag;              // post format.
     int     use_book;               // opening book use.
     U64     max_nodes;              // maximum nodes per search, 0 = no limit.
+#ifdef TUCANO_COMPOSITION
+    MOVE    exclude;                // used for composition functionally, non-playing.
+#endif
 }   SETTINGS;
 
 // Zobrish Keys (hash)

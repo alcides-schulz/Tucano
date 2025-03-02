@@ -83,6 +83,9 @@ void search_run(GAME *game, SETTINGS *settings)
     game->search.abort = FALSE;
     game->search.nodes = 0;
     game->search.tbhits = 0;
+#ifdef TUCANO_COMPOSITION
+    game->search.exclude = settings->exclude;
+#endif
 
     game->is_main_thread = TRUE;
 
