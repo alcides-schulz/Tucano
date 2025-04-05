@@ -190,6 +190,12 @@ int search(GAME *game, UINT incheck, int alpha, int beta, int depth, MOVE exclud
             }
         }
 
+        if (move_is_capture(get_last_move_made(&game->board))) {
+            if (!improving && depth > 3 && depth <= 10 && eval_score + MAX(200, get_best_capture(&game->board)) < alpha) {
+                depth--;
+            }
+        }
+
     }
 
     // Reduction when position is not on transposition table. Idea from Prodeo chess engine (from Ed Schroder).

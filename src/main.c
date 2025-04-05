@@ -20,7 +20,7 @@
 
 #define ENGINE "Tucano"
 #define AUTHOR "Alcides Schulz"
-#define VERSION "12.02"
+#define VERSION "12.03"
 
 void        develop_workbench(void);
 double      bench(int depth, int print);
@@ -111,7 +111,7 @@ int main(int argc, char *argv[])
 #endif
     settings_init();
     search_tables_init();
-
+    
     new_game(&main_game, FEN_NEW_GAME);
 
 #ifndef NDEBUG
@@ -623,11 +623,13 @@ void extract_composition(char *input_pgn);
 void generate_replay(char *input_pgn, char *output_pgn);
 void tnn_generate_menu();
 void generate_plain_files(char *pgn_file_list);
+void tnn_consolidate_files();
 
 void develop_workbench(void)
 {
     //tnn_generate_menu();
-    extract_composition("d:/temp/a.pgn");
+    //extract_composition("d:/temp/a.pgn");
+    tnn_consolidate_files();
 }
 
 //END

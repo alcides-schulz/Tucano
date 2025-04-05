@@ -296,4 +296,94 @@ void tnn_generate_menu()
     }
 }
 
+void tnn_consolidate_files()
+{
+    /*
+        fen rnb1k2r/p4ppp/1qp1pn2/1p1pN3/1b1P1B1P/P3P3/1PPN1PP1/R2QKB1R w KQkq - 1 9
+        move a3b4
+        score 1340
+        ply 16
+        result 1
+        e
+    */
+#ifdef _MSC_VER
+    char *from_file_mask_plain = "d:/temp/temp/data_d%d_n%d_%04d.plain";
+    char *to_file_mask_plain = "d:/temp/data/data_d%d_n%d_%04d.plain";
+#else
+    char *from_file_mask_plain = "./temp/data_d%d_n%d_%04d.plain";
+    char *to_file_mask_plain = "./data/data_d%d_n%d_%04d.plain";
+#endif
+    int total_positions = 100000000;
+    char from_file_name[1000];
+    char to_file_name[1000];
+    FILE *to_file = NULL;
+
+    char fen[500];
+    char move[100];
+    char score[100];
+    char ply[100];
+    char result[100];
+    char e[100];
+
+    int write_count = 0;
+    int write_file = 0;
+
+    for (int i = 0; i < 100; i++) {
+        sprintf(from_file_name, from_file_mask_plain, 10, 0, i);
+        FILE *from_file = fopen(from_file_name, "r");
+        if (from_file == NULL) continue;
+        printf("reading %s...\n", from_file_name);
+        while (TRUE) {
+            if (!fgets(fen, 500, from_file)) {
+                break;
+            }
+            if (strncmp(fen, "fen ", 4)) {
+                printf("error reading 'fen ': %s\n", fen);
+                break;
+            }
+            if (!fgets(move, 100, from_file) || strncmp(move, "move ", 5)) {
+                printf("error reading 'move ': %s\n", move);
+                break;
+            }
+            if (!fgets(score, 100, from_file) || strncmp(score, "score ", 6)) {
+                printf("error reading 'score ': %s\n", score);
+                break;
+            }
+            if (!fgets(ply, 100, from_file) || strncmp(ply, "ply ", 4)) {
+                printf("error reading 'ply ': %s\n", ply);
+                break;
+            }
+            if (!fgets(result, 100, from_file) || strncmp(result, "result ", 7)) {
+                printf("error reading 'result ': %s\n", result);
+                break;
+            }
+            if (!fgets(e, 100, from_file) || strncmp(e, "e", 1)) {
+                printf("error reading 'e': %s\n", e);
+                break;
+            }
+            if (write_count == 0 || write_count == total_positions) {
+                if (to_file != NULL) fclose(to_file);
+                sprintf(to_file_name, to_file_mask_plain, 10, 0, ++write_file);
+                to_file = fopen(to_file_name, "w");
+                if (to_file == NULL) {
+                    printf("error opening file: %s\n", to_file_name);
+                    exit(0);
+                }
+                printf("\twriting %s\n", to_file_name);
+                write_count = 0;
+            }
+            fputs(fen, to_file);
+            fputs(move, to_file);
+            fputs(score, to_file);
+            fputs(ply, to_file);
+            fputs(result, to_file);
+            fputs(e, to_file);
+            write_count++;
+        }
+        fclose(from_file);
+    }
+    if (to_file != NULL) fclose(to_file);
+}
+
 //END
+

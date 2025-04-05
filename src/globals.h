@@ -537,6 +537,7 @@ U64     get_additional_threads_tbhits(void);
 void    *ponder_search(void *game);
 void    update_pv(PV_LINE *pv_line, int ply, MOVE move);
 int     piece_value(int piece);
+int     get_best_capture(BOARD *board);
 int     is_free_passer(BOARD *board, int color, MOVE move);
 int     has_pawn_on_rank7(BOARD *board, int color);
 int     is_pawn_to_rank78(int turn, MOVE move);

@@ -96,6 +96,26 @@ void prepare_search(GAME *game, SETTINGS *settings)
     }
 }
 
+
+int get_best_capture(BOARD *board)
+{
+    int value = PIECE_VALUE[PAWN];
+    int turn = side_on_move(board);
+    int opponent = flip_color(turn);
+
+    for (int piece = QUEEN; piece > PAWN; piece--) {
+        if (board->state[opponent].piece[piece]) {
+            value = PIECE_VALUE[piece];
+            break;
+        }
+    }
+    if (board->state[turn].piece[PAWN] & BB_RANK7[turn]) {
+        value += PIECE_VALUE[QUEEN] - PIECE_VALUE[PAWN];
+    }
+
+    return value;
+}
+
 //-------------------------------------------------------------------------------------------------
 //  Return piece value
 //-------------------------------------------------------------------------------------------------
