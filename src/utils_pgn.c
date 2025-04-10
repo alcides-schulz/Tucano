@@ -510,6 +510,8 @@ int is_only_one_mate_move(GAME *game, int mate_in, MOVE mate_move)
     settings.max_nodes = 0;
 #ifdef TUCANO_COMPOSITION
     settings.exclude = mate_move;
+#else
+    (void)mate_move;
 #endif
 
     search_run(game, &settings);

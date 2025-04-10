@@ -133,9 +133,9 @@ typedef unsigned int    UINT;
 #define MAX_READ     8196
 
 #define MIN_THREADS     1
-#define MAX_THREADS     256
+#define MAX_THREADS     512
 #define MIN_HASH_SIZE   8
-#define MAX_HASH_SIZE   65536
+#define MAX_HASH_SIZE   131072
 
 // Piece index
 #define PAWN        0

@@ -185,7 +185,6 @@ void *iterative_deepening(void *pv_game)
     for (int depth = 1; depth <= game->search.max_depth; depth++) {
 
         // Search on next depth if more than 1/2 threads are already searching it.
-        // Based on demolito chess engine.
         if (!game->is_main_thread && depth > 1 && depth < game->search.max_depth) {
             int count = 0;
             for (int i = 0; i < additional_threads; i++) {
