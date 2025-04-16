@@ -203,7 +203,6 @@ int search(GAME *game, UINT incheck, int alpha, int beta, int depth, MOVE exclud
         depth--;
     }
 
-    //TODO test best_score = eval_score
     //  Loop through move list
     MOVE_LIST   ml;
     MOVE        best_move = MOVE_NONE;
@@ -234,7 +233,7 @@ int search(GAME *game, UINT incheck, int alpha, int beta, int depth, MOVE exclud
         if (gives_check && (depth < 4 || see_move(&game->board, move) >= 0)) {
             extensions = 1;
         }
-
+  
         //  Singular move extension/cutoff/reduction
         if (!root_node && depth >= 8 && !extensions && !singular_move_search) {
             if (tt_record.data && move == trans_move && tt_record.info.flag != TT_UPPER) {
@@ -266,14 +265,14 @@ int search(GAME *game, UINT incheck, int alpha, int beta, int depth, MOVE exclud
         }
 
         //  Pruning or depth reductions
-        if ( !extensions && move_count > 1) {
+        if (!extensions && move_count > 1) {
             if (!is_killer_move(&game->move_order, turn, ply, move)) {
                 if (!is_counter_move(&game->move_order, flip_color(turn), get_last_move_made(&game->board), move)) {
                     int move_has_bad_history = get_has_bad_history(&game->move_order, turn, move);
+                    int free_passer = is_free_passer(&game->board, turn, move);
                     // Move count pruning: prune moves based on move count.
-                    if (!root_node && !pv_node && move_has_bad_history && depth < 8 && !incheck && move_is_quiet(move)) {
-                        int pruning_threshold = 4 + depth * 2;
-                        if (!improving) pruning_threshold = pruning_threshold - 3;
+                    if (!root_node && !pv_node && move_has_bad_history && depth < 8 && !incheck && move_is_quiet(move) && !free_passer) {
+                        int pruning_threshold = 4 + depth * 2 + (improving ? 0 : -3);
                         if (move_count > pruning_threshold) {
                             continue;
                         }
