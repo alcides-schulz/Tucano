@@ -71,7 +71,7 @@ If you compile tucano you can use the command "bench" to get a signature. Just s
 Signature is a number generated after searching a couple of positions to indicate you have the correct compilation. 
 If you don't get the correct signature it means that something is wrong with the compilation process and the program may not perform correctly.
 
-    12.00:  5620048
+    12.00:  1438388
     11.00:  5203395
     10.00:  5734637 (with nn eval file loaded)
      9.00: 21898211

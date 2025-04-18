@@ -269,12 +269,13 @@ int search(GAME *game, UINT incheck, int alpha, int beta, int depth, MOVE exclud
             if (!is_killer_move(&game->move_order, turn, ply, move)) {
                 if (!is_counter_move(&game->move_order, flip_color(turn), get_last_move_made(&game->board), move)) {
                     int move_has_bad_history = get_has_bad_history(&game->move_order, turn, move);
-                    int free_passer = is_free_passer(&game->board, turn, move);
                     // Move count pruning: prune moves based on move count.
-                    if (!root_node && !pv_node && move_has_bad_history && depth < 8 && !incheck && move_is_quiet(move) && !free_passer) {
-                        int pruning_threshold = 4 + depth * 2 + (improving ? 0 : -3);
-                        if (move_count > pruning_threshold) {
-                            continue;
+                    if (!root_node && !pv_node && move_has_bad_history && depth <= 6 && !incheck && move_is_quiet(move)) {
+                        if (!is_free_passer(&game->board, turn, move)) {
+                            int pruning_threshold = 4 + depth * 2 + (improving ? 0 : -3);
+                            if (move_count > pruning_threshold) {
+                                continue;
+                            }
                         }
                     }
                     // Futility pruning: eval + margin below beta. Uses beta cutoff history.
