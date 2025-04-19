@@ -79,7 +79,8 @@ void generate_nn_data(int fen_total, int max_depth, int max_nodes, char *output_
 
     FILE *output = fopen(output_filename, "w");
 
-    tt_init(TRANS_SIZE_GEN);
+    gHashSize = TRANS_SIZE_GEN;
+    tt_init();
 
     UINT start_time = util_get_time();
     int fen_count = 0;

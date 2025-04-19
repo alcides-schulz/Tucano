@@ -20,7 +20,7 @@
 
 #define ENGINE "Tucano"
 #define AUTHOR "Alcides Schulz"
-#define VERSION "12.06"
+#define VERSION "12.07"
 
 void        develop_workbench(void);
 double      bench(int depth, int print);
@@ -46,18 +46,18 @@ int main(int argc, char *argv[])
     THREAD_ID   ponder_thread = 0;
 
     // Options
-    int         threads = 1;    // Number of Threads
-    int         hash_size = 64; // Hash Table Size in MB
+    gThreads = 1;
+    gHashSize = 64;
 
     printf("%s chess engine by %s - %s (type 'help' for information)\n", ENGINE, AUTHOR, VERSION);
 
     // Command line options
     for (int i = 0; i < argc; i++) {
         if (!strcmp("-hash", argv[i])) {
-            if (++i < argc) hash_size = valid_hash_size(atoi(argv[i]));
+            if (++i < argc) gHashSize = valid_hash_size(atoi(argv[i]));
         }
         if (!strcmp("-threads", argv[i])) {
-            if (++i < argc) threads = valid_threads(atoi(argv[i]));
+            if (++i < argc) gThreads = valid_threads(atoi(argv[i]));
         }
         if (!strcmp("-ponder", argv[i])) {
             ponder_on = TRUE;
@@ -92,7 +92,7 @@ int main(int argc, char *argv[])
         }
     }
 
-    printf("   hash table: %d MB, threads: %d, architecture: %s\n", hash_size, threads, NNUE_ARCH);
+    printf("   hash table: %d MB, threads: %d, architecture: %s\n", gHashSize, gThreads, NNUE_ARCH);
 
     // Initializations
     srand((UINT)19810505);
@@ -100,8 +100,8 @@ int main(int argc, char *argv[])
     bb_data_init();
     magic_init();
     book_init();
-    tt_init(hash_size);
-    threads_init(threads);
+    tt_init();
+    threads_init();
 #ifdef EGTB_SYZYGY
     if (strlen(syzygy_path) != 0) {
         if (tb_init(syzygy_path)) {
@@ -240,14 +240,14 @@ int main(int argc, char *argv[])
         }
         if (!strcmp(command, "option")) {
             if (strstr(line, "Hash")) {
-                sscanf(line, "option Hash=%d", &hash_size);
-                hash_size = valid_hash_size(hash_size);
-                tt_init(hash_size);
+                sscanf(line, "option Hash=%d", &gHashSize);
+                gHashSize = valid_hash_size(gHashSize);
+                tt_init();
             }
             if (strstr(line, "Threads")) {
-                sscanf(line, "option Threads=%d", &threads);
-                threads = valid_threads(threads);
-                threads_init(threads);
+                sscanf(line, "option Threads=%d", &gThreads);
+                gThreads = valid_threads(gThreads);
+                threads_init();
             }
 #ifdef EGTB_SYZYGY
             if (strstr(line, "SyzygyPath")) {
@@ -375,12 +375,12 @@ int main(int argc, char *argv[])
         }
         if (!strcmp(command, "bench")) {
             //  Benchmark
-            if (hash_size != 64) {
-                printf("'bench' command requires hash size of 64. Current hash size is %d. Use 'option Hash=64'.\n", hash_size);
+            if (gHashSize != 64) {
+                printf("'bench' command requires hash size of 64. Current hash size is %d. Use 'option Hash=64'.\n", gHashSize);
                 continue;
             }
-            if (threads != 1) {
-                printf("'bench' command requires 1 thread only. Current threads is %d. Use 'option Threads=1'.\n", threads);
+            if (gThreads != 1) {
+                printf("'bench' command requires 1 thread only. Current threads is %d. Use 'option Threads=1'.\n", gThreads);
                 continue;
             }
             bench(16, TRUE);
@@ -388,8 +388,8 @@ int main(int argc, char *argv[])
         }
         if (!strcmp(command, "speed")) {
             //  Measure engine speed
-            if (hash_size != 64) {
-                printf("'speed' command requires hash size of 64. Current hash size is %d. Use 'option Hash=64'.\n", hash_size);
+            if (gHashSize != 64) {
+                printf("'speed' command requires hash size of 64. Current hash size is %d. Use 'option Hash=64'.\n", gHashSize);
                 continue;
             }
             speed_test();

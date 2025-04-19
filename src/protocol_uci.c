@@ -74,18 +74,16 @@ void uci_loop(char *engine_name, char *engine_version, char *engine_author) {
         }
 
         if (!strncmp(uci_line, HASH_OPTION_STRING, strlen(HASH_OPTION_STRING))) {
-            int hash_size = atoi(&uci_line[strlen(HASH_OPTION_STRING)]);
-            hash_size = valid_hash_size(hash_size);
-            tt_init(hash_size);
-            printf("info string Hash set to %d MB\n", hash_size);
+            gHashSize = valid_hash_size(atoi(&uci_line[strlen(HASH_OPTION_STRING)]));
+            tt_init();
+            printf("info string Hash set to %d MB\n", gHashSize);
             continue;
         }
 
         if (!strncmp(uci_line, THREADS_OPTION_STRING, strlen(THREADS_OPTION_STRING))) {
-            int threads = atoi(&uci_line[strlen(THREADS_OPTION_STRING)]);
-            threads = valid_threads(threads);
-            threads_init(threads);
-            printf("info string Threads set to %d\n", threads);
+            gThreads = valid_threads(atoi(&uci_line[strlen(THREADS_OPTION_STRING)]));
+            threads_init();
+            printf("info string Threads set to %d\n", gThreads);
             continue;
         }
 

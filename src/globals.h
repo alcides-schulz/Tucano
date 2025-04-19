@@ -130,12 +130,16 @@ typedef unsigned int    UINT;
 #define POST_XBOARD     2
 #define POST_UCI        3
 
-#define MAX_READ     8196
+#define MAX_READ        8196
 
 #define MIN_THREADS     1
-#define MAX_THREADS     512
+#define MAX_THREADS     1024
 #define MIN_HASH_SIZE   8
-#define MAX_HASH_SIZE   131072
+#define MAX_HASH_SIZE   524288
+
+// Parameters
+EXTERN S32          gThreads;
+EXTERN S32          gHashSize;
 
 // Piece index
 #define PAWN        0
@@ -264,7 +268,6 @@ typedef struct s_pv_line {
     MOVE    line[MAX_PLY][MAX_PLY];
     int     size[MAX_PLY];
 }   PV_LINE;
-
 
 // Piece Values
 #define VALUE_PAWN      180
@@ -530,7 +533,7 @@ int     is_counter_move(MOVE_ORDER *move_order, int prev_color, MOVE previous_mo
 
 // Search
 void    prepare_search(GAME *game, SETTINGS *settings);
-void    threads_init(int threads_count);
+void    threads_init(void);
 void    search_run(GAME *game, SETTINGS *settings);
 U64     get_additional_threads_nodes(void);
 U64     get_additional_threads_tbhits(void);
@@ -555,7 +558,7 @@ int     piece_value_see(int piece);
 
 // transposition table
 void    tt_age(void);
-void    tt_init(size_t size_mb);
+void    tt_init(void);
 void    tt_clear(void);
 void    tt_save(U64 key, TT_RECORD *record);
 void    tt_read(U64 key, TT_RECORD *record);
@@ -564,7 +567,7 @@ void    tt_read(U64 key, TT_RECORD *record);
 void    analyze_mode(GAME *game);
 
 // Evaluation
-int evaluate(GAME *game);
+int     evaluate(GAME *game);
 
 // Board
 void    new_game(GAME *game, char *fen);

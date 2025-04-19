@@ -30,14 +30,14 @@ int     additional_threads = 0;
 //-------------------------------------------------------------------------------------------------
 //  Create threads data.
 //-------------------------------------------------------------------------------------------------
-void threads_init(int threads_count)
+void threads_init()
 {
     if (thread_data != NULL) {
         ALIGNED_FREE(thread_data);
         thread_data = NULL;
     }
-    if (threads_count <= 0) threads_count = 1;
-    additional_threads = threads_count - 1;
+    if (gThreads <= 0) gThreads = 1;
+    additional_threads = gThreads - 1;
     if (additional_threads == 0) return;
     thread_data = (GAME *)ALIGNED_ALLOC(64, sizeof(GAME) * additional_threads);
     if (thread_data == NULL) {
@@ -45,7 +45,9 @@ void threads_init(int threads_count)
         additional_threads = 0;
         return;
     }
-    memset(thread_data, 0, (size_t)(sizeof(GAME) * additional_threads));
+    for (int i = 0; i < additional_threads; i++) {
+        memset(&thread_data[i], 0, sizeof(GAME));
+    }
 }
 
 void *ponder_search(void *game)

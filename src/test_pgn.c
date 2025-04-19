@@ -36,7 +36,8 @@ void test_pgn(char *pgn_filename)
     int        total_positions = 0;
     int        selected_positions = 0;
 
-    tt_init(8);
+    gHashSize = 8;
+    tt_init();
 
     while (read_game(pgn_file, pgn_moves, pgn_game, white, black, result)) {
         assert(strlen(pgn_moves) < 16384);

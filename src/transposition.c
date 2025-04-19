@@ -34,15 +34,22 @@ struct s_hash_structure {
     U8          age;
 }   hash_table;
 
+typedef struct s_hash_clear {
+    THREAD_ID   thread_id;
+    void        *address;
+    size_t      size;
+}   HASH_SECTION;
+
 //-------------------------------------------------------------------------------------------------
 //  Initialization.
 //-------------------------------------------------------------------------------------------------
-void tt_init(size_t size_mb)
+void tt_init()
 {
     assert(sizeof(TT_ENTRY) == 16);
 
     if (hash_table.address != NULL) free(hash_table.address);
 
+    size_t size_mb = gHashSize;
     hash_table.size = 2;
     while (hash_table.size * 2 <= size_mb) {
         hash_table.size *= 2;
@@ -51,7 +58,7 @@ void tt_init(size_t size_mb)
 
     hash_table.address = (TT_ENTRY *)malloc(hash_table.size);
     if (!hash_table.address) {
-        printf("no memory for transposition table!");
+        fprintf(stderr, "no memory for transposition table, hash=%d !", gHashSize);
         exit(-1);
     }
 
@@ -70,11 +77,41 @@ void tt_age(void)
 }
 
 //-------------------------------------------------------------------------------------------------
+//  Clear table section by thread when running multi-thread
+//-------------------------------------------------------------------------------------------------
+void *tt_clear_section(void *data)
+{
+    HASH_SECTION *section = (HASH_SECTION *)data;
+    memset(section->address, 0, section->size);
+    return NULL;
+}
+
+//-------------------------------------------------------------------------------------------------
 //  Clear.
 //-------------------------------------------------------------------------------------------------
 void tt_clear(void)
 {
-    memset(hash_table.address, 0, hash_table.size);
+    HASH_SECTION *sections = (HASH_SECTION *)malloc(sizeof(HASH_SECTION) * gThreads);
+    if (sections ==  NULL) {
+        fprintf(stderr, "cannot allocate memory for tt_clear().sections: gHashSize: %d,  gThreads=%d\n", gHashSize, gThreads);
+        exit(-1);
+    }
+    size_t section_size = hash_table.size / gThreads;
+    size_t section_entries = section_size / sizeof(TT_ENTRY);
+    sections[0].address = hash_table.address;
+    sections[0].size = section_size;
+    tt_clear_section(&sections[0]);
+    if (gThreads > 1) {
+        for (int i = 1; i < gThreads; i++) {
+            sections[i].address = hash_table.address + i * section_entries;
+            sections[i].size = section_size;
+            THREAD_CREATE(sections[i].thread_id, tt_clear_section, &sections[i]);
+        }
+        for (int i = 1; i < gThreads; i++) {
+            THREAD_WAIT(sections[i].thread_id);
+        }
+    }
+    free(sections);
     hash_table.age = 0;
 }
 
