@@ -183,6 +183,13 @@ int search(GAME *game, UINT incheck, int alpha, int beta, int depth, MOVE exclud
                         undo_move(&game->board);
                         if (game->search.abort) return 0;
                         if (pc_score >= pc_beta) {
+                            if (!tt_record.data || tt_record.info.depth < depth - 3) {
+                                tt_record.info.move = pc_move;
+                                tt_record.info.depth = (S8)(depth - 3);
+                                tt_record.info.flag = TT_LOWER;
+                                tt_record.info.score = score_to_tt(pc_score, ply);
+                                tt_save(game->board.key, &tt_record);
+                            }
                             return pc_score;
                         }
                     }
