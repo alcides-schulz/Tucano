@@ -162,7 +162,7 @@ int search(GAME *game, UINT incheck, int alpha, int beta, int depth, MOVE exclud
             }
         }
 
-        //  Prob-Cut: after a capture a low depth with reduced beta indicates it is safe to ignore this node
+        //  Prob-Cut: after a capture a low depth search with reduced beta indicates it is safe to ignore this node
         if (depth >= 5 && !is_mate_score(beta)) {
             int pc_beta = beta + 100;
             if (!tt_record.data || score_from_tt(tt_record.info.score, ply) >= pc_beta || tt_record.info.depth < depth - 3) {
@@ -179,7 +179,13 @@ int search(GAME *game, UINT incheck, int alpha, int beta, int depth, MOVE exclud
                         }
                         make_move(&game->board, pc_move);
                         int pc_incheck = is_incheck(&game->board, side_on_move(&game->board));
-                        int pc_score = -search(game, pc_incheck, -pc_beta, -pc_beta + 1, depth - 4, MOVE_NONE);
+                        int pc_score = 0;
+                        if (depth > 10) {
+                            pc_score = -quiesce(game, pc_incheck, -pc_beta, -pc_beta - 1, 0);
+                        }
+                        if (depth <= 10 || pc_score >= pc_beta) {
+                            pc_score = -search(game, pc_incheck, -pc_beta, -pc_beta + 1, depth - 4, MOVE_NONE);
+                        }
                         undo_move(&game->board);
                         if (game->search.abort) return 0;
                         if (pc_score >= pc_beta) {
@@ -197,6 +203,7 @@ int search(GAME *game, UINT incheck, int alpha, int beta, int depth, MOVE exclud
             }
         }
 
+        // Depth reduction for recaptures that are not promissing.
         if (move_is_capture(get_last_move_made(&game->board))) {
             if (!improving && depth > 3 && depth <= 10 && eval_score + MAX(200, get_best_capture(&game->board)) < alpha) {
                 depth--;
