@@ -169,12 +169,14 @@ int search(GAME *game, UINT incheck, int alpha, int beta, int depth, MOVE exclud
                 if (trans_move == MOVE_NONE || !move_is_quiet(trans_move)) {
                     MOVE pc_move;
                     MOVE_LIST pc_move_list;
+                    int pc_move_count = 0;
                     select_init(&pc_move_list, game, incheck, trans_move, TRUE);
                     while ((pc_move = next_move(&pc_move_list)) != MOVE_NONE) {
-                        if (move_is_quiet(pc_move) || eval_score + see_move(&game->board, pc_move) < pc_beta) {
+                        if (!is_pseudo_legal(&game->board, pc_move_list.pins, pc_move)) {
                             continue;
                         }
-                        if (!is_pseudo_legal(&game->board, pc_move_list.pins, pc_move)) {
+                        pc_move_count++;
+                        if (move_is_quiet(pc_move) || eval_score + see_move(&game->board, pc_move) < pc_beta) {
                             continue;
                         }
                         make_move(&game->board, pc_move);
@@ -184,7 +186,8 @@ int search(GAME *game, UINT incheck, int alpha, int beta, int depth, MOVE exclud
                             pc_score = -quiesce(game, pc_incheck, -pc_beta, -pc_beta - 1, 0);
                         }
                         if (depth <= 10 || pc_score >= pc_beta) {
-                            pc_score = -search(game, pc_incheck, -pc_beta, -pc_beta + 1, depth - 4, MOVE_NONE);
+                            int pc_reductions = pc_move_count / 5;
+                            pc_score = -search(game, pc_incheck, -pc_beta, -pc_beta + 1, depth - 4 - pc_reductions, MOVE_NONE);
                         }
                         undo_move(&game->board);
                         if (game->search.abort) return 0;
