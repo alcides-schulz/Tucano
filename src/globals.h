@@ -522,6 +522,8 @@ int     is_late_moves(MOVE_LIST *ml);
 int     is_bad_capture(MOVE_LIST *ml);
 int     is_mate_score(int score);
 int     is_eval_score(int score);
+int     is_winning_score(int score);
+int     is_losing_score(int score);
 
 //  Move ordering
 void    save_beta_cutoff_data(MOVE_ORDER *move_order, int color, int ply, MOVE best_move, MOVE_LIST *ml, MOVE previous_move);

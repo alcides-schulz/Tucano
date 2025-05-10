@@ -139,8 +139,10 @@ int search(GAME *game, UINT incheck, int alpha, int beta, int depth, MOVE exclud
         }
 
         // Static null move: eval score + margin is higher that current beta, so it can skip the search.
-        if (depth < STAT_NULL_DEPTH && eval_score - STAT_NULL_MARGIN[depth] >= beta && !is_mate_score(beta)) {
-            return eval_score - STAT_NULL_MARGIN[depth];
+        if (depth < STAT_NULL_DEPTH && eval_score - STAT_NULL_MARGIN[depth] >= beta && !is_losing_score(beta)) {
+            if (trans_move == MOVE_NONE || move_is_capture(trans_move)) {
+                return eval_score - STAT_NULL_MARGIN[depth];
+            }
         }
 
         // Null move heuristic: side to move has advantage that even allowing an extra move to opponent, still keeps advantage.
