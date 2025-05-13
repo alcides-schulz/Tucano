@@ -48,6 +48,7 @@ int search(GAME *game, UINT incheck, int alpha, int beta, int depth, MOVE exclud
 
     game->pv_line.size[ply] = ply;
     game->search.nodes++;
+    game->reductions[ply] = 0;
 
     if (!root_node) {
         // drawn position
@@ -127,6 +128,16 @@ int search(GAME *game, UINT incheck, int alpha, int beta, int depth, MOVE exclud
     int eval_score = evaluate(game);
     game->eval_hist[ply] = eval_score;
     int improving = ply > 1 && game->eval_hist[ply] > game->eval_hist[ply - 2];
+    int opponent_worsening = ply > 0 && game->eval_hist[ply] > -game->eval_hist[ply - 1];
+    int prior_reduction = ply > 0 ? game->reductions[ply - 1] : 0;
+
+    // Adjust depth based on eval progress
+    if (prior_reduction >= 3 && !opponent_worsening) {
+        depth++;
+    }
+    if (prior_reduction >= 1 && depth >= 2 && game->eval_hist[ply] + game->eval_hist[ply - 1] > 175) {
+        depth--;
+    }
 
     if (!pv_node && !incheck && !singular_move_search) {
         
@@ -350,7 +361,9 @@ int search(GAME *game, UINT incheck, int alpha, int beta, int depth, MOVE exclud
             score = -search(game, gives_check, -beta, -alpha, depth - 1 + extensions, MOVE_NONE);
         }
         else {
+            game->reductions[ply] = reductions;
             score = -search(game, gives_check, -alpha - 1, -alpha, depth - 1 + extensions - reductions, MOVE_NONE);
+            game->reductions[ply] = 0;
             if (!game->search.abort && score > alpha && reductions) {
                 score = -search(game, gives_check, -alpha - 1, -alpha, depth - 1 + extensions, MOVE_NONE);
             }

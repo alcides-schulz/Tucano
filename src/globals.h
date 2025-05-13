@@ -405,6 +405,7 @@ typedef struct s_game {
     MOVE_ORDER  move_order;
     EVAL_TABLE  eval_table[EVAL_TABLE_SIZE];
     int         eval_hist[MAX_PLY];
+    int         reductions[MAX_PLY];
     int         is_main_thread;
     THREAD_ID   thread_handle;
     int         thread_number;
