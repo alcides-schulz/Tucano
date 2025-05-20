@@ -17,9 +17,6 @@
 
 #include "globals.h"
 
-#define STAT_NULL_DEPTH 4
-static int STAT_NULL_MARGIN[STAT_NULL_DEPTH] = { 0, 80, 160, 320 };
-
 #define RAZOR_DEPTH 6
 static int RAZOR_MARGIN[RAZOR_DEPTH] = { 0, 250, 500, 750, 1000, 1250 };
 
@@ -150,9 +147,12 @@ int search(GAME *game, UINT incheck, int alpha, int beta, int depth, MOVE exclud
         }
 
         // Static null move: eval score + margin is higher that current beta, so it can skip the search.
-        if (depth < STAT_NULL_DEPTH && eval_score - STAT_NULL_MARGIN[depth] >= beta && !is_losing_score(beta)) {
+        if (depth <= 6 && eval_score >= beta && !is_losing_score(beta)) {
             if (trans_move == MOVE_NONE || move_is_capture(trans_move)) {
-                return eval_score - STAT_NULL_MARGIN[depth];
+                int stat_null_margin = 100 * depth - improving * 80 - opponent_worsening * 30 + (ply > 0 ? game->eval_hist[ply - 1] / 350 : 0);
+                if (eval_score - stat_null_margin >= beta) {
+                    return eval_score - stat_null_margin;
+                }
             }
         }
 
