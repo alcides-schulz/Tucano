@@ -20,7 +20,7 @@
 
 #define ENGINE "Tucano"
 #define AUTHOR "Alcides Schulz"
-#define VERSION "12.13"
+#define VERSION "12.14"
 
 void        develop_workbench(void);
 double      bench(int depth, int print);
@@ -629,7 +629,7 @@ void develop_workbench(void)
 {
     //tnn_generate_menu();
     //extract_composition("d:/temp/a.pgn");
-    tnn_consolidate_files();
+    //tnn_consolidate_files();
 }
 
 //END

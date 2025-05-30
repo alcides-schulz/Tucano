@@ -47,8 +47,8 @@ int quiesce(GAME *game, UINT incheck, int alpha, int beta, int depth)
     if (ply >= MAX_PLY) return evaluate(game);
 
     //  Mate pruning.
-    alpha = MAX(-MATE_VALUE + ply, alpha);
-    beta = MIN(MATE_VALUE - ply, beta);
+    alpha = MAX(-MATE_SCORE + ply, alpha);
+    beta = MIN(MATE_SCORE - ply, beta);
     if (alpha >= beta) return alpha;
 
     S8 quiesce_depth = incheck || depth >= 0 ? 0 : -1;
@@ -138,7 +138,7 @@ int quiesce(GAME *game, UINT incheck, int alpha, int beta, int depth)
 
     //  Return only checkmate scores. We don't look at all moves unless in check.
     if (best_score == -MAX_SCORE && incheck) {
-        return -MATE_VALUE + ply;
+        return -MATE_SCORE + ply;
     }
 
     if (best_move != MOVE_NONE) {

@@ -519,7 +519,7 @@ int is_only_one_mate_move(GAME *game, int mate_in, MOVE mate_move)
     //util_print_move(game->search.best_move, FALSE);
     //printf(" %d %d\n", game->search.best_score, MATE_VALUE - game->search.best_score);
     //getchar();
-    if (MATE_VALUE - game->search.best_score == mate_in) {
+    if (MATE_SCORE - game->search.best_score == mate_in) {
         return FALSE;
     }
     return TRUE;

@@ -195,8 +195,8 @@ int has_pawn_on_rank7(BOARD *board, int color)
 //-------------------------------------------------------------------------------------------------
 int is_mate_score(int score)
 {
-    if (score >= MATE_VALUE - MAX_PLY && score <= MATE_VALUE) return TRUE;
-    if (score >= -MATE_VALUE  && score <= -MATE_VALUE + MAX_PLY) return TRUE;
+    if (score >= MATE_SCORE - MAX_PLY && score <= MATE_SCORE) return TRUE;
+    if (score >= -MATE_SCORE  && score <= -MATE_SCORE + MAX_PLY) return TRUE;
     return FALSE;
 }
 
@@ -289,10 +289,10 @@ void post_info(GAME *game, int score, int depth)
         if (is_mate_score(uci_score)) {
             score_type = "mate";
             if (score > 0) { // mate in
-                uci_score = (MATE_VALUE - score + 1) / 2;
+                uci_score = (MATE_SCORE - score + 1) / 2;
             }
             else { // mated in
-                uci_score = -(score + MATE_VALUE) / 2;
+                uci_score = -(score + MATE_SCORE) / 2;
             }
         }
         printf("info ");

@@ -53,8 +53,8 @@ int search(GAME *game, UINT incheck, int alpha, int beta, int depth, MOVE exclud
             return 0;
         }
         //  Mate pruning.
-        alpha = MAX(-MATE_VALUE + ply, alpha);
-        beta = MIN(MATE_VALUE - ply, beta);
+        alpha = MAX(-MATE_SCORE + ply, alpha);
+        beta = MIN(MATE_SCORE - ply, beta);
         if (alpha >= beta) return alpha;
     }
 
@@ -88,11 +88,11 @@ int search(GAME *game, UINT incheck, int alpha, int beta, int depth, MOVE exclud
             int score;
             switch (tbresult) {
             case TB_WIN:
-                score = EGTB_WIN - ply;
+                score = EGTB_SCORE - ply;
                 tt_flag = TT_LOWER;
                 break;
             case TB_LOSS:
-                score = -EGTB_WIN + ply;
+                score = -EGTB_SCORE + ply;
                 tt_flag = TT_UPPER;
                 break;
             default:
@@ -146,7 +146,7 @@ int search(GAME *game, UINT incheck, int alpha, int beta, int depth, MOVE exclud
             if (score < razor_margin) return score;
         }
 
-        // Static null move: eval score + margin is higher that current beta, so it can skip the search.
+        // Static null move: eval score - margin is higher than current beta, so it can skip the search.
         if (depth <= 6 && eval_score >= beta && !is_losing_score(beta)) {
             if (trans_move == MOVE_NONE || move_is_capture(trans_move)) {
                 int stat_null_margin = 100 * depth - improving * 80 - opponent_worsening * 30 + (ply > 0 ? game->eval_hist[ply - 1] / 350 : 0);
@@ -415,7 +415,7 @@ int search(GAME *game, UINT incheck, int alpha, int beta, int depth, MOVE exclud
     else {
         //  Regular search score verification
         if (best_score == -MAX_SCORE) {
-            return (incheck ? -MATE_VALUE + ply : 0);
+            return (incheck ? -MATE_SCORE + ply : 0);
         }
         // Prevent scores outside egtb hits.
         if (pv_node) {

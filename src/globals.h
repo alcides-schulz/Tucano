@@ -114,16 +114,16 @@ typedef unsigned int    UINT;
 #define flip_color(color)   ((color) ^ 1)
 
 // Search values
-#define MAX_PLY         128
-#define MAX_DEPTH        64
-#define MAX_HIST       1024
+#define MAX_PLY         256
+#define MAX_DEPTH       128
+#define MAX_HIST       2048
 #define MAX_TIME   10000000
 
 #define MAX_EVAL     20000
-#define EGTB_WIN     25000
-#define MATE_VALUE   32000
+#define EGTB_SCORE   25000
+#define MATE_SCORE   32000
 #define MAX_SCORE    32767
-#define WIN_SCORE    (EGTB_WIN - MAX_PLY) // for MATE and EGTBWIN score
+#define WIN_SCORE    (EGTB_SCORE - MAX_PLY) // for MATE and EGTBWIN score
 
 #define POST_NONE       0
 #define POST_DEFAULT    1
