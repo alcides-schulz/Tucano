@@ -70,7 +70,8 @@ void generate_nn_data(int fen_total, int max_depth, int max_nodes, char *output_
     }
 
     settings.single_move_time = MAX_TIME;
-    settings.total_move_time = 0;
+    settings.total_time = 0;
+    settings.increment_time = 0;
     settings.moves_per_level = 0;
     settings.max_depth = max_depth;
     settings.post_flag = POST_NONE;

@@ -116,7 +116,8 @@ void *analysis_start(void *game)
     settings.moves_per_level = 0;
     settings.post_flag = POST_XBOARD;
     settings.single_move_time = MAX_TIME;
-    settings.total_move_time = MAX_TIME;
+    settings.total_time = MAX_TIME;
+    settings.increment_time = 0;
     settings.use_book = FALSE;
     settings.max_nodes = 0;
 

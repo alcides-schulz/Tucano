@@ -75,16 +75,32 @@ void prepare_search(GAME *game, SETTINGS *settings)
     }
 
     // Allocate time for this move
-    game->search.normal_move_time = settings->total_move_time / moves_to_go;
+    game->search.normal_move_time = settings->total_time / moves_to_go;
 
     // Allocate time buffer to avoid timeout
-    int time_buffer = (int)(settings->total_move_time * 0.10);
-    if (time_buffer > 1000) time_buffer = 1000;
-    if (time_buffer < 200) time_buffer = settings->total_move_time / 2;
-    UINT max_time = settings->total_move_time - time_buffer;
+    UINT time_buffer = 1000;
+    if (settings->increment_time != 0 && settings->increment_time <= 1000) {
+        // recalculate for very short time control
+        time_buffer = settings->total_time / 10;
+        if (time_buffer > 1000) {
+            time_buffer = 1000;
+        }
+        if (time_buffer < 200) {
+            time_buffer = settings->total_time / 2;
+        }
+    }
+    else {
+        // avoid leaving little time for the move
+        if (time_buffer > settings->total_time || settings->total_time < 2000) {
+            time_buffer = settings->total_time / 2;
+        }
+    }
+    UINT max_time = settings->total_time - time_buffer;
     
     // Additional reduction for moves/time to leave time for very last moves.
-    if (settings->moves_to_go != 0 && moves_to_go < 10 && moves_to_go > 1) max_time /= 2;
+    if (settings->moves_to_go != 0 && moves_to_go < 10 && moves_to_go > 1) {
+        max_time /= 2;
+    }
 
     //  Calculate extended move time, used when score drops.
     game->search.extended_move_time = game->search.normal_move_time * 4;

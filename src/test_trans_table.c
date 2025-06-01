@@ -35,7 +35,8 @@ void trans_table_test(char *fen, char *desc)
     settings.moves_per_level = 0;
     settings.post_flag = POST_DEFAULT;
     settings.single_move_time = 10000; 
-    settings.total_move_time = 0;
+    settings.total_time = 0;
+    settings.increment_time = 0;
     settings.use_book = FALSE;
     settings.max_nodes = 0;
 

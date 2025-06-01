@@ -459,7 +459,8 @@ void    search_tables_init(void);
 //  Settings: default time, max depth, etc
 typedef struct s_settings {
     UINT    single_move_time;       // set by st command. default is 10 seconds.
-    UINT    total_move_time;        // set by time command.
+    UINT    total_time;             // set by time command.
+    UINT    increment_time;         // set by winc/binc
     int     moves_per_level;        // set by level command in XBoard mode
     int     moves_to_go;            // set by movestogo option in UCI mode.
     int     max_depth;              // set by sd command.

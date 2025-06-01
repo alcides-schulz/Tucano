@@ -166,6 +166,8 @@ void *execute_uci_go(void *pv_line)
     int moves_to_go = -1;
     int wtime = -1;
     int btime = -1;
+    int winc = -1;
+    int binc = -1;
     int move_time = -1;
     U64 max_nodes = 0;
 
@@ -176,8 +178,16 @@ void *execute_uci_go(void *pv_line)
             wtime = atoi(strtok(NULL, " "));
             continue;
         }
+        if (!strcmp(token, "winc")) {
+            winc = atoi(strtok(NULL, " "));
+            continue;
+        }
         if (!strcmp(token, "btime")) {
             btime = atoi(strtok(NULL, " "));
+            continue;
+        }
+        if (!strcmp(token, "binc")) {
+            binc = atoi(strtok(NULL, " "));
             continue;
         }
         if (!strcmp(token, "depth")) {
@@ -210,14 +220,17 @@ void *execute_uci_go(void *pv_line)
     game_settings.post_flag = POST_UCI;
     game_settings.max_depth = MAX_DEPTH;
     game_settings.single_move_time = 0;
-    game_settings.total_move_time = 0;
+    game_settings.total_time = 0;
+    game_settings.increment_time = 0;
     game_settings.moves_to_go = 0;
     game_settings.max_nodes = 0;
 
-    int time = side_on_move(&main_game.board) == WHITE ? wtime : btime;
+    int total_time = side_on_move(&main_game.board) == WHITE ? wtime : btime;
+    int inc_time = side_on_move(&main_game.board) == WHITE ? winc : binc;
 
     if (depth != -1) game_settings.max_depth = MAX(1, MIN(depth, MAX_DEPTH));
-    if (time != -1) game_settings.total_move_time = time;
+    if (total_time != -1) game_settings.total_time = total_time;
+    if (inc_time != -1) game_settings.increment_time = inc_time;
     if (move_time != -1) game_settings.single_move_time = move_time;
     if (moves_to_go != -1) game_settings.moves_to_go = moves_to_go;
     if (ponder) uci_is_pondering = TRUE;

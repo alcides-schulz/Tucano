@@ -20,7 +20,7 @@
 
 #define ENGINE "Tucano"
 #define AUTHOR "Alcides Schulz"
-#define VERSION "12.14"
+#define VERSION "12.15"
 
 void        develop_workbench(void);
 double      bench(int depth, int print);
@@ -198,7 +198,8 @@ int main(int argc, char *argv[])
         if (!strcmp(command, "st"))  {
             sscanf(line, "st %d", &game_settings.single_move_time);
             game_settings.single_move_time *= 1000;
-            game_settings.total_move_time = 0;
+            game_settings.total_time = 0;
+            game_settings.increment_time = 0;
             continue;
         }
         if (!strcmp(command, "level"))  {
@@ -208,8 +209,9 @@ int main(int argc, char *argv[])
             continue;
         }
         if (!strcmp(command, "time"))  {
-            sscanf(line, "time %d", &game_settings.total_move_time);
-            game_settings.total_move_time *= 10; // time is in centiseconds
+            sscanf(line, "time %d", &game_settings.total_time);
+            game_settings.total_time *= 10; // time is in centiseconds
+            game_settings.increment_time = 0;
             game_settings.single_move_time = 0;
             continue;
         }
@@ -485,7 +487,8 @@ int main(int argc, char *argv[])
 void settings_init(void)
 {
     game_settings.single_move_time = 10000; // 10 seconds
-    game_settings.total_move_time = 0;
+    game_settings.total_time = 0;
+    game_settings.increment_time = 0;
     game_settings.moves_per_level = 0;
     game_settings.max_depth = MAX_DEPTH;
     game_settings.post_flag = POST_DEFAULT;
@@ -532,7 +535,8 @@ double bench(int depth, int print)
     settings.moves_per_level = 0;
     settings.post_flag = POST_NONE;
     settings.single_move_time = MAX_TIME;
-    settings.total_move_time = MAX_TIME;
+    settings.total_time = MAX_TIME;
+    settings.increment_time = 0;
     settings.use_book = FALSE;
     settings.max_nodes = 0;
 

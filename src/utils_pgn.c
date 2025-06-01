@@ -502,7 +502,8 @@ int is_only_one_mate_move(GAME *game, int mate_in, MOVE mate_move)
 {
     SETTINGS settings;
     settings.single_move_time = 10000;
-    settings.total_move_time = 0;
+    settings.total_time = 0;
+    settings.increment_time = 0;
     settings.moves_per_level = 0;
     settings.max_depth = MAX_DEPTH;
     settings.post_flag = POST_NONE;

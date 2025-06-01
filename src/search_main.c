@@ -55,7 +55,8 @@ void *ponder_search(void *game)
     SETTINGS    ponder_settings;
 
     ponder_settings.single_move_time = MAX_TIME;
-    ponder_settings.total_move_time = MAX_TIME;
+    ponder_settings.total_time = MAX_TIME;
+    ponder_settings.increment_time = 0;
     ponder_settings.moves_per_level = 0;
     ponder_settings.max_depth = MAX_DEPTH;
     ponder_settings.post_flag = POST_XBOARD;
