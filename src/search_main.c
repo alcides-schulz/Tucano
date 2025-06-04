@@ -124,9 +124,11 @@ void search_run(GAME *game, SETTINGS *settings)
     //  Run main search
     iterative_deepening(game);
 
-	//  Notify additional threads to finish
+	//  Notify additional threads to finish and wait
     for (int i = 0; i < additional_threads; i++) {
         thread_data[i].search.abort = TRUE;
+    }
+    for (int i = 0; i < additional_threads; i++) {
         THREAD_WAIT(thread_data[i].thread_handle);
     }
 
