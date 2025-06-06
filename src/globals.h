@@ -115,7 +115,7 @@ typedef unsigned int    UINT;
 
 // Search values
 #define MAX_PLY         256
-#define MAX_DEPTH       128
+#define MAX_DEPTH       120
 #define MAX_HIST       2048
 #define MAX_TIME   10000000
 
